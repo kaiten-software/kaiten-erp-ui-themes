@@ -21,7 +21,21 @@
 		pins: "kaiten_ui_pins",
 		pinGroups: "kaiten_ui_pin_groups",
 		recent: "kaiten_ui_recent",
+		layout: "kaiten_ui_layout",
+		rev: "kaiten_ui_rev",
 	};
+
+	// Everything worth carrying between machines. Anything not listed here stays
+	// local to the browser it was set in.
+	var SYNC_KEYS = ["pins", "pinGroups", "recent"];
+	var SYNC_FLAGS = ["accent", "density", "enabled", "layout"];
+
+	// "split" keeps the master rail beside the entries; "columns" drops the rail
+	// and lays every group out at once, the way classic ERP top menus do.
+	var LAYOUTS = [
+		{ id: "split", icon: "panel-left", label: "Split", title: "Groups on the left, entries on the right" },
+		{ id: "columns", icon: "layout-grid", label: "Columns", title: "Every group side by side" },
+	];
 
 	// Always present, never deleted: anything pinned without an answer lands here.
 	var DEFAULT_PIN_GROUP = { id: "default", label: "Pinned", icon: "star", hue: 42 };
@@ -194,6 +208,10 @@
 		try {
 			localStorage.setItem(key, JSON.stringify(value));
 		} catch (e) {}
+
+		// The single choke point for pins, shelves and history, so the server copy
+		// follows along without every caller having to remember to ask.
+		if (SYNC_KEYS.some(function (name) { return KEY[name] === key; })) schedulePush();
 	}
 
 	function adopt(from, to) {
@@ -211,6 +229,7 @@
 		adopt("aurora_ui_pins", KEY.pins);
 		adopt("aurora_ui_pin_groups", KEY.pinGroups);
 		adopt("aurora_ui_recent", KEY.recent);
+		adopt("aurora_ui_layout", KEY.layout);
 		adopt("aurora:accent", KEY.accent);
 	}
 
@@ -1377,11 +1396,109 @@
 			: "Filtered by \u201c" + needle + "\u201d \u00b7 nothing in this tab";
 	}
 
+	/* ---------------------------------------------------------------------
+	   Layout
+
+	   Two ways to read the same tree. Split is the master/detail rail; columns
+	   opens every group at once for people who would rather scan than click.
+	   ------------------------------------------------------------------ */
+
+	function currentLayout() {
+		return localStorage.getItem(KEY.layout) === "columns" ? "columns" : "split";
+	}
+
+	function applyLayout() {
+		var layout = currentLayout();
+		if (el.mega) el.mega.setAttribute("data-layout", layout);
+		Object.keys(el.layoutBtns || {}).forEach(function (id) {
+			el.layoutBtns[id].classList.toggle("aur-on", id === layout);
+			el.layoutBtns[id].setAttribute("aria-pressed", id === layout ? "true" : "false");
+		});
+	}
+
+	function setLayout(id) {
+		localStorage.setItem(KEY.layout, id === "columns" ? "columns" : "split");
+		applyLayout();
+		renderGroups(state.activeTab || "workspaces");
+		if (megaOpen()) positionMega();
+		schedulePush();
+	}
+
+	function renderColumns(tabId, groups) {
+		el.groups.innerHTML = "";
+		el.body.innerHTML = "";
+		el.body.style.paddingTop = "";
+		state.activeNode = null;
+
+		if (!groups.length) {
+			var query = String(state.megaQuery || "").trim();
+			el.body.appendChild(
+				make("div", {
+					class: "aur-empty",
+					text: query ? 'Nothing in this tab matches "' + query + '".' : "Nothing here you have access to.",
+				})
+			);
+			return;
+		}
+
+		groups.forEach(function (group) {
+			var options = {};
+			if (tabId === "pinned") {
+				options.drag = true;
+				options.pinGroup = group.pinGroup;
+				options.groupKey = group.key;
+			}
+
+			var grid = make("div", { class: "aur-grid" });
+			(group.items || []).slice(0, 300).forEach(function (item, i) {
+				grid.appendChild(renderItem(item, i, options));
+			});
+
+			var head = make("div", { class: "aur-col-head" }, [
+				iconNode(group.icon || "layers", "aur-group-icon"),
+				make("span", { class: "aur-col-label", text: group.label }),
+				make("span", { class: "aur-group-count", text: String((group.items || []).length) }),
+			]);
+
+			var column = make("div", { class: "aur-col", "--h": String(group.hue == null ? 250 : group.hue) }, [head, grid]);
+			if (group.depth) column.style.setProperty("--d", String(group.depth));
+
+			// Dropping anywhere in a shelf's column files the pin there, which is
+			// the whole point of showing every shelf at once.
+			if (options.drag && options.pinGroup) {
+				column.addEventListener("dragover", function (event) {
+					event.preventDefault();
+					event.dataTransfer.dropEffect = "move";
+					column.classList.add("aur-col-drop");
+				});
+				column.addEventListener("dragleave", function () {
+					column.classList.remove("aur-col-drop");
+				});
+				column.addEventListener("drop", function (event) {
+					event.preventDefault();
+					column.classList.remove("aur-col-drop");
+					var dragged = event.dataTransfer.getData("text/plain");
+					if (!dragged) return;
+					movePin(dragged, options.pinGroup);
+					renderGroups("pinned");
+				});
+			}
+
+			el.body.appendChild(column);
+		});
+	}
+
 	function renderGroups(tabId) {
 		var query = state.megaQuery || "";
 		var groups = filterGroups(groupsFor(tabId), query);
 		state.groups = groups;
 		updateFilterBar(query, groups);
+
+		if (currentLayout() === "columns") {
+			renderColumns(tabId, groups);
+			return;
+		}
+
 		el.groups.innerHTML = "";
 		if (tabId === "pinned" && !query) el.groups.appendChild(shelfManageBar());
 
@@ -1940,10 +2057,31 @@
 				return;
 			}
 
+			/* Bubble phase, and deliberately no stopPropagation: the desk's own
+			   dialogs, grid cells and quick entry must keep seeing Escape. Only
+			   this theme's overlays are closed here, and the palette is closed
+			   in one press instead of two only when nothing of ours was open. */
 			if (event.key === "Escape") {
-				closeMega();
-				closePop();
-				closeSelect();
+				var closed = false;
+				if (el.selectPop) {
+					closeSelect();
+					closed = true;
+				}
+				if (el.pop) {
+					closePop();
+					closed = true;
+				}
+				if (megaOpen()) {
+					closeMega();
+					closed = true;
+				}
+
+				if (!closed) {
+					try {
+						var bar = window.frappe && frappe.app && frappe.app.awesome_bar;
+						if (bar && bar.is_open && bar.is_open()) bar.close();
+					} catch (e) {}
+				}
 				return;
 			}
 
@@ -2087,8 +2225,31 @@
 		return host.querySelector("input, textarea, .control-input") || host;
 	}
 
+	/* The command palette owns the only awesomplete that is already a floating
+	   overlay: nothing clips it, so it never needs rescuing. Re-anchoring it
+	   painted a second list beside the palette, because the modal carries a
+	   transform mid-animation and the offset maths below reads it wrong. */
+	function isCommandPalette(list) {
+		var host = list.parentElement;
+		return Boolean(host && host.querySelector("#navbar-search"));
+	}
+
+	function reclip(list) {
+		if (!list.dataset.aurUnclipped) return;
+		delete list.dataset.aurUnclipped;
+		list.classList.remove("aur-unclipped");
+		["position", "width", "minWidth", "maxHeight", "left", "top", "bottom"].forEach(function (prop) {
+			list.style[prop] = "";
+		});
+	}
+
 	function unclip(list) {
 		if (!list.offsetParent && getComputedStyle(list).display === "none") return;
+
+		if (isCommandPalette(list)) {
+			reclip(list);
+			return;
+		}
 
 		var anchor = anchorOf(list);
 		if (!anchor) return;
@@ -2127,6 +2288,9 @@
 
 	function watchPopups() {
 		var sweep = function () {
+			// A list that has closed keeps its fixed coordinates otherwise, and
+			// reappears in last-time's position before the next sweep moves it.
+			document.querySelectorAll(".awesomplete > ul[hidden].aur-unclipped, .autocomplete-results[hidden].aur-unclipped").forEach(reclip);
 			document.querySelectorAll(POPUP_SELECTOR).forEach(unclip);
 		};
 
@@ -2323,6 +2487,23 @@
 		var megaClear = make("button", { class: "aur-mega-clear", type: "button", title: "Clear", text: "\u00d7" });
 		megaClear.addEventListener("click", clearMegaFilter);
 
+		// Layout switch, right where the eye already is for the filter.
+		el.layoutBtns = {};
+		var layoutSeg = make("div", { class: "aur-layout-seg", role: "group", "aria-label": "Menu layout" });
+		LAYOUTS.forEach(function (opt) {
+			var button = make(
+				"button",
+				{ class: "aur-layout-btn", type: "button", title: opt.title, "aria-label": opt.title },
+				[iconNode(resolveIcon(opt.icon, opt.label, "layout"), "aur-glyph")]
+			);
+			button.addEventListener("click", function (event) {
+				event.stopPropagation();
+				setLayout(opt.id);
+			});
+			el.layoutBtns[opt.id] = button;
+			layoutSeg.appendChild(button);
+		});
+
 		el.filterText = make("span", { class: "aur-filter-text" });
 		var filterClear = make("button", { class: "aur-filter-clear", type: "button", text: "Clear filter" });
 		filterClear.addEventListener("click", clearMegaFilter);
@@ -2338,10 +2519,13 @@
 				iconNode("search", "aur-mega-search-icon"),
 				el.megaSearch,
 				megaClear,
+				layoutSeg,
 			]),
 			el.filterBar,
 			make("div", { class: "aur-mega-cols" }, [el.groups, el.body]),
 		]);
+
+		applyLayout();
 
 		// Pointer velocity feeds the hover-intent delay.
 		el.groups.addEventListener("mousemove", function (event) {
@@ -2432,16 +2616,19 @@
 	function setAccent(id) {
 		localStorage.setItem(KEY.accent, id);
 		applyPrefs();
+		schedulePush();
 	}
 
 	function setDensity(id) {
 		localStorage.setItem(KEY.density, id);
 		applyPrefs();
+		schedulePush();
 	}
 
 	function toggleTheme() {
 		localStorage.setItem(KEY.enabled, themeEnabled() ? "0" : "1");
 		applyPrefs();
+		schedulePush();
 		try {
 			frappe.show_alert({
 				message: themeEnabled() ? "Kaiten theme on" : "Kaiten theme off",
@@ -2686,6 +2873,115 @@
 		new MutationObserver(queue).observe(document.body, { childList: true, subtree: true });
 	}
 
+	/* ---------------------------------------------------------------------
+	   Carrying the menu between machines
+
+	   localStorage paints the bar before any round trip, but it belongs to one
+	   browser profile on one machine: a new laptop showed an empty Pinned tab.
+	   The server holds the durable copy, and the later of the two revisions
+	   wins. Pushes stay disabled until the first pull answers, so a fresh
+	   browser cannot overwrite good data with its own emptiness.
+	   ------------------------------------------------------------------ */
+
+	var SYNC = { rev: 0, timer: null, applying: false, ready: false };
+
+	function localRev() {
+		return Number(localStorage.getItem(KEY.rev) || 0) || 0;
+	}
+
+	function snapshot() {
+		var data = { pins: read(KEY.pins, []), pinGroups: read(KEY.pinGroups, []), recent: read(KEY.recent, []) };
+		SYNC_FLAGS.forEach(function (name) {
+			var value = localStorage.getItem(KEY[name]);
+			if (value != null) data[name] = value;
+		});
+		return data;
+	}
+
+	function pushPrefs() {
+		if (!SYNC.ready || SYNC.applying) return;
+
+		var rev = Date.now();
+		var payload = JSON.stringify(snapshot());
+
+		try {
+			frappe
+				.xcall("kaiten_erp_ui_themes.api.set_prefs", { payload: payload, rev: String(rev) })
+				.then(function () {
+					SYNC.rev = rev;
+					localStorage.setItem(KEY.rev, String(rev));
+				})
+				.catch(function () {});
+		} catch (e) {}
+	}
+
+	function schedulePush() {
+		if (!SYNC.ready || SYNC.applying) return;
+		clearTimeout(SYNC.timer);
+		SYNC.timer = setTimeout(pushPrefs, 900);
+	}
+
+	function adoptPrefs(data, rev) {
+		// Writing through the normal helpers would schedule a push straight back,
+		// so the flag keeps this one-way.
+		SYNC.applying = true;
+		try {
+			SYNC_KEYS.forEach(function (name) {
+				if (Array.isArray(data[name])) write(KEY[name], data[name]);
+			});
+			SYNC_FLAGS.forEach(function (name) {
+				if (typeof data[name] === "string" && data[name] !== "") localStorage.setItem(KEY[name], data[name]);
+			});
+			localStorage.setItem(KEY.rev, String(rev));
+			SYNC.rev = rev;
+		} finally {
+			SYNC.applying = false;
+		}
+
+		applyPrefs();
+		applyLayout();
+		setCounts();
+		syncPinButton();
+		if (megaOpen()) renderGroups(state.activeTab || "workspaces");
+	}
+
+	function pullPrefs() {
+		var request;
+		try {
+			request = frappe.xcall("kaiten_erp_ui_themes.api.get_prefs");
+		} catch (e) {
+			return;
+		}
+
+		request
+			.then(function (remote) {
+				var remoteRev = Number((remote && remote.rev) || 0) || 0;
+				var mine = localRev();
+
+				var parsed = null;
+				if (remote && remote.payload) {
+					try {
+						parsed = JSON.parse(remote.payload);
+					} catch (e) {
+						parsed = null;
+					}
+				}
+
+				if (parsed && remoteRev >= mine && remoteRev > 0) adoptPrefs(parsed, remoteRev);
+
+				SYNC.ready = true;
+
+				// Nothing stored yet, but this browser has history worth keeping:
+				// seed the server so the next machine starts from it.
+				var seed = !parsed && (pins().length || read(KEY.recent, []).length);
+				if (seed || mine > remoteRev) pushPrefs();
+			})
+			.catch(function () {
+				// Older site without the doctype, or simply offline. Staying not
+				// ready keeps everything working locally and risks no clobbering.
+			});
+	}
+
 	function boot() {
 		var anchor = document.querySelector(".main-section") || document.querySelector("header.navbar");
 		if (!anchor || !window.frappe || !frappe.xcall) return false;
@@ -2700,6 +2996,7 @@
 		skinSelects();
 		watchPopups();
 		trackRoutes();
+		pullPrefs();
 		backfillTitles();
 		loadMenu(0);
 		return true;

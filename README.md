@@ -35,8 +35,26 @@ bench --site [site] clear-cache
   list/form sheets, sidebar and dock, dark mode.
 - **Mega menu** — Workspaces, Modules, Create, Insights, Tools, Pinned and
   Recent. Search filters the tree. Pins can be filed onto shelves.
+- **Two menu layouts** — *Split* keeps the group rail beside the entries;
+  *Columns* drops the rail and lays every group out at once, each under its own
+  heading. Switch with the toggle beside the menu filter; the choice is
+  remembered per user.
 - **Login** — branded sign-in with the same accent presets as the desk.
 - **Menu API** — one cached, permission-filtered call that feeds the bar.
+- **Preferences follow the user** — pins, shelves, recents, accent, density and
+  layout are stored against the user in the database, so they survive a new
+  machine, a different browser or cleared site data.
+
+## Where preferences are stored
+
+`localStorage` is still written first, so the bar paints without waiting on a
+round trip. The durable copy lives in a **Kaiten UI Preference** record, one per
+user, holding the state as JSON.
+
+On load the two are compared and the later revision wins. Pushes are held back
+until that first read answers, so a fresh browser cannot overwrite good data
+with its own emptiness; if the read fails (offline, or the doctype not yet
+installed) everything keeps working locally and nothing is sent.
 
 ## Branding
 
@@ -59,9 +77,12 @@ The wordmark defaults to **Kaiten**. Override it with either:
 | printable keys | filter the open mega menu |
 | `↑` `↓` | move through results |
 | `Enter` | open the highlighted item |
-| `Esc` | close the mega menu |
+| `Esc` | close the mega menu, a popover, or the awesomebar |
 | `Ctrl+K` | Frappe awesomebar (unchanged) |
 | `Alt+1`…`9` | jump to a pinned item |
+
+`Esc` closes whichever overlay is open and is deliberately left to bubble, so the
+desk's own dialogs, grid cells and quick entry keep responding to it.
 
 ## Toggling
 
@@ -77,5 +98,6 @@ Accent and density live in the palette popover on the right of the bar.
 bench --site [site] uninstall-app kaiten_erp_ui_themes
 ```
 
-User pins, recents and accent choice are stored in the browser (`localStorage`)
-and are not removed from the site database.
+That removes the **Kaiten UI Preference** records along with the app. The cached
+copy in each browser's `localStorage` is left behind and is simply ignored once
+the app is gone.

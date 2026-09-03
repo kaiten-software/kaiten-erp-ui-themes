@@ -299,3 +299,72 @@ def get_titles(refs: str | list) -> dict:
 				titles[f"{doctype}:{row['name']}"] = title
 
 	return titles
+
+
+# --------------------------------------------------------------------------
+# Preferences
+#
+# Pins, shelves, recents and appearance choices are held in localStorage so the
+# bar can paint before any round trip. That alone is tied to one browser on one
+# machine, so this is the durable copy, keyed to the user. Whoever wrote last
+# wins, decided by a client clock the caller sends along.
+# --------------------------------------------------------------------------
+
+PREF_DOCTYPE = "Kaiten UI Preference"
+
+# Enough for a long pin list and history without letting a client post anything
+# it likes into the database.
+PREF_LIMIT = 400_000
+
+
+@frappe.whitelist()
+def get_prefs() -> dict:
+	"""This user's stored menu state, or empty when nothing is saved yet."""
+	if frappe.session.user == "Guest":
+		return {}
+
+	row = frappe.db.get_value(
+		PREF_DOCTYPE,
+		{"user": frappe.session.user},
+		["rev", "payload"],
+		as_dict=True,
+	)
+	if not row:
+		return {}
+
+	return {"rev": row.get("rev") or "0", "payload": row.get("payload") or ""}
+
+
+@frappe.whitelist()
+def set_prefs(payload: str, rev: str = "0") -> dict:
+	"""Store this user's menu state, keeping whichever revision is newer."""
+	if frappe.session.user == "Guest":
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	payload = str(payload or "")
+	if len(payload) > PREF_LIMIT:
+		frappe.throw(_("Preferences are too large to store."))
+
+	# Reject anything that is not the JSON object the client is meant to send,
+	# so a bad write cannot poison the next read for that user.
+	try:
+		parsed = frappe.parse_json(payload)
+	except Exception:
+		frappe.throw(_("Preferences must be valid JSON."))
+
+	if not isinstance(parsed, dict):
+		frappe.throw(_("Preferences must be a JSON object."))
+
+	name = frappe.db.get_value(PREF_DOCTYPE, {"user": frappe.session.user}, "name")
+
+	if name:
+		doc = frappe.get_doc(PREF_DOCTYPE, name)
+	else:
+		doc = frappe.new_doc(PREF_DOCTYPE)
+		doc.user = frappe.session.user
+
+	doc.rev = str(rev or "0")
+	doc.payload = payload
+	doc.save(ignore_permissions=True)
+
+	return {"rev": doc.rev}
