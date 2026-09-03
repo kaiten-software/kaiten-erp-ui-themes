@@ -37,8 +37,10 @@ bench --site [site] clear-cache
   Recent. Search filters the tree. Pins can be filed onto shelves.
 - **Two menu layouts** — *Split* keeps the group rail beside the entries;
   *Columns* drops the rail and lays every group out at once, each under its own
-  heading. Switch with the toggle beside the menu filter; the choice is
-  remembered per user.
+  heading. Long groups show their first eight entries with a `+n more` that opens
+  the rest in place — pushing down only what sits below it in the same lane — so a
+  module with ninety doctypes never crowds out the other thirty-four. Switch with
+  the toggle beside the menu filter; the choice is remembered per user.
 - **Login** — branded sign-in with the same accent presets as the desk.
 - **Menu API** — one call feeds the whole bar, cached per user for five minutes.
   Every doctype, report and tool is filtered against that user's read permission,

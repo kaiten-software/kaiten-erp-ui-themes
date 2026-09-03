@@ -959,14 +959,28 @@
 	grid-template-columns: 1fr;
 }
 
-/* Newspaper columns rather than a rigid grid: short groups stack together and
-   the column heights even out, instead of one long group forcing a half-empty
-   second row. */
+/* The top gap belongs to the flow, not the body. As the body's own padding it
+   stayed put while entries scrolled up through it, showing a sliver of them
+   above the sticky headings. */
 .aur-mega[data-layout="columns"] .aur-mega-body {
 	display: block;
-	column-width: 224px;
-	column-gap: 22px;
-	padding: 14px 18px 20px;
+	overflow-y: auto;
+	padding: 0 18px 20px;
+}
+
+/* Lanes side by side, each an ordinary stack that grows downwards. CSS columns
+   were tried here and reflowed every group whenever one changed height, so
+   opening a long module shuffled the panel under the reader. */
+.aur-mega[data-layout="columns"] .aur-mega-flow {
+	display: flex;
+	align-items: flex-start;
+	gap: 22px;
+	padding-top: 14px;
+}
+
+.aur-lane {
+	flex: 1 1 0;
+	min-width: 0;
 }
 
 /* One entry per line inside a column, so the eye runs straight down it. */
@@ -982,29 +996,85 @@
 .aur-col {
 	min-width: 0;
 	padding: 0 0 14px;
-	/* Keep a group whole rather than splitting its heading from its entries. */
-	break-inside: avoid;
-	-webkit-column-break-inside: avoid;
 	/* Nested pin shelves keep their parentage visible. */
 	margin-left: calc(var(--d, 0) * 12px);
 }
 
+/* A group that is only its own heading loses the heading, so it needs the
+   breathing room the heading used to give it. */
+.aur-col-lone {
+	padding-bottom: 6px;
+}
+
+/* Opens the rest of a group in place, so a long module never costs you sight of
+   the others. */
+.aur-col-more {
+	display: block;
+	width: 100%;
+	margin: 4px 0 0;
+	padding: 6px 9px;
+	font: inherit;
+	font-size: 11.5px;
+	font-weight: 600;
+	text-align: left;
+	color: color-mix(in oklab, var(--aur-accent) 82%, var(--aur-ink));
+	background: color-mix(in oklab, var(--aur-accent) 8%, transparent);
+	border: 1px solid transparent;
+	border-radius: calc(var(--aur-r) - 4px);
+	cursor: pointer;
+	transition: background var(--aur-fast), border-color var(--aur-fast), transform var(--aur-fast);
+}
+
+.aur-col-more:hover {
+	background: color-mix(in oklab, var(--aur-accent) 16%, transparent);
+	border-color: color-mix(in oklab, var(--aur-accent) 32%, transparent);
+	transform: translateX(2px);
+}
+
+/* Reads as a way back up once the group is open, rather than another invitation
+   to expand it. */
+.aur-col-more.aur-col-open {
+	color: var(--aur-dim);
+	background: transparent;
+	border-color: var(--aur-line);
+}
+
+/* A filled band in the group's own hue. As underlined text it read as one more
+   row among the entries; as a band it is plainly the thing they belong to.
+   Sticky, so the heading stays with its entries while the lane scrolls. */
 .aur-col-head {
+	position: sticky;
+	top: 0;
+	z-index: 2;
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	margin: 0 0 7px;
-	padding: 0 9px 6px;
-	font-size: 10.5px;
-	font-weight: 700;
-	letter-spacing: 0.1em;
+	padding: 6px 10px;
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.08em;
 	text-transform: uppercase;
-	color: hsl(var(--h, 250) 62% 44%);
-	border-bottom: 1px solid var(--aur-line);
+	color: hsl(var(--h, 250) 58% 32%);
+	background: hsl(var(--h, 250) 82% 95%);
+	border: 1px solid hsl(var(--h, 250) 70% 88%);
+	border-radius: calc(var(--aur-r) - 3px);
+	box-shadow: 0 1px 0 hsl(var(--h, 250) 60% 90%);
 }
 
 [data-theme="dark"] .aur-col-head {
-	color: hsl(var(--h, 250) 70% 72%);
+	color: hsl(var(--h, 250) 78% 80%);
+	background: hsl(var(--h, 250) 38% 20%);
+	border-color: hsl(var(--h, 250) 40% 30%);
+	box-shadow: none;
+}
+
+/* The count sits on the band, so it takes the band's colour rather than the
+   muted grey it uses in the group rail. */
+.aur-col-head .aur-group-count {
+	color: inherit;
+	opacity: 0.72;
+	background: transparent;
 }
 
 .aur-col-head .aur-group-icon {
@@ -3227,6 +3297,130 @@ a.aur-item:focus {
 			color-mix(in oklab, var(--aur-accent) 10%, transparent)
 		),
 		linear-gradient(180deg, rgba(24, 26, 40, 0.94), rgba(17, 19, 31, 0.9));
+}
+
+/* Collapsed, the container keeps its place at zero width. The hairline above is
+   drawn inside its right edge and the glow just outside, so with no width left
+   between them they became a stray line and smudge beside the dock, belonging to
+   a sidebar that is no longer there. */
+.aurora-on body.sidebar-collapsed .body-sidebar-container,
+.aurora-on body.sidebar-collapsed .body-sidebar {
+	background: none;
+	box-shadow: none;
+	border-right: none;
+}
+
+/* --- The collapse handle -----------------------------------------------------
+   The desk gives collapsing and expanding a 24px button that is invisible until
+   you happen to hover the sidebar or the dock, and it carries no name, so finding
+   it depends on already knowing it is there. Both are permanent here, half again
+   as large, and in the accent colour.
+
+   Stock also puts them low down and 220px apart, so the control appeared to jump
+   between corners. Both now sit halfway down, level with each other, and the one
+   on the sidebar edge names itself on hover.
+   ---------------------------------------------------------------------------- */
+
+.aurora-on body:not(.sidebar-collapsed) .body-sidebar .sidebar-toggle-btn,
+.aurora-on body.sidebar-collapsed .dock .dock-toggle-btn {
+	top: 50%;
+	bottom: auto;
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	opacity: 1;
+	visibility: visible;
+	color: var(--aur-accent);
+	background: linear-gradient(180deg, #ffffff, #f3f5ff);
+	border: 1px solid color-mix(in oklab, var(--aur-accent) 38%, var(--aur-line));
+	border-radius: 999px;
+	box-shadow: 0 10px 20px -12px rgba(49, 46, 129, 0.65),
+		0 0 0 4px color-mix(in oklab, var(--aur-accent) 9%, transparent);
+	cursor: pointer;
+	z-index: 1045;
+	transition: background var(--aur-fast), border-color var(--aur-fast), box-shadow var(--aur-fast),
+		transform var(--aur-fast);
+}
+
+/* Half on the panel, half off it, so it reads as the handle of the edge it moves. */
+.aurora-on body:not(.sidebar-collapsed) .body-sidebar .sidebar-toggle-btn {
+	position: absolute;
+	right: -16px;
+	left: auto;
+}
+
+/* Inside the rail, not straddling its edge. The dock clips its contents to keep
+   the rotating wash behind the icons, and it carries a backdrop filter, so a
+   handle hung outside it is cut off however it is positioned. */
+.aurora-on body.sidebar-collapsed .dock .dock-toggle-btn {
+	position: absolute;
+	right: 9px;
+	left: auto;
+}
+
+[data-theme="dark"].aurora-on body:not(.sidebar-collapsed) .body-sidebar .sidebar-toggle-btn,
+[data-theme="dark"].aurora-on body.sidebar-collapsed .dock .dock-toggle-btn {
+	background: linear-gradient(180deg, #262a3d, #1a1c2b);
+}
+
+/* Stock draws the chevron at 12px, which is lost inside a larger button. */
+.aurora-on body:not(.sidebar-collapsed) .body-sidebar .sidebar-toggle-btn svg,
+.aurora-on body.sidebar-collapsed .dock .dock-toggle-btn svg {
+	width: 17px;
+	height: 17px;
+}
+
+.aurora-on body:not(.sidebar-collapsed) .body-sidebar .sidebar-toggle-btn:hover,
+.aurora-on body.sidebar-collapsed .dock .dock-toggle-btn:hover {
+	background: linear-gradient(180deg, color-mix(in oklab, var(--aur-accent) 14%, #fff), color-mix(in oklab, var(--aur-accent) 22%, #fff));
+	border-color: var(--aur-accent);
+	box-shadow: 0 12px 24px -12px rgba(49, 46, 129, 0.7),
+		0 0 0 5px color-mix(in oklab, var(--aur-accent) 16%, transparent);
+	transform: translateY(-50%) scale(1.08);
+}
+
+[data-theme="dark"].aurora-on body:not(.sidebar-collapsed) .body-sidebar .sidebar-toggle-btn:hover,
+[data-theme="dark"].aurora-on body.sidebar-collapsed .dock .dock-toggle-btn:hover {
+	background: linear-gradient(180deg, color-mix(in oklab, var(--aur-accent) 34%, #1f2233), color-mix(in oklab, var(--aur-accent) 22%, #1a1c2b));
+}
+
+.aurora-on body:not(.sidebar-collapsed) .body-sidebar .sidebar-toggle-btn:focus-visible,
+.aurora-on body.sidebar-collapsed .dock .dock-toggle-btn:focus-visible {
+	outline: 2px solid var(--aur-accent);
+	outline-offset: 3px;
+}
+
+/* The name, so the handle does not rely on a chevron to explain itself. Only the
+   sidebar's, since the dock clips anything wider than the rail; the one in the
+   rail carries a tooltip instead. */
+.aurora-on body:not(.sidebar-collapsed) .body-sidebar .sidebar-toggle-btn::after {
+	content: attr(data-aur-hint);
+	position: absolute;
+	left: calc(100% + 10px);
+	top: 50%;
+	transform: translateY(-50%) translateX(-4px);
+	padding: 5px 9px;
+	font-size: 11.5px;
+	font-weight: 650;
+	white-space: nowrap;
+	color: #fff;
+	background: rgba(30, 27, 75, 0.94);
+	border-radius: calc(var(--aur-r) - 4px);
+	box-shadow: 0 10px 22px -12px rgba(15, 23, 42, 0.7);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity var(--aur-fast), transform var(--aur-fast);
+}
+
+.aurora-on body:not(.sidebar-collapsed) .body-sidebar .sidebar-toggle-btn:hover::after,
+.aurora-on body:not(.sidebar-collapsed) .body-sidebar .sidebar-toggle-btn:focus-visible::after {
+	opacity: 1;
+	transform: translateY(-50%) translateX(0);
 }
 
 /* The workspace name reads as a title, not as another row. */

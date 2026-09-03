@@ -187,7 +187,25 @@
 
 	var root = document.documentElement;
 	var el = {};
-	var state = { tabs: {}, activeTab: null, index: [], cursor: -1, searching: false, groups: [], megaQuery: "" };
+	// Accounts alone carries 91 doctypes, so the columns layout shows a group's
+	// first few entries and keeps the rest behind a count. The classification is
+	// what that layout is for; the full list is a click away.
+	var COLUMN_PEEK = 8;
+
+	// Narrowest a lane may be before the panel drops one. Below roughly this,
+	// entry labels start truncating into "Account..." and stop being readable.
+	var LANE_WIDTH = 250;
+
+	var state = {
+		tabs: {},
+		activeTab: null,
+		index: [],
+		cursor: -1,
+		searching: false,
+		groups: [],
+		megaQuery: "",
+		openCols: {},
+	};
 	var hover = { timer: null, tabTimer: null, vx: 0, x: 0, t: 0 };
 
 	/* ---------------------------------------------------------------------
@@ -1387,12 +1405,17 @@
 			shown += 1;
 		});
 
-		var plural = function (n, word) {
-			return n + " " + word + (n === 1 ? "" : "s");
+		var plural = function (n, one, many) {
+			return n + " " + (n === 1 ? one : many);
 		};
 
 		el.filterText.textContent = items
-			? "Filtered by \u201c" + needle + "\u201d \u00b7 " + plural(items, "match") + " in " + plural(shown, "group")
+			? "Filtered by \u201c" +
+			  needle +
+			  "\u201d \u00b7 " +
+			  plural(items, "match", "matches") +
+			  " in " +
+			  plural(shown, "group", "groups")
 			: "Filtered by \u201c" + needle + "\u201d \u00b7 nothing in this tab";
 	}
 
@@ -1430,8 +1453,9 @@
 		el.body.style.paddingTop = "";
 		state.activeNode = null;
 
+		var query = String(state.megaQuery || "").trim();
+
 		if (!groups.length) {
-			var query = String(state.megaQuery || "").trim();
 			el.body.appendChild(
 				make("div", {
 					class: "aur-empty",
@@ -1441,7 +1465,26 @@
 			return;
 		}
 
-		groups.forEach(function (group) {
+		/* "All workspaces" earns its place in the split rail, where only one group
+		   shows at a time. Here every group is already on screen, so it is the
+		   same list over again — and the longest one at that. */
+		var shown = groups.filter(function (group) {
+			return group.key !== "__all";
+		});
+		if (!shown.length) shown = groups;
+
+		var flow = make("div", { class: "aur-mega-flow" });
+		el.body.appendChild(flow);
+
+		/* Lanes are built here rather than left to CSS columns. Column boxes
+		   reflow every group whenever one of them changes height, so opening a
+		   long module used to shuffle the whole panel and lose the reader's place.
+		   A lane is an ordinary stack: opening a group inside one pushes down what
+		   sits below it and leaves the other lanes where they are. */
+		var lanes = [];
+		var built = [];
+
+		shown.forEach(function (group) {
 			var options = {};
 			if (tabId === "pinned") {
 				options.drag = true;
@@ -1449,19 +1492,76 @@
 				options.groupKey = group.key;
 			}
 
+			var items = group.items || [];
+			// A filtered view is small, and the matches are the whole point, so
+			// nothing is held back while a search is in force.
+			var expanded = Boolean(query) || Boolean(state.openCols[group.key]);
+			var visible = expanded ? items.slice(0, 300) : items.slice(0, COLUMN_PEEK);
+
 			var grid = make("div", { class: "aur-grid" });
-			(group.items || []).slice(0, 300).forEach(function (item, i) {
+			visible.forEach(function (item, i) {
 				grid.appendChild(renderItem(item, i, options));
 			});
 
 			var head = make("div", { class: "aur-col-head" }, [
 				iconNode(group.icon || "layers", "aur-group-icon"),
 				make("span", { class: "aur-col-label", text: group.label }),
-				make("span", { class: "aur-group-count", text: String((group.items || []).length) }),
+				make("span", { class: "aur-group-count", text: String(items.length) }),
 			]);
 
-			var column = make("div", { class: "aur-col", "--h": String(group.hue == null ? 250 : group.hue) }, [head, grid]);
+			// A workspace with no children is its own heading. Printing the name
+			// twice, once as a label and once as the only row beneath it, wastes
+			// half the panel on repetition.
+			var echo =
+				items.length === 1 &&
+				String(items[0].label || "")
+					.trim()
+					.toLowerCase() ===
+					String(group.label || "")
+						.trim()
+						.toLowerCase();
+
+			var column = make(
+				"div",
+				{ class: echo ? "aur-col aur-col-lone" : "aur-col", "--h": String(group.hue == null ? 250 : group.hue) },
+				echo ? [grid] : [head, grid]
+			);
 			if (group.depth) column.style.setProperty("--d", String(group.depth));
+
+			/* Opening and closing edits this one column in place. Re-rendering the
+			   panel for it would blank and rebuild every group, which reads as a
+			   flicker and a reload. */
+			var toggle = null;
+
+			var label = function () {
+				var open = grid.children.length >= items.length;
+				toggle.textContent = open ? "Show less" : "+" + (items.length - grid.children.length) + " more";
+				toggle.classList.toggle("aur-col-open", open);
+			};
+
+			var flip = function (event) {
+				event.stopPropagation();
+				if (grid.children.length >= items.length) {
+					while (grid.children.length > COLUMN_PEEK) grid.removeChild(grid.lastChild);
+					delete state.openCols[group.key];
+				} else {
+					var from = grid.children.length;
+					items.slice(from, 300).forEach(function (item, i) {
+						// The stagger counts from the first new row, so entry ninety
+						// does not wait out a second and a quarter of delay.
+						grid.appendChild(renderItem(item, Math.min(i, 12), options));
+					});
+					state.openCols[group.key] = true;
+				}
+				label();
+			};
+
+			if (items.length > COLUMN_PEEK && !query) {
+				toggle = make("button", { class: "aur-col-more", type: "button" });
+				toggle.addEventListener("click", flip);
+				column.appendChild(toggle);
+				label();
+			}
 
 			// Dropping anywhere in a shelf's column files the pin there, which is
 			// the whole point of showing every shelf at once.
@@ -1484,7 +1584,39 @@
 				});
 			}
 
-			el.body.appendChild(column);
+			// A heading plus its rows, which is close enough to a height for
+			// deciding where one lane should end and the next begin.
+			built.push({ node: column, weight: (echo ? 0 : 1) + visible.length + (toggle ? 1 : 0) });
+		});
+
+		var width = el.body.clientWidth || el.mega.clientWidth || 1100;
+		var laneCount = Math.max(1, Math.min(6, Math.floor(width / LANE_WIDTH)));
+
+		var remaining = built.reduce(function (sum, entry) {
+			return sum + entry.weight;
+		}, 0);
+		var lanesLeft = laneCount;
+		var target = remaining / lanesLeft;
+		var used = 0;
+		var lane = null;
+
+		built.forEach(function (entry) {
+			// Groups keep their order and fill one lane at a time, so the reading
+			// order stays alphabetical down a lane and then on to the next.
+			if (!lane || (lanesLeft > 1 && used && used + entry.weight / 2 > target)) {
+				if (lane) {
+					remaining -= used;
+					lanesLeft -= 1;
+					target = remaining / Math.max(1, lanesLeft);
+					used = 0;
+				}
+				lane = make("div", { class: "aur-lane" });
+				lanes.push(lane);
+				flow.appendChild(lane);
+			}
+
+			lane.appendChild(entry.node);
+			used += entry.weight;
 		});
 	}
 
@@ -1981,6 +2113,7 @@
 		state.cursor = -1;
 		state.megaQuery = "";
 		state.manageShelves = false;
+		state.openCols = {};
 		if (el.megaSearch) el.megaSearch.value = "";
 		if (el.filterBar) el.filterBar.classList.remove("aur-on");
 
@@ -1995,6 +2128,7 @@
 	}
 
 	function openTab(tabId) {
+		if (state.activeTab !== tabId) state.openCols = {};
 		state.activeTab = tabId;
 		state.searching = false;
 
@@ -2493,7 +2627,7 @@
 		LAYOUTS.forEach(function (opt) {
 			var button = make(
 				"button",
-				{ class: "aur-layout-btn", type: "button", title: opt.title, "aria-label": opt.title },
+				{ class: "aur-layout-btn", type: "button", "data-layout": opt.id, title: opt.title, "aria-label": opt.title },
 				[iconNode(resolveIcon(opt.icon, opt.label, "layout"), "aur-glyph")]
 			);
 			button.addEventListener("click", function (event) {
@@ -2557,8 +2691,21 @@
 		document.body.appendChild(el.mega);
 
 		window.addEventListener("resize", function () {
-			if (megaOpen()) positionMega();
+			if (!megaOpen()) {
+				closePop();
+				return;
+			}
+
+			positionMega();
 			closePop();
+
+			// Lane count comes from the panel width, so a resize has to redeal the
+			// groups. Only worth doing when the count actually changes.
+			if (currentLayout() === "columns" && state.activeTab) {
+				var width = el.body.clientWidth || el.mega.clientWidth || 1100;
+				var lanes = Math.max(1, Math.min(6, Math.floor(width / LANE_WIDTH)));
+				if (lanes !== el.body.querySelectorAll(".aur-lane").length) renderGroups(state.activeTab);
+			}
 		});
 	}
 
@@ -2858,6 +3005,21 @@
 		}
 	}
 
+	/* The collapse and expand handles carry an aria-label but no visible name and
+	   no tooltip, so a chevron is all the user has to go on. This gives each one
+	   the words the stylesheet shows on hover, and a native tooltip besides. */
+	function dressToggles() {
+		[
+			[".body-sidebar .sidebar-toggle-btn", "Collapse sidebar"],
+			[".dock .dock-toggle-btn", "Expand sidebar"],
+		].forEach(function (pair) {
+			var button = document.querySelector(pair[0]);
+			if (!button || button.dataset.aurHint === pair[1]) return;
+			button.dataset.aurHint = pair[1];
+			button.setAttribute("title", pair[1]);
+		});
+	}
+
 	function watchSidebar() {
 		var pending = null;
 
@@ -2866,10 +3028,12 @@
 			pending = requestAnimationFrame(function () {
 				pending = null;
 				dressSidebar();
+				dressToggles();
 			});
 		};
 
 		dressSidebar();
+		dressToggles();
 		new MutationObserver(queue).observe(document.body, { childList: true, subtree: true });
 	}
 
