@@ -12,7 +12,7 @@ sidebar, list sheet, forms).
 From any bench:
 
 ```bash
-bench get-app kaiten_erp_ui_themes <GIT_URL>
+bench get-app https://github.com/kaiten-software/kaiten-erp-ui-themes.git
 bench --site [site] install-app kaiten_erp_ui_themes
 bench --site [site] clear-cache
 ```
