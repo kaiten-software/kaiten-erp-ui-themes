@@ -1,0 +1,3488 @@
+/* =========================================================================
+   Kaiten ERP UI Themes — a rich, colorful desk theme for Frappe / ERPNext
+   -------------------------------------------------------------------------
+   Every rule is scoped under html.aurora-on so the theme can be switched off
+   at runtime without leaving artefacts behind. Component classes use the
+   aur- prefix; everything else targets stock desk markup.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   1. Tokens
+   -------------------------------------------------------------------------
+   These live on :root rather than .aurora-on. Aurora's own chrome — the bar,
+   the panel, the login card — stays on screen when the theme is switched
+   off, and with the tokens scoped it had nothing to colour itself with.
+   Only the page-level paint below is gated on the theme.
+   ---------------------------------------------------------------------- */
+
+:root {
+	--aur-indigo: #6366f1;
+	--aur-violet: #8b5cf6;
+	--aur-pink: #ec4899;
+	--aur-amber: #f59e0b;
+	--aur-cyan: #06b6d4;
+	--aur-emerald: #10b981;
+	--aur-rose: #f43f5e;
+
+	--aur-grad-soft: linear-gradient(135deg, rgba(99, 102, 241, 0.14), rgba(236, 72, 153, 0.1));
+
+	--aur-surface: rgba(255, 255, 255, 0.94);
+	--aur-surface-2: rgba(248, 250, 255, 0.88);
+	--aur-line: rgba(99, 102, 241, 0.14);
+	--aur-line-strong: rgba(99, 102, 241, 0.28);
+	--aur-ink: #0f172a;
+	--aur-ink-soft: #64748b;
+
+	--aur-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+	--aur-shadow: 0 2px 6px rgba(15, 23, 42, 0.05), 0 14px 32px -22px rgba(79, 70, 229, 0.55);
+	--aur-shadow-lg: 0 6px 14px rgba(15, 23, 42, 0.07), 0 32px 64px -32px rgba(79, 70, 229, 0.6);
+	--aur-glow: 0 0 0 1px rgba(99, 102, 241, 0.35), 0 12px 30px -12px rgba(139, 92, 246, 0.55);
+
+	--aur-r-sm: 10px;
+	--aur-r: 14px;
+	--aur-r-lg: 18px;
+	--aur-r-xl: 24px;
+
+	--aur-ease: cubic-bezier(0.22, 1, 0.36, 1);
+	--aur-ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+	--aur-fast: 0.18s;
+	--aur-mid: 0.32s;
+	--aur-slow: 0.55s;
+
+	--aur-nav-h: 60px;
+	--aur-bar-h: 48px;
+	--aur-scroll: 0;
+}
+
+[data-theme="dark"] {
+	--aur-surface: rgba(28, 30, 44, 0.92);
+	--aur-surface-2: rgba(22, 24, 36, 0.88);
+	--aur-line: rgba(148, 163, 255, 0.16);
+	--aur-line-strong: rgba(148, 163, 255, 0.3);
+	--aur-ink: #e2e8f0;
+	--aur-ink-soft: #94a3b8;
+
+	--aur-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+	--aur-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), 0 14px 32px -22px rgba(0, 0, 0, 0.9);
+	--aur-shadow-lg: 0 6px 14px rgba(0, 0, 0, 0.45), 0 32px 64px -32px rgba(0, 0, 0, 0.95);
+}
+
+/* Painting the page is the theme's job, so it stays behind the switch. */
+.aurora-on {
+	background: #eef1fb;
+}
+
+.aurora-on[data-theme="dark"] {
+	background: #0b0d18;
+}
+
+/* -------------------------------------------------------------------------
+   1b. Frappe v17 token remap
+   -------------------------------------------------------------------------
+   v17 derives every surface, outline and ink colour from one neutral gray
+   ramp, and paints primary buttons with near-black. Retinting that ramp is
+   what gives the desk colour at rest instead of only on hover, and raising
+   the radius scale rounds every control consistently in one move.
+
+   Each value is declared twice: a plain hex fallback, then a color-mix()
+   version that browsers with support will use. That keeps the accent
+   switchable from a single custom property.
+   ---------------------------------------------------------------------- */
+
+.aurora-on {
+	--radius-sm: 6px;
+	--radius: 10px;
+	--radius-md: 12px;
+	--radius-lg: 16px;
+	--radius-xl: 20px;
+
+	--primary: var(--aur-accent);
+	--primary-color: var(--aur-accent);
+	--btn-primary: var(--aur-accent);
+}
+
+.aurora-on:not([data-theme="dark"]) {
+	--gray-50: #f6f7fd;
+	--gray-50: color-mix(in oklab, var(--aur-accent) 7%, #f8f8f8);
+	--gray-100: #eef0fa;
+	--gray-100: color-mix(in oklab, var(--aur-accent) 10%, #f3f3f3);
+	--gray-200: #e4e7f6;
+	--gray-200: color-mix(in oklab, var(--aur-accent) 12%, #ededed);
+	--gray-300: #d6dbf0;
+	--gray-300: color-mix(in oklab, var(--aur-accent) 14%, #e2e2e2);
+	--gray-400: #b6bde0;
+	--gray-400: color-mix(in oklab, var(--aur-accent) 17%, #c7c7c7);
+	--gray-450: #a2aad4;
+	--gray-450: color-mix(in oklab, var(--aur-accent) 18%, #b3b3b3);
+	--gray-500: #8189b4;
+	--gray-500: color-mix(in oklab, var(--aur-accent) 19%, #999999);
+	--gray-600: #666e9c;
+	--gray-600: color-mix(in oklab, var(--aur-accent) 20%, #7c7c7c);
+	--gray-700: #464d7c;
+	--gray-700: color-mix(in oklab, var(--aur-accent) 21%, #525252);
+	--gray-800: #313760;
+	--gray-800: color-mix(in oklab, var(--aur-accent) 22%, #383838);
+	--gray-900: #1e2347;
+	--gray-900: color-mix(in oklab, var(--aur-accent) 22%, #1f1f1f);
+	--gray-950: #171b3a;
+	--gray-950: color-mix(in oklab, var(--aur-accent) 22%, #171717);
+}
+
+.aurora-on[data-theme="dark"] {
+	--gray-100: #dadeef;
+	--gray-100: color-mix(in oklab, var(--aur-accent) 12%, #d9d9d9);
+	--gray-200: #b0b6d6;
+	--gray-200: color-mix(in oklab, var(--aur-accent) 14%, #afafaf);
+	--gray-300: #9aa1c4;
+	--gray-300: color-mix(in oklab, var(--aur-accent) 16%, #999999);
+	--gray-400: #7b83ab;
+	--gray-400: color-mix(in oklab, var(--aur-accent) 18%, #7a7a7a);
+	--gray-450: #656d94;
+	--gray-450: color-mix(in oklab, var(--aur-accent) 18%, #636363);
+	--gray-500: #454b74;
+	--gray-500: color-mix(in oklab, var(--aur-accent) 20%, #424242);
+	--gray-600: #3b4167;
+	--gray-600: color-mix(in oklab, var(--aur-accent) 20%, #383838);
+	--gray-700: #2c3153;
+	--gray-700: color-mix(in oklab, var(--aur-accent) 20%, #292929);
+	--gray-800: #262b4a;
+	--gray-800: color-mix(in oklab, var(--aur-accent) 20%, #242424);
+	--gray-900: #191d38;
+	--gray-900: color-mix(in oklab, var(--aur-accent) 20%, #171717);
+	--gray-950: #11142a;
+	--gray-950: color-mix(in oklab, var(--aur-accent) 20%, #0f0f0f);
+}
+
+/* -------------------------------------------------------------------------
+   1c. Accent presets — one attribute repaints the entire desk
+   ---------------------------------------------------------------------- */
+
+:root,
+[data-aur-accent="aurora"] {
+	--aur-accent: #6366f1;
+	--aur-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 34%, #ec4899 68%, #f59e0b 100%);
+	--aur-grad-cool: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #0ea5e9 100%);
+	--aur-mesh-a: rgba(99, 102, 241, 0.28);
+	--aur-mesh-b: rgba(236, 72, 153, 0.22);
+	--aur-mesh-c: rgba(6, 182, 212, 0.2);
+	--aur-mesh-d: rgba(245, 158, 11, 0.16);
+}
+
+[data-aur-accent="sunset"] {
+	--aur-accent: #f43f5e;
+	--aur-grad: linear-gradient(135deg, #f43f5e 0%, #fb7185 30%, #f59e0b 70%, #fbbf24 100%);
+	--aur-grad-cool: linear-gradient(135deg, #e11d48 0%, #f43f5e 50%, #f97316 100%);
+	--aur-mesh-a: rgba(244, 63, 94, 0.26);
+	--aur-mesh-b: rgba(249, 115, 22, 0.22);
+	--aur-mesh-c: rgba(251, 191, 36, 0.2);
+	--aur-mesh-d: rgba(217, 70, 239, 0.16);
+}
+
+[data-aur-accent="ocean"] {
+	--aur-accent: #0ea5e9;
+	--aur-grad: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 35%, #3b82f6 70%, #6366f1 100%);
+	--aur-grad-cool: linear-gradient(135deg, #0284c7 0%, #0ea5e9 50%, #22d3ee 100%);
+	--aur-mesh-a: rgba(14, 165, 233, 0.28);
+	--aur-mesh-b: rgba(34, 211, 238, 0.22);
+	--aur-mesh-c: rgba(59, 130, 246, 0.2);
+	--aur-mesh-d: rgba(16, 185, 129, 0.16);
+}
+
+[data-aur-accent="forest"] {
+	--aur-accent: #10b981;
+	--aur-grad: linear-gradient(135deg, #10b981 0%, #34d399 35%, #14b8a6 70%, #84cc16 100%);
+	--aur-grad-cool: linear-gradient(135deg, #059669 0%, #10b981 50%, #22d3ee 100%);
+	--aur-mesh-a: rgba(16, 185, 129, 0.26);
+	--aur-mesh-b: rgba(132, 204, 22, 0.2);
+	--aur-mesh-c: rgba(20, 184, 166, 0.2);
+	--aur-mesh-d: rgba(250, 204, 21, 0.14);
+}
+
+[data-aur-accent="grape"] {
+	--aur-accent: #a855f7;
+	--aur-grad: linear-gradient(135deg, #a855f7 0%, #d946ef 35%, #ec4899 70%, #f472b6 100%);
+	--aur-grad-cool: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #d946ef 100%);
+	--aur-mesh-a: rgba(168, 85, 247, 0.28);
+	--aur-mesh-b: rgba(217, 70, 239, 0.22);
+	--aur-mesh-c: rgba(236, 72, 153, 0.2);
+	--aur-mesh-d: rgba(99, 102, 241, 0.18);
+}
+
+/* -------------------------------------------------------------------------
+   1d. Density
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-aur-density="compact"] {
+	--aur-bar-h: 40px;
+	--btn-height: 26px;
+}
+
+.aurora-on[data-aur-density="compact"] .list-row-container .list-row {
+	padding-top: 4px;
+	padding-bottom: 4px;
+}
+
+.aurora-on[data-aur-density="compact"] .form-section {
+	padding: 0 12px;
+	margin-bottom: 10px;
+}
+
+.aurora-on[data-aur-density="compact"] .aur-item {
+	padding: 6px 9px;
+}
+
+/* -------------------------------------------------------------------------
+   2. Canvas — animated aurora mesh behind the whole desk
+   ---------------------------------------------------------------------- */
+
+.aurora-on body {
+	background: transparent;
+	color: var(--aur-ink);
+}
+
+.aurora-on body::before {
+	content: "";
+	position: fixed;
+	inset: -20vh -10vw;
+	z-index: -1;
+	pointer-events: none;
+	background:
+		radial-gradient(38vw 38vw at 12% 8%, var(--aur-mesh-a), transparent 62%),
+		radial-gradient(34vw 34vw at 88% 4%, var(--aur-mesh-b), transparent 60%),
+		radial-gradient(42vw 42vw at 78% 82%, var(--aur-mesh-c), transparent 64%),
+		radial-gradient(36vw 36vw at 8% 92%, var(--aur-mesh-d), transparent 62%);
+	filter: blur(12px) saturate(120%);
+	transform: translate3d(0, calc(var(--aur-scroll) * -40px), 0);
+	animation: aur-drift 34s var(--aur-ease) infinite alternate;
+}
+
+.aurora-on[data-theme="dark"] body::before {
+	opacity: 0.55;
+}
+
+@keyframes aur-drift {
+	0% {
+		transform: translate3d(0, 0, 0) scale(1);
+	}
+	50% {
+		transform: translate3d(2%, -2%, 0) scale(1.07);
+	}
+	100% {
+		transform: translate3d(-2%, 2%, 0) scale(1.03);
+	}
+}
+
+/* Let the mesh read through the stock layout containers so cards float on it
+   instead of sitting on an opaque slab. */
+.aurora-on .page-container,
+.aurora-on .layout-main,
+.aurora-on .main-section,
+.aurora-on .page-body,
+.aurora-on .container.page-body,
+.aurora-on .layout-main-section,
+.aurora-on .layout-main-section-wrapper,
+.aurora-on .desk-page,
+.aurora-on .page-main-content,
+.aurora-on .page-content,
+.aurora-on .page-wrapper {
+	background: transparent;
+}
+
+/* -------------------------------------------------------------------------
+   3. Scrollbars + selection
+   ---------------------------------------------------------------------- */
+
+.aurora-on ::-webkit-scrollbar {
+	width: 11px;
+	height: 11px;
+}
+
+.aurora-on ::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.aurora-on ::-webkit-scrollbar-thumb {
+	border-radius: 999px;
+	border: 3px solid transparent;
+	background-clip: content-box;
+	background-image: var(--aur-grad-cool);
+	opacity: 0.7;
+}
+
+.aurora-on ::-webkit-scrollbar-thumb:hover {
+	background-image: var(--aur-grad);
+}
+
+.aurora-on ::selection {
+	background: rgba(139, 92, 246, 0.28);
+}
+
+/* -------------------------------------------------------------------------
+   4. Navbar — frosted glass with a gradient hairline
+   ---------------------------------------------------------------------- */
+
+.aurora-on .navbar {
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.7));
+	backdrop-filter: blur(18px) saturate(160%);
+	-webkit-backdrop-filter: blur(18px) saturate(160%);
+	border-bottom: none;
+	box-shadow: 0 1px 0 rgba(99, 102, 241, 0.12), 0 10px 30px -24px rgba(79, 70, 229, 0.9);
+	position: relative;
+	z-index: 1030;
+}
+
+.aurora-on[data-theme="dark"] .navbar {
+	background: linear-gradient(180deg, rgba(20, 22, 34, 0.9), rgba(16, 18, 28, 0.75));
+}
+
+.aurora-on .navbar::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 2px;
+	background: var(--aur-grad);
+	opacity: 0.85;
+}
+
+.aurora-on .navbar-brand {
+	font-weight: 700;
+	letter-spacing: -0.01em;
+	background: var(--aur-grad-cool);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	transition: filter var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .navbar-brand:hover {
+	filter: brightness(1.15) saturate(1.3);
+}
+
+.aurora-on .navbar .nav-link {
+	border-radius: var(--aur-r-sm);
+	transition: background var(--aur-fast) var(--aur-ease), transform var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .navbar .nav-link:hover {
+	background: var(--aur-grad-soft);
+	transform: translateY(-1px);
+}
+
+/* -------------------------------------------------------------------------
+   5. Aurora bar — the sticky mega menu strip
+   ---------------------------------------------------------------------- */
+
+.aur-bar {
+	position: sticky;
+	top: 0;
+	z-index: 40;
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(244, 246, 255, 0.82));
+	backdrop-filter: blur(16px) saturate(150%);
+	-webkit-backdrop-filter: blur(16px) saturate(150%);
+	border-bottom: 1px solid var(--aur-line);
+	box-shadow: 0 10px 30px -28px rgba(79, 70, 229, 0.9);
+	transition: box-shadow var(--aur-mid) var(--aur-ease), background var(--aur-mid) var(--aur-ease);
+}
+
+/* While the panel is open the bar rides above the scrim. Dimming it hid the
+   one thing that says which menu you are in. */
+.aur-bar.aur-bar-lifted {
+	z-index: 1202;
+	box-shadow: 0 18px 40px -30px rgba(79, 70, 229, 1);
+}
+
+[data-theme="dark"] .aur-bar {
+	background: linear-gradient(180deg, rgba(22, 24, 36, 0.94), rgba(16, 18, 28, 0.86));
+}
+
+.aur-bar.aur-bar-stuck {
+	box-shadow: 0 12px 34px -22px rgba(79, 70, 229, 0.75);
+}
+
+.aur-bar-progress {
+	position: absolute;
+	left: 0;
+	top: 0;
+	height: 2px;
+	width: calc(var(--aur-scroll) * 100%);
+	background: var(--aur-grad);
+	border-radius: 0 999px 999px 0;
+	transition: width 0.1s linear;
+}
+
+.aur-bar-inner {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	height: var(--aur-bar-h);
+	padding: 0 14px;
+	max-width: 100%;
+	overflow: visible;
+}
+
+.aur-brand {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	font-weight: 700;
+	font-size: 12.5px;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	padding: 5px 11px;
+	border-radius: 999px;
+	color: #fff;
+	background: var(--aur-grad);
+	background-size: 220% 220%;
+	animation: aur-shift 9s ease infinite;
+	box-shadow: 0 6px 18px -8px rgba(139, 92, 246, 0.9);
+	border: none;
+	cursor: pointer;
+	flex: none;
+}
+
+@keyframes aur-shift {
+	0%,
+	100% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+}
+
+.aur-brand-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: #fff;
+	box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
+	animation: aur-pulse 2.4s var(--aur-ease) infinite;
+}
+
+@keyframes aur-pulse {
+	0% {
+		box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.75);
+	}
+	70% {
+		box-shadow: 0 0 0 9px rgba(255, 255, 255, 0);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+	}
+}
+
+.aur-nav {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow-x: auto;
+	scrollbar-width: none;
+}
+
+.aur-nav::-webkit-scrollbar {
+	display: none;
+}
+
+.aur-tab {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	white-space: nowrap;
+	border: none;
+	background: transparent;
+	color: var(--aur-ink);
+	font-size: 13px;
+	font-weight: 600;
+	padding: 7px 13px;
+	border-radius: 999px;
+	cursor: pointer;
+	transition: color var(--aur-fast) var(--aur-ease), background var(--aur-fast) var(--aur-ease),
+		transform var(--aur-fast) var(--aur-ease-back);
+}
+
+.aur-tab .aur-tab-glyph {
+	font-size: 14px;
+	line-height: 1;
+	transition: transform var(--aur-mid) var(--aur-ease-back);
+}
+
+.aur-tab:hover {
+	background: var(--aur-grad-soft);
+	transform: translateY(-1px);
+}
+
+.aur-tab:hover .aur-tab-glyph {
+	transform: translateY(-2px) rotate(-8deg) scale(1.15);
+}
+
+.aur-tab.aur-open {
+	color: #fff;
+	background: var(--aur-grad-cool);
+	box-shadow: 0 8px 20px -10px rgba(79, 70, 229, 0.95);
+}
+
+.aur-tab-count {
+	font-size: 10.5px;
+	font-weight: 700;
+	padding: 1px 6px;
+	border-radius: 999px;
+	background: rgba(99, 102, 241, 0.16);
+	color: var(--aur-indigo);
+}
+
+.aur-tab.aur-open .aur-tab-count {
+	background: rgba(255, 255, 255, 0.25);
+	color: #fff;
+}
+
+.aur-bar-right {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex: none;
+}
+
+.aur-search-wrap {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.aur-search {
+	width: 210px;
+	height: 32px;
+	padding: 0 32px 0 32px;
+	border-radius: 999px;
+	border: 1px solid var(--aur-line);
+	background: var(--aur-surface);
+	color: var(--aur-ink);
+	font-size: 12.5px;
+	outline: none;
+	transition: width var(--aur-mid) var(--aur-ease), box-shadow var(--aur-mid) var(--aur-ease),
+		border-color var(--aur-mid) var(--aur-ease);
+}
+
+.aur-search::placeholder {
+	color: var(--aur-ink-soft);
+}
+
+.aur-search:focus {
+	width: 320px;
+	border-color: transparent;
+	box-shadow: var(--aur-glow);
+}
+
+.aur-search-icon {
+	position: absolute;
+	left: 11px;
+	font-size: 13px;
+	opacity: 0.6;
+	pointer-events: none;
+}
+
+.aur-search-kbd {
+	position: absolute;
+	right: 9px;
+	font-size: 10px;
+	font-weight: 700;
+	color: var(--aur-ink-soft);
+	border: 1px solid var(--aur-line);
+	border-radius: 5px;
+	padding: 1px 5px;
+	pointer-events: none;
+}
+
+.aur-icon-btn {
+	width: 32px;
+	height: 32px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	border: 1px solid var(--aur-line);
+	background: var(--aur-surface);
+	color: var(--aur-ink);
+	font-size: 14px;
+	cursor: pointer;
+	transition: transform var(--aur-fast) var(--aur-ease-back), box-shadow var(--aur-fast) var(--aur-ease),
+		background var(--aur-fast) var(--aur-ease);
+}
+
+.aur-icon-btn:hover {
+	transform: translateY(-2px) rotate(8deg);
+	box-shadow: var(--aur-glow);
+	background: var(--aur-grad-soft);
+}
+
+.aur-icon-btn:active {
+	transform: scale(0.92);
+}
+
+/* -------------------------------------------------------------------------
+   6. Mega panel
+   ---------------------------------------------------------------------- */
+
+.aur-mega {
+	position: fixed;
+	z-index: 1201;
+	/* The real ceiling is set from script, which knows how far down the panel
+	   starts; this is only the fallback before the first measurement. */
+	max-height: min(70vh, 620px);
+	display: none;
+	flex-direction: column;
+	overflow: hidden;
+	border-radius: var(--aur-r-xl);
+	border: 1px solid var(--aur-line);
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(247, 249, 255, 0.95));
+	backdrop-filter: blur(22px) saturate(160%);
+	-webkit-backdrop-filter: blur(22px) saturate(160%);
+	box-shadow: var(--aur-shadow-lg);
+	transform-origin: top center;
+}
+
+[data-theme="dark"] .aur-mega {
+	background: linear-gradient(180deg, rgba(26, 28, 42, 0.98), rgba(18, 20, 32, 0.96));
+}
+
+.aur-mega.aur-visible {
+	display: flex;
+	animation: aur-mega-in var(--aur-mid) var(--aur-ease) both;
+}
+
+.aur-mega-cols {
+	display: grid;
+	grid-template-columns: 232px 1fr;
+	flex: 1 1 auto;
+	/* Without this the columns size to their content and never scroll. */
+	min-height: 0;
+}
+
+/* The filter strip above the two columns. */
+.aur-mega-search {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	flex: none;
+	padding: 11px 14px;
+	border-bottom: 1px solid var(--aur-line);
+	background: linear-gradient(180deg, color-mix(in oklab, var(--aur-accent) 9%, transparent), transparent);
+}
+
+.aur-mega-search-icon {
+	width: 15px;
+	height: 15px;
+	flex: none;
+	color: var(--aur-accent);
+}
+
+.aur-mega-input {
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 30px;
+	padding: 0 8px;
+	font-size: 13px;
+	font-weight: 550;
+	color: var(--aur-ink);
+	background: transparent;
+	border: none;
+	outline: none;
+}
+
+.aur-mega-input::placeholder {
+	color: var(--aur-ink-soft);
+	font-weight: 500;
+}
+
+.aur-mega-input::-webkit-search-cancel-button {
+	display: none;
+}
+
+.aur-mega-clear {
+	flex: none;
+	width: 22px;
+	height: 22px;
+	font-size: 16px;
+	line-height: 1;
+	color: var(--aur-ink-soft);
+	background: transparent;
+	border: none;
+	border-radius: 999px;
+	cursor: pointer;
+	transition: background var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease);
+}
+
+.aur-mega-clear:hover {
+	color: var(--aur-accent);
+	background: color-mix(in oklab, var(--aur-accent) 14%, transparent);
+}
+
+/* Standing notice while a filter is in force. It has to persist across tab
+   changes, because a tab narrowed by an earlier search would otherwise just
+   look empty. */
+.aur-filter-bar {
+	display: none;
+	align-items: center;
+	gap: 9px;
+	flex: none;
+	padding: 7px 14px;
+	border-bottom: 1px solid var(--aur-line);
+	background: color-mix(in oklab, var(--aur-accent) 13%, transparent);
+	font-size: 12px;
+	font-weight: 620;
+	color: color-mix(in oklab, var(--aur-accent) 78%, var(--aur-ink));
+}
+
+.aur-filter-bar.aur-on {
+	display: flex;
+	animation: aur-mega-in var(--aur-fast) var(--aur-ease) both;
+}
+
+.aur-filter-icon {
+	width: 14px;
+	height: 14px;
+	flex: none;
+	color: var(--aur-accent);
+}
+
+.aur-filter-text {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.aur-filter-clear {
+	flex: none;
+	padding: 3px 11px;
+	font-size: 11.5px;
+	font-weight: 650;
+	color: #fff;
+	background: var(--aur-grad-cool);
+	border: none;
+	border-radius: 999px;
+	cursor: pointer;
+	transition: transform var(--aur-fast) var(--aur-ease-back), box-shadow var(--aur-fast) var(--aur-ease);
+}
+
+.aur-filter-clear:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 8px 16px -8px color-mix(in oklab, var(--aur-accent) 95%, transparent);
+}
+
+@keyframes aur-mega-in {
+	from {
+		opacity: 0;
+		transform: translateY(-10px) scale(0.985);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+.aur-mega::before {
+	content: "";
+	position: absolute;
+	inset: 0 0 auto 0;
+	height: 3px;
+	background: var(--aur-grad);
+}
+
+.aur-mega-groups {
+	padding: 16px 10px;
+	overflow-y: auto;
+	/* Grid children default to min-height:auto, which stops them from ever
+	   becoming scroll containers. */
+	min-height: 0;
+	border-right: 1px solid var(--aur-line);
+	background: linear-gradient(180deg, rgba(99, 102, 241, 0.07), transparent 40%);
+}
+
+.aur-group {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	text-align: left;
+	border: none;
+	background: transparent;
+	color: var(--aur-ink);
+	font-size: 12.5px;
+	font-weight: 600;
+	padding: 8px 10px;
+	border-radius: var(--aur-r-sm);
+	cursor: pointer;
+	transition: background var(--aur-fast) var(--aur-ease), transform var(--aur-fast) var(--aur-ease),
+		color var(--aur-fast) var(--aur-ease);
+}
+
+.aur-group:hover {
+	background: var(--aur-grad-soft);
+	transform: translateX(3px);
+}
+
+.aur-group.aur-active {
+	color: #fff;
+	background: var(--aur-grad-cool);
+	box-shadow: 0 10px 22px -14px rgba(79, 70, 229, 0.95);
+}
+
+/* An <svg> with only a viewBox falls back to 300x150, so every glyph needs a
+   size of its own before any context-specific rule refines it. */
+.aur-glyph {
+	width: 16px;
+	height: 16px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	flex: none;
+}
+
+.aur-group-icon {
+	width: 17px;
+	height: 17px;
+	flex: none;
+	color: hsl(var(--h, 245) 70% 54%);
+	transition: transform var(--aur-mid) var(--aur-ease-back), color var(--aur-fast) var(--aur-ease);
+}
+
+.aur-group:hover .aur-group-icon {
+	transform: scale(1.18) rotate(-8deg);
+}
+
+.aur-group.aur-active .aur-group-icon {
+	color: #fff;
+}
+
+.aur-group-count {
+	margin-left: auto;
+	font-size: 10.5px;
+	font-weight: 700;
+	opacity: 0.65;
+}
+
+.aur-mega-body {
+	padding: 16px 18px 20px;
+	overflow-y: auto;
+	min-height: 0;
+}
+
+.aur-mega-title {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	color: var(--aur-ink-soft);
+	margin-bottom: 12px;
+}
+
+.aur-mega-title::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: linear-gradient(90deg, var(--aur-line-strong), transparent);
+}
+
+.aur-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(228px, 1fr));
+	gap: 8px;
+}
+
+.aur-item {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 9px 11px;
+	border-radius: var(--aur-r);
+	border: 1px solid transparent;
+	background: rgba(255, 255, 255, 0.6);
+	color: var(--aur-ink);
+	text-align: left;
+	cursor: pointer;
+	overflow: hidden;
+	transition: transform var(--aur-fast) var(--aur-ease), border-color var(--aur-fast) var(--aur-ease),
+		box-shadow var(--aur-fast) var(--aur-ease), background var(--aur-fast) var(--aur-ease);
+}
+
+[data-theme="dark"] .aur-item {
+	background: rgba(255, 255, 255, 0.04);
+}
+
+.aur-item::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	opacity: 0;
+	pointer-events: none;
+	background: radial-gradient(160px circle at var(--mx, 50%) var(--my, 50%), hsl(var(--h, 245) 90% 65% / 0.22), transparent 70%);
+	transition: opacity var(--aur-mid) var(--aur-ease);
+}
+
+.aur-item:hover,
+.aur-item.aur-cursor {
+	transform: translateY(-2px);
+	border-color: hsl(var(--h, 245) 80% 65% / 0.45);
+	background: rgba(255, 255, 255, 0.92);
+	box-shadow: 0 12px 26px -18px hsl(var(--h, 245) 80% 50% / 0.9);
+}
+
+[data-theme="dark"] .aur-item:hover,
+[data-theme="dark"] .aur-item.aur-cursor {
+	background: rgba(255, 255, 255, 0.08);
+}
+
+.aur-item:hover::after,
+.aur-item.aur-cursor::after {
+	opacity: 1;
+}
+
+.aur-item-icon .aur-glyph {
+	width: 16px;
+	height: 16px;
+}
+
+.aur-item-icon {
+	width: 30px;
+	height: 30px;
+	flex: none;
+	display: grid;
+	place-items: center;
+	border-radius: 9px;
+	font-size: 13px;
+	font-weight: 700;
+	color: #fff;
+	background: linear-gradient(140deg, hsl(var(--h, 245) 85% 62%), hsl(calc(var(--h, 245) + 38) 85% 58%));
+	box-shadow: 0 6px 14px -8px hsl(var(--h, 245) 85% 50% / 0.95);
+	transition: transform var(--aur-mid) var(--aur-ease-back);
+}
+
+.aur-item:hover .aur-item-icon {
+	transform: rotate(-6deg) scale(1.08);
+}
+
+.aur-item-text {
+	min-width: 0;
+	flex: 1;
+}
+
+.aur-item-label {
+	font-size: 12.5px;
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.aur-item-sub {
+	font-size: 10.5px;
+	color: var(--aur-ink-soft);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+a.aur-item,
+a.aur-item:hover,
+a.aur-item:focus {
+	text-decoration: none;
+	color: var(--aur-ink);
+}
+
+.aur-mega-title .aur-chip {
+	margin-left: 8px;
+}
+
+.aur-icon-btn.aur-pinned {
+	color: var(--aur-amber);
+	border-color: color-mix(in oklab, var(--aur-amber) 45%, transparent);
+	background: color-mix(in oklab, var(--aur-amber) 12%, transparent);
+}
+
+.aur-item-actions {
+	display: flex;
+	gap: 3px;
+	opacity: 0;
+	transform: translateX(4px);
+	transition: opacity var(--aur-fast) var(--aur-ease), transform var(--aur-fast) var(--aur-ease);
+}
+
+.aur-item:hover .aur-item-actions,
+.aur-item.aur-cursor .aur-item-actions {
+	opacity: 1;
+	transform: none;
+}
+
+.aur-chip {
+	font-size: 10px;
+	font-weight: 700;
+	padding: 3px 7px;
+	border-radius: 999px;
+	border: 1px solid var(--aur-line-strong);
+	background: var(--aur-surface);
+	color: var(--aur-ink-soft);
+	cursor: pointer;
+	transition: background var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease),
+		transform var(--aur-fast) var(--aur-ease-back);
+}
+
+.aur-chip:hover {
+	background: var(--aur-grad-cool);
+	border-color: transparent;
+	color: #fff;
+	transform: scale(1.08);
+}
+
+.aur-empty {
+	padding: 28px 10px;
+	text-align: center;
+	color: var(--aur-ink-soft);
+	font-size: 12.5px;
+}
+
+.aur-stagger {
+	animation: aur-pop var(--aur-mid) var(--aur-ease) both;
+	animation-delay: calc(var(--i, 0) * 14ms);
+}
+
+@keyframes aur-pop {
+	from {
+		opacity: 0;
+		transform: translateY(8px) scale(0.98);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+.aur-scrim {
+	position: fixed;
+	inset: 0;
+	z-index: 1200;
+	background: rgba(10, 12, 24, 0.28);
+	backdrop-filter: blur(2px);
+	animation: aur-fade var(--aur-fast) ease both;
+}
+
+@keyframes aur-fade {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+/* -------------------------------------------------------------------------
+   7. Buttons + ripple
+   ---------------------------------------------------------------------- */
+
+.aurora-on .btn {
+	position: relative;
+	overflow: hidden;
+	border-radius: var(--aur-r-sm);
+	font-weight: 600;
+	transition: transform var(--aur-fast) var(--aur-ease-back), box-shadow var(--aur-fast) var(--aur-ease),
+		filter var(--aur-fast) var(--aur-ease);
+}
+
+/* The ripple needs the button to clip, but v17 nests dropdown menus inside
+   the button that opens them (the sort selector, the list menu, the grid row
+   menus). Clipping those buttons swallows the menu whole, so any button that
+   carries one opts out. */
+.aurora-on .btn:has(.dropdown-menu),
+.aurora-on .es-button:has(.dropdown-menu),
+.aurora-on .btn[data-toggle="dropdown"],
+.aurora-on .es-button[data-toggle="dropdown"],
+.aurora-on .btn.dropdown-toggle,
+.aurora-on .es-button.dropdown-toggle {
+	overflow: visible;
+}
+
+.aurora-on .btn:hover {
+	transform: translateY(-1px);
+}
+
+.aurora-on .btn:active {
+	transform: translateY(0) scale(0.97);
+}
+
+.aurora-on .btn-primary {
+	border: none;
+	background: var(--aur-grad-cool);
+	background-size: 180% 180%;
+	box-shadow: 0 8px 20px -10px rgba(79, 70, 229, 0.95);
+}
+
+.aurora-on .btn-primary:hover {
+	background-position: 100% 50%;
+	box-shadow: 0 12px 26px -10px rgba(139, 92, 246, 0.95);
+	filter: saturate(1.15);
+}
+
+.aurora-on .btn-default,
+.aurora-on .btn-secondary {
+	border: 1px solid var(--aur-line-strong);
+	background: var(--aur-surface);
+}
+
+.aurora-on .btn-default:hover,
+.aurora-on .btn-secondary:hover {
+	background: var(--aur-grad-soft);
+	border-color: transparent;
+	box-shadow: var(--aur-shadow-sm);
+}
+
+/* v17's button system reads its colours from --bt-* custom properties, so the
+   accent is applied there rather than by overriding backgrounds. Buttons that
+   carry their own data-theme (danger, warning) are left alone. */
+.aurora-on .es-button {
+	--bt-solid-bg: var(--aur-accent);
+	--bt-solid-bg-hover: color-mix(in oklab, var(--aur-accent) 84%, #000);
+	--bt-solid-bg-active: color-mix(in oklab, var(--aur-accent) 72%, #000);
+	--bt-solid-fg: #fff;
+	position: relative;
+	overflow: hidden;
+	transition: transform var(--aur-fast) var(--aur-ease-back), box-shadow var(--aur-fast) var(--aur-ease),
+		background var(--aur-fast) var(--aur-ease), border-color var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .es-button:hover {
+	transform: translateY(-1px);
+}
+
+.aurora-on .es-button:active {
+	transform: scale(0.97);
+}
+
+.aurora-on .es-button[data-variant="solid"]:not([data-theme]) {
+	background: var(--aur-grad-cool);
+	background-size: 180% 180%;
+	color: #fff;
+	box-shadow: 0 8px 20px -10px color-mix(in oklab, var(--aur-accent) 90%, transparent);
+}
+
+.aurora-on .es-button[data-variant="solid"]:not([data-theme]):hover {
+	background-position: 100% 50%;
+	box-shadow: 0 12px 26px -10px color-mix(in oklab, var(--aur-accent) 95%, transparent);
+}
+
+.aurora-on .es-button[data-variant="subtle"]:hover,
+.aurora-on .es-button:not([data-variant]):hover {
+	box-shadow: var(--aur-shadow-sm);
+}
+
+.aur-ripple {
+	position: absolute;
+	border-radius: 50%;
+	transform: scale(0);
+	background: rgba(255, 255, 255, 0.55);
+	pointer-events: none;
+	animation: aur-ripple 0.62s var(--aur-ease) forwards;
+	mix-blend-mode: overlay;
+}
+
+@keyframes aur-ripple {
+	to {
+		transform: scale(2.6);
+		opacity: 0;
+	}
+}
+
+/* -------------------------------------------------------------------------
+   8. Page head + titles
+   ---------------------------------------------------------------------- */
+
+.aurora-on .page-head {
+	background: transparent;
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	border-bottom: 1px solid var(--aur-line);
+}
+
+.aurora-on .page-title .title-text,
+.aurora-on .page-head .title-text {
+	font-weight: 750;
+	letter-spacing: -0.02em;
+	background: linear-gradient(120deg, var(--aur-ink) 20%, var(--aur-indigo) 62%, var(--aur-pink) 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+
+.aurora-on[data-theme="dark"] .page-title .title-text,
+.aurora-on[data-theme="dark"] .page-head .title-text {
+	background: linear-gradient(120deg, #e2e8f0 20%, #a5b4fc 60%, #f0abfc 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+
+/* -------------------------------------------------------------------------
+   9. Cards — workspace widgets, number cards, shortcuts, links
+   ---------------------------------------------------------------------- */
+
+.aurora-on .widget,
+.aurora-on .frappe-card,
+.aurora-on .form-section.card-section,
+.aurora-on .dashboard-section {
+	position: relative;
+	/* Must stay visible: link fields, grid rows and card menus render their
+	   dropdowns inside these boxes and would otherwise be cut off. Decoration
+	   is clipped by giving the pseudo-elements their own radius instead. */
+	overflow: visible;
+	border-radius: var(--aur-r-lg) !important;
+	border: 1px solid var(--aur-line);
+	background: linear-gradient(158deg, var(--aur-surface), var(--aur-surface-2));
+	box-shadow: var(--aur-shadow);
+	transition: transform var(--aur-mid) var(--aur-ease), box-shadow var(--aur-mid) var(--aur-ease),
+		border-color var(--aur-mid) var(--aur-ease);
+}
+
+.aurora-on .widget::before,
+.aurora-on .frappe-card::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	background: var(--aur-grad) top left / 100% 3px no-repeat;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity var(--aur-mid) var(--aur-ease), background-size var(--aur-mid) var(--aur-ease);
+}
+
+.aurora-on .widget::after,
+.aurora-on .frappe-card::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	opacity: 0;
+	border-radius: inherit;
+	background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), rgba(139, 92, 246, 0.16), transparent 70%);
+	transition: opacity var(--aur-mid) var(--aur-ease);
+}
+
+.aurora-on .widget:hover,
+.aurora-on .frappe-card:hover {
+	transform: translateY(-4px);
+	border-color: var(--aur-line-strong);
+	box-shadow: var(--aur-shadow-lg);
+}
+
+.aurora-on .widget:hover::before,
+.aurora-on .frappe-card:hover::before,
+.aurora-on .widget:hover::after,
+.aurora-on .frappe-card:hover::after {
+	opacity: 1;
+}
+
+.aurora-on .widget-head .widget-title,
+.aurora-on .widget .widget-title {
+	font-weight: 700;
+	letter-spacing: -0.01em;
+}
+
+/* Shortcut tiles get their own colour identity. */
+.aurora-on .widget.shortcut-widget-box {
+	background: linear-gradient(150deg, rgba(99, 102, 241, 0.12), rgba(236, 72, 153, 0.08)), var(--aur-surface);
+}
+
+.aurora-on .widget.shortcut-widget-box:hover {
+	transform: translateY(-5px) scale(1.015);
+}
+
+.aurora-on .widget.number-widget-box .widget-content .number,
+.aurora-on .number-card .number {
+	font-weight: 780;
+	letter-spacing: -0.03em;
+	background: var(--aur-grad-cool);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+
+.aurora-on .links-widget-box .link-item {
+	border-radius: var(--aur-r-sm);
+	transition: background var(--aur-fast) var(--aur-ease), transform var(--aur-fast) var(--aur-ease),
+		padding-left var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .links-widget-box .link-item:hover {
+	background: var(--aur-grad-soft);
+	transform: translateX(3px);
+	padding-left: 12px;
+}
+
+/* -------------------------------------------------------------------------
+   10. Sidebar
+   ---------------------------------------------------------------------- */
+
+.aurora-on .desk-sidebar .standard-sidebar-item,
+.aurora-on .list-sidebar .sidebar-item-container {
+	border-radius: var(--aur-r-sm);
+	transition: background var(--aur-fast) var(--aur-ease), transform var(--aur-fast) var(--aur-ease),
+		color var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .desk-sidebar .standard-sidebar-item:hover {
+	background: var(--aur-grad-soft);
+	transform: translateX(4px);
+}
+
+.aurora-on .desk-sidebar .standard-sidebar-item.selected {
+	color: #fff;
+	background: var(--aur-grad-cool);
+	box-shadow: 0 10px 22px -14px rgba(79, 70, 229, 0.95);
+}
+
+.aurora-on .desk-sidebar .standard-sidebar-item.selected .sidebar-item-label,
+.aurora-on .desk-sidebar .standard-sidebar-item.selected .sidebar-item-icon svg {
+	color: #fff;
+	stroke: #fff;
+}
+
+.aurora-on .sidebar-label {
+	font-size: 10.5px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--aur-ink-soft);
+}
+
+/* -------------------------------------------------------------------------
+   11. List view
+   ---------------------------------------------------------------------- */
+
+.aurora-on .frappe-list .result,
+.aurora-on .list-row-container {
+	border-radius: var(--aur-r);
+}
+
+.aurora-on .list-row-container {
+	position: relative;
+	border-bottom: 1px solid var(--aur-line);
+	transition: background var(--aur-fast) var(--aur-ease), transform var(--aur-fast) var(--aur-ease),
+		box-shadow var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .list-row-container::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 6px;
+	bottom: 6px;
+	width: 3px;
+	border-radius: 999px;
+	background: var(--aur-grad);
+	opacity: 0;
+	transform: scaleY(0.3);
+	transition: opacity var(--aur-fast) var(--aur-ease), transform var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .list-row-container:hover {
+	background: var(--aur-grad-soft);
+	transform: translateX(3px);
+	box-shadow: var(--aur-shadow-sm);
+}
+
+.aurora-on .list-row-container:hover::before {
+	opacity: 1;
+	transform: scaleY(1);
+}
+
+.aurora-on .list-subject .level-item.bold,
+.aurora-on .list-subject a {
+	font-weight: 600;
+	transition: color var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .list-row-container:hover .list-subject a {
+	color: var(--aur-indigo);
+}
+
+.aurora-on .list-row-head {
+	background: linear-gradient(180deg, rgba(99, 102, 241, 0.1), transparent);
+	border-radius: var(--aur-r) var(--aur-r) 0 0;
+	border-bottom: 1px solid var(--aur-line-strong);
+}
+
+/* -------------------------------------------------------------------------
+   12. Indicators + pills
+   ---------------------------------------------------------------------- */
+
+.aurora-on .indicator-pill {
+	border-radius: 999px;
+	font-weight: 650;
+	letter-spacing: 0.01em;
+	box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+	transition: transform var(--aur-fast) var(--aur-ease-back);
+}
+
+.aurora-on .indicator-pill:hover {
+	transform: scale(1.06);
+}
+
+/* -------------------------------------------------------------------------
+   13. Form view
+   ---------------------------------------------------------------------- */
+
+.aurora-on .form-section {
+	border-radius: var(--aur-r-lg);
+	border: 1px solid var(--aur-line);
+	background: linear-gradient(158deg, var(--aur-surface), var(--aur-surface-2));
+	box-shadow: var(--aur-shadow-sm);
+	padding: 4px 14px;
+	margin-bottom: 14px;
+	transition: box-shadow var(--aur-mid) var(--aur-ease), border-color var(--aur-mid) var(--aur-ease);
+}
+
+.aurora-on .form-section:hover {
+	border-color: var(--aur-line-strong);
+	box-shadow: var(--aur-shadow);
+}
+
+.aurora-on .form-section .section-head {
+	font-weight: 700;
+	letter-spacing: -0.01em;
+	color: var(--aur-ink);
+}
+
+.aurora-on .frappe-control input.form-control,
+.aurora-on .frappe-control select.form-control,
+.aurora-on .frappe-control textarea.form-control,
+.aurora-on .form-control {
+	border-radius: var(--aur-r-sm);
+	border: 1px solid var(--aur-line);
+	transition: border-color var(--aur-fast) var(--aur-ease), box-shadow var(--aur-fast) var(--aur-ease),
+		background var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .form-control:focus {
+	border-color: transparent;
+	box-shadow: var(--aur-glow);
+}
+
+.aurora-on .form-tabs .nav-link,
+.aurora-on .form-tabs-list .nav-link {
+	border-radius: var(--radius-sm);
+	font-weight: 600;
+	background: none;
+	transition: color var(--aur-fast) var(--aur-ease), box-shadow var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .form-tabs .nav-link:hover,
+.aurora-on .form-tabs-list .nav-link:hover {
+	color: var(--aur-accent);
+	background: none;
+}
+
+/* An underline, not a filled pill. These tabs are sized to their own text, so
+   a filled background rendered as a blob on top of short labels. */
+.aurora-on .form-tabs .nav-link.active,
+.aurora-on .form-tabs-list .nav-link.active {
+	color: var(--aur-accent);
+	background: none;
+	box-shadow: inset 0 -2px 0 0 var(--aur-accent);
+}
+
+/* Suggestion lists must float above the cards they sit inside. */
+.aurora-on .awesomplete > ul,
+.aurora-on .autocomplete-results {
+	z-index: 1300;
+	border-radius: var(--aur-r);
+	border: 1px solid var(--aur-line);
+	box-shadow: var(--aur-shadow-lg);
+}
+
+/* Re-anchored to the viewport by the script above, once a clipping ancestor
+   is found between the list and the page. */
+.aurora-on .aur-unclipped {
+	z-index: 1350 !important;
+	overflow-y: auto;
+	background: var(--aur-surface);
+	backdrop-filter: blur(14px) saturate(150%);
+	-webkit-backdrop-filter: blur(14px) saturate(150%);
+}
+
+/* -------------------------------------------------------------------------
+   13b. Pin shelves — the rail inside the Pinned tab
+   ---------------------------------------------------------------------- */
+
+.aur-shelf-row {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	border-radius: var(--aur-r-sm);
+	transition: background var(--aur-fast) var(--aur-ease), box-shadow var(--aur-fast) var(--aur-ease);
+}
+
+.aur-shelf-row > .aur-group {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+/* The row lights up as a target while an entry is held over it. */
+.aur-shelf-row.aur-drop {
+	background: var(--aur-grad-soft);
+	box-shadow: inset 0 0 0 2px var(--aur-accent);
+}
+
+/* The rail's own header, and the switch into arranging mode. */
+.aur-shelf-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 2px 4px 8px;
+	margin-bottom: 4px;
+	border-bottom: 1px solid var(--aur-line);
+}
+
+.aur-shelf-bar-label {
+	font-size: 10px;
+	font-weight: 800;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	color: var(--aur-ink-soft);
+}
+
+.aur-shelf-bar.aur-on .aur-shelf-bar-label {
+	color: var(--aur-accent);
+}
+
+.aur-shelf-manage {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 3px 9px;
+	border: 1px solid var(--aur-line-strong);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--aur-ink-soft);
+	font-size: 11px;
+	font-weight: 700;
+	cursor: pointer;
+	transition: background var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease),
+		border-color var(--aur-fast) var(--aur-ease);
+}
+
+.aur-shelf-manage svg {
+	width: 12px;
+	height: 12px;
+}
+
+.aur-shelf-manage:hover {
+	background: var(--aur-grad-soft);
+	color: var(--aur-accent);
+}
+
+.aur-shelf-bar.aur-on .aur-shelf-manage {
+	border-color: transparent;
+	background: var(--aur-grad-cool);
+	color: #fff;
+}
+
+/* Nesting reads as an indent against a soft rail. */
+.aur-shelf-row.aur-nested {
+	margin-left: calc(var(--d, 0) * 14px);
+}
+
+.aur-shelf-row.aur-nested::before {
+	content: "";
+	position: absolute;
+	left: -8px;
+	top: 5px;
+	bottom: 5px;
+	width: 2px;
+	border-radius: 999px;
+	background: color-mix(in oklab, var(--aur-accent) 32%, transparent);
+}
+
+.aur-shelf-grip {
+	flex: none;
+	width: 14px;
+	margin-right: -2px;
+	color: var(--aur-ink-soft);
+	font-size: 14px;
+	line-height: 1;
+	text-align: center;
+	cursor: grab;
+	opacity: 0.6;
+}
+
+.aur-shelf-grip:active {
+	cursor: grabbing;
+}
+
+.aur-shelf-row.aur-dragging {
+	opacity: 0.4;
+}
+
+/* Where the dragged shelf would land. */
+.aur-shelf-row.aur-drop-above,
+.aur-shelf-row.aur-drop-below {
+	box-shadow: none;
+	background: transparent;
+}
+
+.aur-shelf-row.aur-drop-above::after,
+.aur-shelf-row.aur-drop-below::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 2px;
+	border-radius: 999px;
+	background: var(--aur-accent);
+	box-shadow: 0 0 0 3px color-mix(in oklab, var(--aur-accent) 22%, transparent);
+}
+
+.aur-shelf-row.aur-drop-above::after {
+	top: -2px;
+}
+
+.aur-shelf-row.aur-drop-below::after {
+	bottom: -2px;
+}
+
+/* Tools only exist while arranging, so nothing sits under the pointer during
+   ordinary use. */
+.aur-shelf-tools {
+	display: flex;
+	align-items: center;
+	gap: 1px;
+	flex: none;
+	padding-right: 2px;
+}
+
+.aur-shelf-row.aur-managing {
+	background: color-mix(in oklab, var(--aur-accent) 6%, transparent);
+	box-shadow: inset 0 0 0 1px var(--aur-line);
+}
+
+.aur-shelf-row.aur-managing > .aur-group {
+	pointer-events: none;
+	padding-right: 2px;
+}
+
+/* The rail is narrow, and four tools plus a grip leave little room. The count
+   is noise while arranging, and the name gets what is left rather than
+   wrapping onto a second line. */
+.aur-shelf-row.aur-managing .aur-group-count {
+	display: none;
+}
+
+.aur-shelf-row .aur-group > span {
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.aur-shelf-row.aur-managing .aur-shelf-tool {
+	width: 19px;
+	height: 19px;
+	border-radius: 6px;
+}
+
+.aur-shelf-row.aur-managing .aur-shelf-tool svg {
+	width: 12px;
+	height: 12px;
+}
+
+.aur-shelf-tool {
+	display: grid;
+	place-items: center;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border: none;
+	border-radius: 7px;
+	background: transparent;
+	color: var(--aur-ink-soft);
+	cursor: pointer;
+	transition: background var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease),
+		transform var(--aur-fast) var(--aur-ease-back);
+}
+
+.aur-shelf-tool svg {
+	width: 13px;
+	height: 13px;
+}
+
+.aur-shelf-tool:hover {
+	background: color-mix(in oklab, var(--aur-accent) 16%, transparent);
+	color: var(--aur-accent);
+	transform: scale(1.12);
+}
+
+.aur-shelf-tool.aur-shelf-danger:hover {
+	background: rgba(244, 63, 94, 0.16);
+	color: #f43f5e;
+}
+
+/* Confirming a delete, and choosing a shelf icon. */
+.aur-confirm-pop {
+	width: 268px;
+	padding: 14px;
+}
+
+.aur-confirm-title {
+	font-size: 13.5px;
+	font-weight: 700;
+	color: var(--aur-ink);
+}
+
+.aur-confirm-body {
+	margin-top: 5px;
+	font-size: 11.5px;
+	line-height: 1.5;
+	color: var(--aur-ink-soft);
+}
+
+.aur-confirm-row {
+	display: flex;
+	justify-content: flex-end;
+	gap: 7px;
+	margin-top: 13px;
+}
+
+.aur-confirm-btn {
+	padding: 6px 13px;
+	border: 1px solid var(--aur-line-strong);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--aur-ink);
+	font-size: 12px;
+	font-weight: 700;
+	cursor: pointer;
+	transition: background var(--aur-fast) var(--aur-ease), transform var(--aur-fast) var(--aur-ease-back);
+}
+
+.aur-confirm-btn:hover {
+	transform: translateY(-1px);
+	background: var(--aur-grad-soft);
+}
+
+.aur-confirm-btn.aur-confirm-danger {
+	border-color: transparent;
+	background: linear-gradient(135deg, #f43f5e, #e11d48);
+	color: #fff;
+	box-shadow: 0 8px 18px -10px rgba(244, 63, 94, 0.95);
+}
+
+.aur-icon-pop {
+	width: 262px;
+	padding: 12px;
+}
+
+.aur-icon-grid {
+	display: grid;
+	grid-template-columns: repeat(8, 1fr);
+	gap: 3px;
+	max-height: 216px;
+	overflow-y: auto;
+	margin-top: 6px;
+}
+
+.aur-icon-cell {
+	display: grid;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: none;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--aur-ink-soft);
+	cursor: pointer;
+	transition: background var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease),
+		transform var(--aur-fast) var(--aur-ease-back);
+}
+
+.aur-icon-cell svg {
+	width: 15px;
+	height: 15px;
+}
+
+.aur-icon-cell:hover {
+	background: var(--aur-grad-soft);
+	color: var(--aur-accent);
+	transform: scale(1.14);
+}
+
+.aur-icon-cell.aur-on {
+	background: var(--aur-grad-cool);
+	color: #fff;
+}
+
+.aur-shelf-input {
+	width: 100%;
+	height: 32px;
+	padding: 0 10px;
+	border-radius: var(--aur-r-sm);
+	border: 1px solid var(--aur-accent);
+	background: var(--aur-surface);
+	color: var(--aur-ink);
+	font-size: 12.5px;
+	font-weight: 600;
+	outline: none;
+	box-shadow: 0 0 0 3px color-mix(in oklab, var(--aur-accent) 20%, transparent);
+}
+
+.aur-shelf-add {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 7px 10px;
+	border: 1px dashed var(--aur-line-strong);
+	border-radius: var(--aur-r-sm);
+	background: transparent;
+	color: var(--aur-ink-soft);
+	font-size: 12.5px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease),
+		border-color var(--aur-fast) var(--aur-ease);
+}
+
+.aur-shelf-add svg {
+	width: 14px;
+	height: 14px;
+}
+
+.aur-shelf-add:hover {
+	border-style: solid;
+	border-color: transparent;
+	background: var(--aur-grad-soft);
+	color: var(--aur-accent);
+}
+
+/* The grip, and the entry it belongs to while it is being carried. */
+.aur-grip {
+	flex: none;
+	width: 12px;
+	margin-left: -4px;
+	color: var(--aur-ink-soft);
+	font-size: 15px;
+	line-height: 1;
+	letter-spacing: -1px;
+	opacity: 0;
+	cursor: grab;
+	transition: opacity var(--aur-fast) var(--aur-ease);
+}
+
+.aur-item:hover .aur-grip {
+	opacity: 0.55;
+}
+
+.aur-grip:active {
+	cursor: grabbing;
+}
+
+.aur-item.aur-draggable {
+	cursor: grab;
+}
+
+.aur-item.aur-dragging {
+	opacity: 0.45;
+	transform: scale(0.98);
+	cursor: grabbing;
+}
+
+/* Where a dragged entry would land, on whichever side of the target the
+   pointer is nearer. The marker sits just inside the edge because the entry
+   clips its own overflow, and ::after already carries the cursor glow. */
+.aur-item.aur-item-before::before,
+.aur-item.aur-item-after::before {
+	content: "";
+	position: absolute;
+	top: 5px;
+	bottom: 5px;
+	width: 3px;
+	border-radius: 999px;
+	background: var(--aur-accent);
+	box-shadow: 0 0 12px 1px color-mix(in oklab, var(--aur-accent) 55%, transparent);
+	pointer-events: none;
+	z-index: 2;
+}
+
+.aur-item.aur-item-before::before {
+	left: 2px;
+}
+
+.aur-item.aur-item-after::before {
+	right: 2px;
+}
+
+.aur-grid.aur-grid-drop {
+	border-radius: var(--aur-r);
+	box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--aur-accent) 34%, transparent);
+}
+
+.aur-pin-pop {
+	width: 226px;
+	padding: 10px;
+}
+
+.aur-pin-choice {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	width: 100%;
+	padding: 7px 9px;
+	border: none;
+	border-radius: var(--aur-r-sm);
+	background: transparent;
+	color: var(--aur-ink);
+	font-size: 12.5px;
+	font-weight: 600;
+	text-align: left;
+	cursor: pointer;
+	transition: background var(--aur-fast) var(--aur-ease), padding-left var(--aur-fast) var(--aur-ease);
+}
+
+.aur-pin-choice svg {
+	width: 14px;
+	height: 14px;
+	color: var(--aur-accent);
+}
+
+.aur-pin-choice:hover {
+	background: var(--aur-grad-soft);
+	padding-left: 14px;
+}
+
+.aur-pin-hint {
+	padding: 8px 9px 2px;
+	color: var(--aur-ink-soft);
+	font-size: 10.5px;
+	line-height: 1.4;
+}
+
+/* -------------------------------------------------------------------------
+   14. Modals, dropdowns, datatable
+   ---------------------------------------------------------------------- */
+
+/* No clipping here either: link and select suggestions inside a dialog have
+   to be able to reach past its edge. The header and footer round themselves
+   instead, so the corners still read as one card. */
+.aurora-on .modal-content {
+	border-radius: var(--aur-r-xl);
+	border: 1px solid var(--aur-line);
+	overflow: visible;
+	box-shadow: var(--aur-shadow-lg);
+	animation: aur-mega-in var(--aur-mid) var(--aur-ease) backwards;
+}
+
+.aurora-on .modal-header {
+	background: linear-gradient(120deg, rgba(99, 102, 241, 0.12), rgba(236, 72, 153, 0.08));
+	border-bottom: 1px solid var(--aur-line);
+	border-radius: var(--aur-r-xl) var(--aur-r-xl) 0 0;
+}
+
+.aurora-on .modal-footer {
+	border-radius: 0 0 var(--aur-r-xl) var(--aur-r-xl);
+}
+
+.aurora-on .dropdown-menu {
+	border-radius: var(--aur-r);
+	border: 1px solid var(--aur-line);
+	box-shadow: var(--aur-shadow-lg);
+	z-index: 1300;
+	max-height: min(60vh, 420px);
+	overflow-x: hidden;
+	overflow-y: auto;
+	animation: aur-mega-in var(--aur-fast) var(--aur-ease) backwards;
+}
+
+.aurora-on .dropdown-item {
+	border-radius: 8px;
+	transition: background var(--aur-fast) var(--aur-ease), padding-left var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .dropdown-item:hover {
+	background: var(--aur-grad-soft);
+	padding-left: 20px;
+}
+
+.aurora-on .datatable .dt-row:hover .dt-cell {
+	background: var(--aur-grad-soft) !important;
+}
+
+.aurora-on .datatable .dt-row-header .dt-cell {
+	background: linear-gradient(180deg, rgba(99, 102, 241, 0.12), transparent) !important;
+	font-weight: 650;
+}
+
+/* -------------------------------------------------------------------------
+   15. v17 desk shell — dock rail, body sidebar, onboarding
+   ---------------------------------------------------------------------- */
+
+.aurora-on .dock {
+	background: linear-gradient(180deg, rgba(99, 102, 241, 0.16), rgba(236, 72, 153, 0.1) 55%, rgba(6, 182, 212, 0.12));
+	backdrop-filter: blur(16px) saturate(150%);
+	-webkit-backdrop-filter: blur(16px) saturate(150%);
+	border-right: 1px solid var(--aur-line);
+}
+
+.aurora-on .dock-logo img {
+	filter: drop-shadow(0 4px 10px rgba(79, 70, 229, 0.45));
+	transition: transform var(--aur-mid) var(--aur-ease-back);
+}
+
+.aurora-on .dock-logo:hover img {
+	transform: rotate(-8deg) scale(1.12);
+}
+
+.aurora-on .dock-divider {
+	background: linear-gradient(90deg, transparent, var(--aur-line-strong), transparent);
+	height: 1px;
+	border: none;
+}
+
+.aurora-on .dock-item {
+	position: relative;
+	border-radius: 12px;
+	overflow: hidden;
+	transition: transform var(--aur-fast) var(--aur-ease-back), background var(--aur-fast) var(--aur-ease),
+		box-shadow var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .dock-item:hover {
+	background: rgba(255, 255, 255, 0.75);
+	transform: translateX(2px) scale(1.1);
+	box-shadow: var(--aur-glow);
+}
+
+[data-theme="dark"].aurora-on .dock-item:hover {
+	background: rgba(255, 255, 255, 0.1);
+}
+
+.aurora-on .dock-item.active {
+	background: var(--aur-grad-cool);
+	box-shadow: 0 10px 22px -12px rgba(79, 70, 229, 0.95);
+}
+
+.aurora-on .dock-item.active svg,
+.aurora-on .dock-item.active .sidebar-item-icon svg {
+	color: #fff;
+	stroke: #fff;
+}
+
+.aurora-on .dock-item.active::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 18%;
+	bottom: 18%;
+	width: 3px;
+	border-radius: 999px;
+	background: #fff;
+	opacity: 0.9;
+}
+
+.aurora-on .body-sidebar,
+.aurora-on .body-sidebar-container {
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(245, 247, 255, 0.8));
+	backdrop-filter: blur(18px) saturate(150%);
+	-webkit-backdrop-filter: blur(18px) saturate(150%);
+	border-right: 1px solid var(--aur-line);
+}
+
+[data-theme="dark"].aurora-on .body-sidebar,
+[data-theme="dark"].aurora-on .body-sidebar-container {
+	background: linear-gradient(180deg, rgba(24, 26, 40, 0.92), rgba(18, 20, 32, 0.86));
+}
+
+.aurora-on .standard-sidebar-item {
+	border-radius: var(--aur-r-sm);
+	transition: background var(--aur-fast) var(--aur-ease), transform var(--aur-fast) var(--aur-ease),
+		color var(--aur-fast) var(--aur-ease), box-shadow var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .standard-sidebar-item:hover {
+	background: var(--aur-grad-soft);
+	transform: translateX(3px);
+}
+
+.aurora-on .standard-sidebar-item.active-sidebar,
+.aurora-on .standard-sidebar-item.selected {
+	background: var(--aur-grad-cool);
+	box-shadow: 0 10px 22px -14px rgba(79, 70, 229, 0.95);
+}
+
+.aurora-on .standard-sidebar-item.active-sidebar,
+.aurora-on .standard-sidebar-item.active-sidebar a,
+.aurora-on .standard-sidebar-item.active-sidebar .sidebar-item-label,
+.aurora-on .standard-sidebar-item.selected,
+.aurora-on .standard-sidebar-item.selected a {
+	color: #fff !important;
+}
+
+.aurora-on .standard-sidebar-item.active-sidebar svg,
+.aurora-on .standard-sidebar-item.selected svg {
+	stroke: #fff;
+	color: #fff;
+}
+
+.aurora-on .title-container .header-title {
+	font-weight: 700;
+	letter-spacing: -0.01em;
+}
+
+.aurora-on .onb-panel,
+.aurora-on .user-onboarding .onb-panel {
+	border-radius: var(--aur-r-xl);
+	border: 1px solid var(--aur-line);
+	background: linear-gradient(158deg, var(--aur-surface), var(--aur-surface-2));
+	box-shadow: var(--aur-shadow-lg);
+	overflow: hidden;
+}
+
+.aurora-on .onb-panel .onb-header-main {
+	background: linear-gradient(120deg, rgba(99, 102, 241, 0.14), rgba(236, 72, 153, 0.09));
+	border-bottom: 1px solid var(--aur-line);
+}
+
+.aurora-on .onb-progress-badge {
+	border-radius: 999px;
+	font-weight: 700;
+}
+
+.aurora-on .onb-group {
+	border-radius: var(--aur-r-sm);
+	transition: background var(--aur-fast) var(--aur-ease), padding-left var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .onb-group:hover {
+	background: var(--aur-grad-soft);
+	padding-left: 8px;
+}
+
+/* -------------------------------------------------------------------------
+   16. Colour at rest
+   -------------------------------------------------------------------------
+   Repeating elements cycle through a hue wheel so lists and rails read as
+   colourful standing still, not only under the cursor.
+   ---------------------------------------------------------------------- */
+
+.aurora-on .list-row-container,
+.aurora-on .body-sidebar .sidebar-item-container,
+.aurora-on .dock-items .dock-item {
+	--cyc-h: 245;
+}
+
+.aurora-on .list-row-container:nth-child(8n + 2),
+.aurora-on .body-sidebar .sidebar-item-container:nth-child(8n + 2),
+.aurora-on .dock-items .dock-item:nth-child(8n + 2) {
+	--cyc-h: 285;
+}
+
+.aurora-on .list-row-container:nth-child(8n + 3),
+.aurora-on .body-sidebar .sidebar-item-container:nth-child(8n + 3),
+.aurora-on .dock-items .dock-item:nth-child(8n + 3) {
+	--cyc-h: 325;
+}
+
+.aurora-on .list-row-container:nth-child(8n + 4),
+.aurora-on .body-sidebar .sidebar-item-container:nth-child(8n + 4),
+.aurora-on .dock-items .dock-item:nth-child(8n + 4) {
+	--cyc-h: 8;
+}
+
+.aurora-on .list-row-container:nth-child(8n + 5),
+.aurora-on .body-sidebar .sidebar-item-container:nth-child(8n + 5),
+.aurora-on .dock-items .dock-item:nth-child(8n + 5) {
+	--cyc-h: 35;
+}
+
+.aurora-on .list-row-container:nth-child(8n + 6),
+.aurora-on .body-sidebar .sidebar-item-container:nth-child(8n + 6),
+.aurora-on .dock-items .dock-item:nth-child(8n + 6) {
+	--cyc-h: 165;
+}
+
+.aurora-on .list-row-container:nth-child(8n + 7),
+.aurora-on .body-sidebar .sidebar-item-container:nth-child(8n + 7),
+.aurora-on .dock-items .dock-item:nth-child(8n + 7) {
+	--cyc-h: 192;
+}
+
+.aurora-on .list-row-container:nth-child(8n + 8),
+.aurora-on .body-sidebar .sidebar-item-container:nth-child(8n + 8),
+.aurora-on .dock-items .dock-item:nth-child(8n + 8) {
+	--cyc-h: 212;
+}
+
+/* List rows keep a visible colour stripe and a faint banding tint. */
+.aurora-on .list-row-container::before {
+	background: hsl(var(--cyc-h) 84% 62%);
+	opacity: 0.55;
+	transform: scaleY(0.7);
+	width: 3px;
+}
+
+.aurora-on .list-row-container:hover::before {
+	opacity: 1;
+	transform: scaleY(1);
+	width: 4px;
+}
+
+.aurora-on .list-row-container:nth-child(even) {
+	background: color-mix(in oklab, var(--aur-accent) 4%, transparent);
+}
+
+.aurora-on .list-row-container:hover {
+	background: color-mix(in oklab, var(--aur-accent) 11%, transparent);
+}
+
+/* Sidebar and dock icons carry their own colour. */
+.aurora-on .body-sidebar .sidebar-item-icon svg,
+.aurora-on .dock-items .dock-item > svg {
+	color: hsl(var(--cyc-h) 70% 55%);
+	stroke: hsl(var(--cyc-h) 70% 55%);
+	transition: color var(--aur-fast) var(--aur-ease), stroke var(--aur-fast) var(--aur-ease),
+		transform var(--aur-mid) var(--aur-ease-back);
+}
+
+.aurora-on[data-theme="dark"] .body-sidebar .sidebar-item-icon svg,
+.aurora-on[data-theme="dark"] .dock-items .dock-item > svg {
+	color: hsl(var(--cyc-h) 72% 68%);
+	stroke: hsl(var(--cyc-h) 72% 68%);
+}
+
+.aurora-on .body-sidebar .sidebar-item-container:hover .sidebar-item-icon svg,
+.aurora-on .dock-items .dock-item:hover > svg {
+	transform: scale(1.14) rotate(-6deg);
+}
+
+.aurora-on .standard-sidebar-item.active-sidebar .sidebar-item-icon svg,
+.aurora-on .standard-sidebar-item.selected .sidebar-item-icon svg,
+.aurora-on .dock-item.active > svg {
+	color: #fff;
+	stroke: #fff;
+}
+
+/* Cards wear their gradient edge all the time. */
+.aurora-on .widget::before,
+.aurora-on .frappe-card::before {
+	opacity: 0.9;
+}
+
+.aurora-on .widget:hover::before,
+.aurora-on .frappe-card:hover::before {
+	background-size: 100% 4px;
+}
+
+.aurora-on .widget.number-widget-box,
+.aurora-on .widget.shortcut-widget-box {
+	background: linear-gradient(152deg, color-mix(in oklab, var(--aur-accent) 13%, var(--card-bg)), var(--card-bg) 70%);
+}
+
+.aurora-on .widget.chart-widget-box,
+.aurora-on .widget.dashboard-widget-box {
+	background: linear-gradient(152deg, color-mix(in oklab, var(--aur-accent) 6%, var(--card-bg)), var(--card-bg) 60%);
+}
+
+/* Form sections get a standing accent edge. Overflow stays visible so link
+   field suggestions can escape the card. */
+.aurora-on .form-section {
+	position: relative;
+	overflow: visible;
+}
+
+/* A bar across the top edge that tapers away behind the rounded corner.
+   The trick is that the layer covers the whole card and inherits its radius,
+   so the bar is painted as a background and the corner clips it — overflow
+   would do the same but cannot be used here, since link suggestions have to
+   escape the card. */
+.aurora-on .form-section::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	background: var(--aur-grad) top left / 100% 3px no-repeat;
+	opacity: 0.75;
+	pointer-events: none;
+	transition: opacity var(--aur-mid) var(--aur-ease), background-size var(--aur-mid) var(--aur-ease);
+}
+
+.aurora-on .form-section:hover::before {
+	opacity: 1;
+	background-size: 100% 4px;
+}
+
+.aurora-on .page-head {
+	border-bottom: none;
+	box-shadow: inset 0 -2px 0 -1px color-mix(in oklab, var(--aur-accent) 30%, transparent);
+}
+
+/* -------------------------------------------------------------------------
+   17. Selects — styled control plus the Aurora listbox that replaces the
+   native OS popup
+   ---------------------------------------------------------------------- */
+
+.aurora-on select.form-control,
+.aurora-on .frappe-control select,
+.aurora-on select.input-sm {
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	border-radius: var(--radius);
+	padding-right: 30px;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 10px center;
+	cursor: pointer;
+}
+
+/* That painted chevron is only a fallback. v17 renders its own icon beside
+   the select, and where it does, the two stacked up as a doubled arrow. */
+.aurora-on .control-input:has(> .select-icon) select.form-control,
+.aurora-on .control-input:has(> .select-icon) select.input-sm,
+.aurora-on .control-input:has(> .select-icon) .frappe-control select {
+	background-image: none;
+}
+
+.aurora-on .select-icon svg {
+	color: var(--aur-accent);
+}
+
+.aur-select-pop {
+	position: fixed;
+	z-index: 1300;
+	min-width: 190px;
+	max-height: 330px;
+	overflow-y: auto;
+	padding: 6px;
+	border-radius: var(--aur-r);
+	border: 1px solid var(--aur-line);
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 255, 0.96));
+	backdrop-filter: blur(18px) saturate(160%);
+	-webkit-backdrop-filter: blur(18px) saturate(160%);
+	box-shadow: var(--aur-shadow-lg);
+	animation: aur-mega-in 0.16s var(--aur-ease) both;
+}
+
+[data-theme="dark"] .aur-select-pop {
+	background: linear-gradient(180deg, rgba(26, 28, 42, 0.99), rgba(18, 20, 32, 0.97));
+}
+
+.aur-select-opt {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	padding: 7px 10px;
+	border-radius: 9px;
+	font-size: 13px;
+	color: var(--aur-ink);
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease),
+		transform var(--aur-fast) var(--aur-ease);
+}
+
+.aur-select-opt:hover,
+.aur-select-opt.aur-cursor {
+	background: var(--aur-grad-soft);
+	transform: translateX(2px);
+}
+
+.aur-select-opt.aur-selected {
+	color: #fff;
+	background: var(--aur-grad-cool);
+	box-shadow: 0 8px 18px -12px rgba(79, 70, 229, 0.95);
+}
+
+.aur-select-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	flex: none;
+	background: currentColor;
+	opacity: 0.35;
+}
+
+.aur-select-opt.aur-selected .aur-select-dot {
+	opacity: 1;
+}
+
+.aur-select-empty {
+	padding: 10px;
+	font-size: 12.5px;
+	color: var(--aur-ink-soft);
+}
+
+/* -------------------------------------------------------------------------
+   18. Pins and the settings popover
+   ---------------------------------------------------------------------- */
+
+.aur-star {
+	border: none;
+	background: transparent;
+	color: var(--aur-ink-soft);
+	font-size: 13px;
+	line-height: 1;
+	padding: 3px;
+	border-radius: 7px;
+	cursor: pointer;
+	opacity: 0;
+	transition: opacity var(--aur-fast) var(--aur-ease), transform var(--aur-fast) var(--aur-ease-back),
+		color var(--aur-fast) var(--aur-ease);
+}
+
+.aur-item:hover .aur-star,
+.aur-item.aur-cursor .aur-star,
+.aur-star.aur-pinned {
+	opacity: 1;
+}
+
+.aur-star:hover {
+	transform: scale(1.25) rotate(12deg);
+	color: var(--aur-amber);
+}
+
+.aur-star.aur-pinned {
+	color: var(--aur-amber);
+}
+
+.aur-pop {
+	position: fixed;
+	z-index: 1300;
+	width: 268px;
+	padding: 14px;
+	border-radius: var(--aur-r-lg);
+	border: 1px solid var(--aur-line);
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 255, 0.96));
+	backdrop-filter: blur(20px) saturate(160%);
+	-webkit-backdrop-filter: blur(20px) saturate(160%);
+	box-shadow: var(--aur-shadow-lg);
+	animation: aur-mega-in 0.18s var(--aur-ease) both;
+}
+
+[data-theme="dark"] .aur-pop {
+	background: linear-gradient(180deg, rgba(26, 28, 42, 0.99), rgba(18, 20, 32, 0.97));
+}
+
+.aur-pop-label {
+	font-size: 10.5px;
+	font-weight: 700;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	color: var(--aur-ink-soft);
+	margin-bottom: 9px;
+}
+
+.aur-pop-row + .aur-pop-label {
+	margin-top: 16px;
+}
+
+.aur-swatches {
+	display: flex;
+	gap: 9px;
+}
+
+.aur-swatch {
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	border: 2px solid transparent;
+	cursor: pointer;
+	position: relative;
+	transition: transform var(--aur-fast) var(--aur-ease-back), box-shadow var(--aur-fast) var(--aur-ease);
+}
+
+.aur-swatch:hover {
+	transform: scale(1.18) rotate(-8deg);
+}
+
+.aur-swatch.aur-on {
+	border-color: var(--aur-ink);
+	box-shadow: 0 0 0 3px color-mix(in oklab, var(--aur-accent) 30%, transparent);
+}
+
+.aur-seg {
+	display: flex;
+	gap: 4px;
+	padding: 3px;
+	border-radius: 999px;
+	border: 1px solid var(--aur-line);
+	background: var(--aur-surface-2);
+}
+
+.aur-seg button {
+	flex: 1;
+	border: none;
+	background: transparent;
+	color: var(--aur-ink);
+	font-size: 12px;
+	font-weight: 600;
+	padding: 5px 8px;
+	border-radius: 999px;
+	cursor: pointer;
+	transition: background var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease);
+}
+
+.aur-seg button.aur-on {
+	color: #fff;
+	background: var(--aur-grad-cool);
+}
+
+/* -------------------------------------------------------------------------
+   19. Scroll reveal
+   ---------------------------------------------------------------------- */
+
+.aurora-on .aur-reveal {
+	opacity: 0;
+	transform: translateY(16px);
+}
+
+.aurora-on .aur-reveal.aur-in {
+	opacity: 1;
+	transform: none;
+	transition: opacity var(--aur-slow) var(--aur-ease), transform var(--aur-slow) var(--aur-ease);
+}
+
+/* -------------------------------------------------------------------------
+   20. The list sheet and its sticky rail
+   -------------------------------------------------------------------------
+   v17 pins the meta column to the right edge with position: sticky and fills
+   it with an opaque --bg-color so it can hide the columns that scroll under
+   it. Over a translucent, tinted row that fill reads as a white slab cutting
+   the list in half. The rail stays opaque, because it still has a job to do,
+   but it is repainted as the row's own tint over a flat sheet colour so it
+   disappears into the row it belongs to.
+   ---------------------------------------------------------------------- */
+
+.aurora-on {
+	--aur-sheet: #ffffff;
+	--aur-row-tint: transparent;
+}
+
+.aurora-on[data-theme="dark"] {
+	--aur-sheet: #171a28;
+}
+
+.aurora-on .frappe-list .result {
+	background: var(--aur-sheet);
+	border: 1px solid var(--aur-line);
+	border-radius: var(--aur-r-lg);
+	box-shadow: var(--aur-shadow);
+}
+
+.aurora-on .list-row-container:nth-child(even) {
+	--aur-row-tint: color-mix(in oklab, var(--aur-accent) 4%, transparent);
+}
+
+.aurora-on .list-row-container:hover {
+	--aur-row-tint: color-mix(in oklab, var(--aur-accent) 11%, transparent);
+}
+
+.aurora-on .list-row-container,
+.aurora-on .list-row-container:nth-child(even),
+.aurora-on .list-row-container:hover {
+	background: var(--aur-row-tint);
+}
+
+/* The row holds a position: sticky child, so it cannot be transformed. */
+.aurora-on .list-row-container:hover {
+	transform: none;
+	box-shadow: inset 0 0 0 1px var(--aur-line-strong);
+}
+
+/* Rows are slices of one sheet, not separate cards. Rounding them individually
+   pulled the tint away from the sheet's edge, leaving a notch at every corner
+   that the opaque rail then painted over. Only the closing row is rounded, and
+   only to match the sheet it closes. */
+.aurora-on .list-row-container {
+	border-radius: 0;
+}
+
+.aurora-on .list-row-container:last-child {
+	border-bottom: none;
+	border-radius: 0 0 var(--aur-r-lg) var(--aur-r-lg);
+}
+
+.aurora-on .list-row .level-right {
+	border-left: none;
+	background: linear-gradient(var(--aur-row-tint), var(--aur-row-tint)), var(--aur-sheet);
+	/* Only enough of an edge to read as depth when columns scroll under it.
+	   Any heavier and it looks like a seam splitting the row in two. */
+	box-shadow: -16px 0 16px -18px rgba(15, 23, 42, 0.16);
+}
+
+/* The rail is opaque and square, so on the bottom row it painted its own
+   corner out past the sheet's rounded one. */
+.aurora-on .list-row-container:last-child .level-right,
+.aurora-on .list-row-container:last-child .list-row {
+	border-bottom-right-radius: var(--aur-r-lg);
+}
+
+/* Header and rail share one vertical gradient across boxes of equal height,
+   which is what lets the two halves meet without a seam. */
+.aurora-on .list-row-head,
+.aurora-on .list-row-head .level-right {
+	background: linear-gradient(180deg, color-mix(in oklab, var(--aur-accent) 15%, transparent), transparent),
+		var(--aur-sheet);
+	border-bottom: 1px solid var(--aur-line-strong);
+}
+
+.aurora-on .list-row-head {
+	border-radius: var(--aur-r-lg) var(--aur-r-lg) 0 0;
+}
+
+.aurora-on .list-row-head .level-right {
+	border-left: none;
+	border-radius: 0 var(--aur-r-lg) 0 0;
+	box-shadow: none;
+}
+
+.aurora-on .list-row-head .list-row-col span,
+.aurora-on .list-row-head .list-count {
+	font-weight: 650;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	font-size: 0.72rem;
+	color: color-mix(in oklab, var(--aur-accent) 55%, var(--aur-ink));
+}
+
+.aurora-on .frappe-list .list-paging-area {
+	background: var(--aur-sheet);
+	border: 1px solid var(--aur-line);
+	border-radius: var(--aur-r);
+	box-shadow: var(--aur-shadow-sm);
+	margin-top: 10px;
+	padding: 8px 14px;
+}
+
+.aurora-on .list-row-col:not(.list-subject) {
+	color: var(--aur-ink-soft);
+}
+
+/* Sorting and column resizing feedback. */
+.aurora-on .list-col-resize-handle:hover {
+	background: var(--aur-accent);
+}
+
+/* Filters, sort and the view switcher live above the sheet. */
+.aurora-on .filter-section .filter-button,
+.aurora-on .filter-selector .btn,
+.aurora-on .sort-selector .btn {
+	border-radius: 999px;
+}
+
+.aurora-on .filter-area .filter-box,
+.aurora-on .standard-filter-section .frappe-control input {
+	border-radius: 999px;
+	border: 1px solid var(--aur-line);
+	transition: box-shadow var(--aur-fast) var(--aur-ease), border-color var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .standard-filter-section .frappe-control input:focus {
+	border-color: transparent;
+	box-shadow: var(--aur-glow);
+}
+
+/* -------------------------------------------------------------------------
+   21. Form canvas
+   -------------------------------------------------------------------------
+   .form-page paints an opaque --card-bg sheet across the entire form. With
+   every section already drawn as its own card, that sheet is what made the
+   middle of the screen read as a flat white rectangle, so it is dropped and
+   the sections float on the mesh instead.
+   ---------------------------------------------------------------------- */
+
+.aurora-on .std-form-layout,
+.aurora-on .std-form-layout > .form-layout,
+.aurora-on .std-form-layout > .form-layout > .form-page,
+.aurora-on .form-layout,
+.aurora-on .form-page,
+.aurora-on .form-tabbed-section,
+.aurora-on .layout-side-section {
+	background: transparent;
+	background-color: transparent;
+	box-shadow: none;
+}
+
+/* Sections get a coloured spine that cycles, so a long form reads as a stack
+   of distinct cards rather than one grey wall. */
+.aurora-on .form-section:nth-of-type(6n + 1) {
+	--cyc-h: 245;
+}
+.aurora-on .form-section:nth-of-type(6n + 2) {
+	--cyc-h: 285;
+}
+.aurora-on .form-section:nth-of-type(6n + 3) {
+	--cyc-h: 325;
+}
+.aurora-on .form-section:nth-of-type(6n + 4) {
+	--cyc-h: 25;
+}
+.aurora-on .form-section:nth-of-type(6n + 5) {
+	--cyc-h: 165;
+}
+.aurora-on .form-section:nth-of-type(6n + 6) {
+	--cyc-h: 200;
+}
+
+/* Only the paint changes here; the size and clipping come from the rule above. */
+.aurora-on .form-section::before {
+	background-image: linear-gradient(90deg, hsl(var(--cyc-h, 245) 84% 64%), hsl(calc(var(--cyc-h, 245) + 30) 84% 60%));
+	opacity: 0.85;
+}
+
+.aurora-on .form-section .section-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding-top: 10px;
+	color: color-mix(in oklab, hsl(var(--cyc-h, 245) 60% 45%) 70%, var(--aur-ink));
+}
+
+.aurora-on .form-section .section-head::before {
+	content: "";
+	width: 7px;
+	height: 7px;
+	border-radius: 999px;
+	background: hsl(var(--cyc-h, 245) 84% 62%);
+	box-shadow: 0 0 0 3px hsl(var(--cyc-h, 245) 84% 62% / 0.18);
+}
+
+.aurora-on .form-column .frappe-control {
+	transition: transform var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .control-label {
+	font-weight: 600;
+	letter-spacing: 0.005em;
+	color: var(--aur-ink-soft);
+}
+
+.aurora-on .frappe-control:focus-within .control-label {
+	color: var(--aur-accent);
+}
+
+/* Read-only values should still look like values, not like disabled inputs. */
+.aurora-on .like-disabled-input {
+	background: color-mix(in oklab, var(--aur-accent) 6%, transparent);
+	border: 1px solid var(--aur-line);
+	border-radius: var(--aur-r-sm);
+}
+
+/* -------------------------------------------------------------------------
+   22. Form sidebar, dashboard and connections
+   ---------------------------------------------------------------------- */
+
+.aurora-on .layout-side-section .form-sidebar,
+.aurora-on .layout-side-section .list-sidebar,
+.aurora-on .form-dashboard-section,
+.aurora-on .form-footer .comment-box {
+	background: linear-gradient(158deg, var(--aur-surface), var(--aur-surface-2));
+	border: 1px solid var(--aur-line);
+	border-radius: var(--aur-r-lg);
+	box-shadow: var(--aur-shadow-sm);
+	padding: 14px 16px;
+	margin-bottom: 14px;
+	transition: border-color var(--aur-mid) var(--aur-ease), box-shadow var(--aur-mid) var(--aur-ease);
+}
+
+.aurora-on .layout-side-section .form-sidebar:hover,
+.aurora-on .form-dashboard-section:hover {
+	border-color: var(--aur-line-strong);
+	box-shadow: var(--aur-shadow);
+}
+
+.aurora-on .form-sidebar .sidebar-label,
+.aurora-on .form-dashboard-section .section-head {
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: color-mix(in oklab, var(--aur-accent) 60%, var(--aur-ink-soft));
+}
+
+.aurora-on .form-sidebar .user-action-link,
+.aurora-on .form-sidebar .sidebar-menu li > a,
+.aurora-on .form-sidebar .form-stats {
+	border-radius: 10px;
+	transition: background var(--aur-fast) var(--aur-ease), padding-left var(--aur-fast) var(--aur-ease),
+		color var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .form-sidebar .user-action-link:hover,
+.aurora-on .form-sidebar .sidebar-menu li > a:hover {
+	background: var(--aur-grad-soft);
+	padding-left: 8px;
+	color: var(--aur-accent);
+}
+
+.aurora-on .form-sidebar svg,
+.aurora-on .form-sidebar .icon {
+	color: var(--aur-accent);
+	stroke: var(--aur-accent);
+}
+
+/* Connections: each linked doctype becomes a chip that lifts on hover. */
+.aurora-on .form-links .document-link {
+	border-radius: var(--aur-r);
+	padding: 8px 10px;
+	transition: background var(--aur-fast) var(--aur-ease), transform var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .form-links .document-link:hover {
+	background: var(--aur-grad-soft);
+	transform: translateY(-2px);
+}
+
+/* Only the count itself becomes a pill; .document-link-badge is the row that
+   wraps the link, not the number. */
+.aurora-on .document-link .count,
+.aurora-on .badge-link .count {
+	border-radius: 999px;
+	background: var(--aur-grad-cool);
+	color: #fff;
+	font-weight: 650;
+	padding: 1px 9px;
+}
+
+.aurora-on .form-link-title {
+	font-weight: 650;
+	color: var(--aur-ink);
+}
+
+/* -------------------------------------------------------------------------
+   23. Timeline and comments
+   ---------------------------------------------------------------------- */
+
+.aurora-on .new-timeline .timeline-item .timeline-content {
+	border-radius: var(--aur-r);
+	border: 1px solid var(--aur-line);
+	background: var(--aur-surface);
+	box-shadow: var(--aur-shadow-sm);
+	transition: border-color var(--aur-fast) var(--aur-ease), transform var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .new-timeline .timeline-item:hover .timeline-content {
+	border-color: var(--aur-line-strong);
+	transform: translateX(2px);
+}
+
+.aurora-on .new-timeline .timeline-dot,
+.aurora-on .new-timeline .timeline-badge {
+	background: var(--aur-grad);
+	border: 2px solid var(--aur-sheet);
+	box-shadow: 0 0 0 3px color-mix(in oklab, var(--aur-accent) 22%, transparent);
+}
+
+.aurora-on .new-timeline::before,
+.aurora-on .timeline-items::before {
+	background: linear-gradient(180deg, var(--aur-line-strong), transparent);
+}
+
+/* -------------------------------------------------------------------------
+   24. Child tables and the report grid
+   ---------------------------------------------------------------------- */
+
+.aurora-on .form-grid,
+.aurora-on .grid-body {
+	border-color: var(--aur-line);
+}
+
+.aurora-on .form-grid {
+	border-radius: var(--aur-r);
+}
+
+.aurora-on .form-grid {
+	overflow: hidden;
+	box-shadow: var(--aur-shadow-sm);
+}
+
+.aurora-on .grid-heading-row {
+	background: linear-gradient(180deg, color-mix(in oklab, var(--aur-accent) 13%, transparent), transparent),
+		var(--aur-sheet);
+	border-bottom: 1px solid var(--aur-line-strong);
+	font-weight: 650;
+	letter-spacing: 0.02em;
+}
+
+/* The body cannot clip — link fields in its rows have to open past it — so a
+   radius here only draws a curve its own opaque bands then cut square across.
+   The card edge is .form-grid's job, and that one does clip. */
+.aurora-on .grid-body {
+	border-radius: 0;
+}
+
+.aurora-on .grid-row {
+	transition: background var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .grid-body .grid-row:nth-child(even) {
+	background: color-mix(in oklab, var(--aur-accent) 3%, transparent);
+}
+
+.aurora-on .grid-body .grid-row:hover {
+	background: color-mix(in oklab, var(--aur-accent) 10%, transparent);
+}
+
+.aurora-on .grid-row .row-index .row-check + span {
+	color: var(--aur-accent);
+	font-weight: 650;
+}
+
+.aurora-on .datatable .dt-header,
+.aurora-on .datatable .dt-row-header {
+	background: linear-gradient(180deg, color-mix(in oklab, var(--aur-accent) 13%, transparent), transparent),
+		var(--aur-sheet);
+}
+
+.aurora-on .datatable .dt-cell--header .dt-cell__content {
+	font-weight: 650;
+	color: color-mix(in oklab, var(--aur-accent) 55%, var(--aur-ink));
+}
+
+.aurora-on .datatable .dt-row:hover .dt-cell {
+	background: color-mix(in oklab, var(--aur-accent) 8%, transparent);
+}
+
+.aurora-on .datatable .dt-cell--focus {
+	box-shadow: inset 0 0 0 2px var(--aur-accent);
+	border-radius: 4px;
+}
+
+.aurora-on .datatable .dt-scrollable {
+	background: transparent;
+}
+
+/* -------------------------------------------------------------------------
+   25. Feedback — alerts, progress, avatars, controls
+   ---------------------------------------------------------------------- */
+
+.aurora-on .desk-alert,
+.aurora-on .es-alert {
+	border-radius: var(--aur-r);
+	border: 1px solid var(--aur-line);
+	box-shadow: var(--aur-shadow-lg);
+	backdrop-filter: blur(16px) saturate(150%);
+	animation: aur-mega-in var(--aur-mid) var(--aur-ease-back) both;
+}
+
+.aurora-on .desk-alert::after {
+	content: "";
+	position: absolute;
+	inset: auto 0 0 0;
+	height: 3px;
+	background: var(--aur-grad);
+	border-radius: 999px;
+}
+
+.aurora-on .progress {
+	background: color-mix(in oklab, var(--aur-accent) 12%, transparent);
+	border-radius: 999px;
+	overflow: hidden;
+}
+
+.aurora-on .progress-bar {
+	background: var(--aur-grad);
+	border-radius: 999px;
+	position: relative;
+	overflow: hidden;
+}
+
+.aurora-on .progress-bar::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+	animation: aur-sweep 1.6s linear infinite;
+}
+
+@keyframes aur-sweep {
+	from {
+		transform: translateX(-100%);
+	}
+	to {
+		transform: translateX(100%);
+	}
+}
+
+.aurora-on .avatar .avatar-frame {
+	box-shadow: 0 0 0 2px var(--aur-sheet), 0 0 0 3.5px color-mix(in oklab, var(--aur-accent) 45%, transparent);
+	transition: transform var(--aur-fast) var(--aur-ease-back), box-shadow var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .avatar:hover .avatar-frame {
+	transform: scale(1.08);
+	box-shadow: 0 0 0 2px var(--aur-sheet), 0 0 0 4px var(--aur-accent);
+}
+
+.aurora-on input[type="checkbox"],
+.aurora-on input[type="radio"],
+.aurora-on input[type="range"],
+.aurora-on progress {
+	accent-color: var(--aur-accent);
+}
+
+.aurora-on .popover,
+.aurora-on .tooltip-inner {
+	border-radius: var(--aur-r-sm);
+	border: 1px solid var(--aur-line);
+	box-shadow: var(--aur-shadow-lg);
+	backdrop-filter: blur(12px);
+}
+
+/* Empty states read as an invitation rather than an error. */
+.aurora-on .no-result,
+.aurora-on .msg-box {
+	border-radius: var(--aur-r-lg);
+	background: radial-gradient(120% 90% at 50% 0%, color-mix(in oklab, var(--aur-accent) 12%, transparent), transparent 70%);
+	padding: 34px 20px;
+}
+
+.aurora-on .no-result img,
+.aurora-on .msg-box img {
+	filter: drop-shadow(0 12px 24px color-mix(in oklab, var(--aur-accent) 35%, transparent));
+}
+
+/* -------------------------------------------------------------------------
+   26. The left rail
+   -------------------------------------------------------------------------
+   The workspace tree is the one surface that is on screen all day, so it
+   carries the most weight here. Every row gets an icon chip tinted with its
+   own hue, nested groups get a connector down the gutter, and the selected
+   row is filled with its hue rather than a single house colour.
+   ---------------------------------------------------------------------- */
+
+.aurora-on .body-sidebar,
+.aurora-on .body-sidebar-container {
+	background: linear-gradient(
+			180deg,
+			color-mix(in oklab, var(--aur-accent) 9%, transparent),
+			transparent 42%,
+			color-mix(in oklab, var(--aur-accent) 6%, transparent)
+		),
+		linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(246, 248, 255, 0.86));
+	border-right: none;
+	box-shadow: inset -1px 0 0 var(--aur-line), 10px 0 30px -26px rgba(49, 46, 129, 0.75);
+}
+
+[data-theme="dark"].aurora-on .body-sidebar,
+[data-theme="dark"].aurora-on .body-sidebar-container {
+	background: linear-gradient(
+			180deg,
+			color-mix(in oklab, var(--aur-accent) 16%, transparent),
+			transparent 42%,
+			color-mix(in oklab, var(--aur-accent) 10%, transparent)
+		),
+		linear-gradient(180deg, rgba(24, 26, 40, 0.94), rgba(17, 19, 31, 0.9));
+}
+
+/* The workspace name reads as a title, not as another row. */
+.aurora-on .body-sidebar .sidebar-header {
+	border-bottom: 1px solid var(--aur-line);
+	margin-bottom: 6px;
+	padding-bottom: 8px;
+}
+
+.aurora-on .title-container .header-title {
+	font-size: 1.06rem;
+	font-weight: 780;
+	letter-spacing: -0.02em;
+	background: var(--aur-grad);
+	background-size: 200% 100%;
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	animation: aur-hue-slide 9s linear infinite;
+}
+
+@keyframes aur-hue-slide {
+	to {
+		background-position: 200% 0;
+	}
+}
+
+.aurora-on .body-sidebar .sidebar-header .drop-icon svg {
+	color: var(--aur-accent);
+	stroke: var(--aur-accent);
+}
+
+/* --- rows ------------------------------------------------------------- */
+
+.aurora-on .body-sidebar .standard-sidebar-item {
+	position: relative;
+	margin: 1px 5px;
+	padding: 4px 6px;
+	border-radius: 11px;
+	overflow: hidden;
+	transition: background var(--aur-fast) var(--aur-ease), transform var(--aur-fast) var(--aur-ease),
+		box-shadow var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .body-sidebar .item-anchor {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.aurora-on .body-sidebar .sidebar-item-label {
+	font-weight: 560;
+	letter-spacing: 0.004em;
+}
+
+/* A hairline that grows out of the left edge on hover. */
+.aurora-on .body-sidebar .standard-sidebar-item::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 50%;
+	width: 3px;
+	height: 0;
+	border-radius: 999px;
+	background: hsl(var(--cyc-h, 245) 84% 60%);
+	transform: translateY(-50%);
+	transition: height var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .body-sidebar .standard-sidebar-item:hover {
+	background: linear-gradient(
+		100deg,
+		hsl(var(--cyc-h, 245) 90% 62% / 0.16),
+		hsl(calc(var(--cyc-h, 245) + 40) 90% 62% / 0.07)
+	);
+	transform: translateX(3px);
+}
+
+.aurora-on .body-sidebar .standard-sidebar-item:hover::before {
+	height: 62%;
+}
+
+/* --- icon chips ------------------------------------------------------- */
+
+/* The desk hides these entirely while the dock rail is up, on the grounds
+   that the rail already carries icons. The tree is a wall of text without
+   them, so that rule is outranked here. */
+.aurora-on body .body-sidebar .standard-sidebar-item .item-anchor .sidebar-item-icon {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border-radius: 8px;
+	color: hsl(var(--cyc-h, 245) 72% 44%);
+	background: linear-gradient(
+		150deg,
+		hsl(var(--cyc-h, 245) 90% 62% / 0.2),
+		hsl(calc(var(--cyc-h, 245) + 45) 90% 62% / 0.1)
+	);
+	box-shadow: inset 0 0 0 1px hsl(var(--cyc-h, 245) 80% 60% / 0.25);
+	transition: transform var(--aur-mid) var(--aur-ease-back), background var(--aur-fast) var(--aur-ease),
+		box-shadow var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .body-sidebar .sidebar-item-icon svg {
+	width: 14px;
+	height: 14px;
+	color: currentColor;
+	stroke: currentColor;
+}
+
+.aurora-on .body-sidebar .standard-sidebar-item:hover .sidebar-item-icon {
+	transform: scale(1.12) rotate(-7deg);
+	background: linear-gradient(
+		150deg,
+		hsl(var(--cyc-h, 245) 90% 60% / 0.34),
+		hsl(calc(var(--cyc-h, 245) + 45) 90% 60% / 0.2)
+	);
+	box-shadow: inset 0 0 0 1px hsl(var(--cyc-h, 245) 80% 58% / 0.45),
+		0 6px 14px -8px hsl(var(--cyc-h, 245) 80% 55% / 0.9);
+}
+
+/* --- the selected row ------------------------------------------------- */
+
+.aurora-on .body-sidebar .standard-sidebar-item.selected,
+.aurora-on .body-sidebar .standard-sidebar-item.active-sidebar {
+	background: linear-gradient(
+		112deg,
+		hsl(var(--cyc-h, 245) 82% 60%),
+		hsl(calc(var(--cyc-h, 245) + 38) 82% 56%)
+	);
+	transform: none;
+	box-shadow: 0 12px 24px -14px hsl(var(--cyc-h, 245) 82% 55% / 0.95),
+		inset 0 1px 0 rgba(255, 255, 255, 0.32);
+}
+
+.aurora-on .body-sidebar .standard-sidebar-item.selected::before,
+.aurora-on .body-sidebar .standard-sidebar-item.active-sidebar::before {
+	height: 62%;
+	background: rgba(255, 255, 255, 0.92);
+}
+
+.aurora-on .body-sidebar .standard-sidebar-item.selected .sidebar-item-icon,
+.aurora-on .body-sidebar .standard-sidebar-item.active-sidebar .sidebar-item-icon {
+	color: #fff;
+	background: rgba(255, 255, 255, 0.22);
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+/* A highlight that crosses the selected row once, on arrival. */
+.aurora-on .body-sidebar .standard-sidebar-item.selected::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 40%;
+	background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+	transform: skewX(-18deg);
+	animation: aur-side-sheen 2.6s var(--aur-ease) 0.2s;
+	pointer-events: none;
+}
+
+@keyframes aur-side-sheen {
+	from {
+		left: -50%;
+	}
+	to {
+		left: 130%;
+	}
+}
+
+/* --- nested groups ---------------------------------------------------- */
+
+/* The desk already draws this connector as a border-left on the nested
+   container, which is the only thing guaranteed to line up with the indent
+   it belongs to. Painting it as a background keeps that exact anchor while
+   allowing it to fade out down the group. */
+.aurora-on .body-sidebar .indent + .nested-container {
+	border-left: none;
+	background-image: linear-gradient(
+		180deg,
+		color-mix(in oklab, var(--aur-accent) 45%, transparent),
+		color-mix(in oklab, var(--aur-accent) 7%, transparent)
+	);
+	background-size: 2px calc(100% - 8px);
+	background-position: left top;
+	background-repeat: no-repeat;
+}
+
+.aurora-on body .body-sidebar .sidebar-child-item .standard-sidebar-item .item-anchor .sidebar-item-icon {
+	width: 19px;
+	height: 19px;
+	border-radius: 7px;
+}
+
+.aurora-on .body-sidebar .sidebar-child-item .sidebar-item-icon svg {
+	width: 12px;
+	height: 12px;
+}
+
+/* --- entrance --------------------------------------------------------- */
+
+.aurora-on .body-sidebar .sidebar-items > .sidebar-item-container {
+	animation: aur-side-in 0.45s var(--aur-ease) both;
+	animation-delay: var(--aur-stagger, 0ms);
+}
+
+@keyframes aur-side-in {
+	from {
+		opacity: 0;
+		transform: translateX(-10px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+/* --- scrollbar -------------------------------------------------------- */
+
+.aurora-on .body-sidebar ::-webkit-scrollbar-thumb,
+.aurora-on .body-sidebar-container ::-webkit-scrollbar-thumb {
+	background: color-mix(in oklab, var(--aur-accent) 35%, transparent);
+	border-radius: 999px;
+}
+
+/* --- dock rail -------------------------------------------------------- */
+
+.aurora-on .dock {
+	position: relative;
+	overflow: hidden;
+}
+
+/* A slow vertical wash so the rail is never a flat strip of colour. */
+.aurora-on .dock::after {
+	content: "";
+	position: absolute;
+	inset: -30% -50%;
+	background: conic-gradient(
+		from 0deg,
+		transparent,
+		color-mix(in oklab, var(--aur-accent) 22%, transparent),
+		transparent 55%
+	);
+	animation: aur-dock-turn 18s linear infinite;
+	pointer-events: none;
+	z-index: 0;
+}
+
+@keyframes aur-dock-turn {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.aurora-on .dock > * {
+	position: relative;
+	z-index: 1;
+}
+
+.aurora-on .dock-item.active {
+	background: linear-gradient(
+		135deg,
+		hsl(var(--cyc-h, 245) 82% 60%),
+		hsl(calc(var(--cyc-h, 245) + 38) 82% 56%)
+	);
+	box-shadow: 0 10px 22px -10px hsl(var(--cyc-h, 245) 82% 55% / 0.95),
+		0 0 0 3px hsl(var(--cyc-h, 245) 82% 60% / 0.18);
+}
+
+/* Each rail icon sits on a tile in its own hue. The glyph is taken well
+   below mid-lightness because the greens and cyans were washing out against
+   a pale rail at the lightness the rest of the theme uses. */
+.aurora-on .dock .dock-items .dock-item {
+	background: linear-gradient(
+		150deg,
+		hsl(var(--cyc-h, 245) 88% 60% / 0.16),
+		hsl(calc(var(--cyc-h, 245) + 45) 88% 60% / 0.07)
+	);
+	box-shadow: inset 0 0 0 1px hsl(var(--cyc-h, 245) 80% 58% / 0.22);
+}
+
+.aurora-on .dock .dock-items .dock-item > svg,
+.aurora-on .dock .dock-items .dock-item .sidebar-item-icon > svg {
+	color: hsl(var(--cyc-h, 245) 74% 43%);
+	stroke: hsl(var(--cyc-h, 245) 74% 43%);
+	stroke-width: 2.1;
+}
+
+.aurora-on .dock .dock-items .dock-item:hover {
+	background: linear-gradient(
+		150deg,
+		hsl(var(--cyc-h, 245) 88% 58% / 0.32),
+		hsl(calc(var(--cyc-h, 245) + 45) 88% 58% / 0.16)
+	);
+	box-shadow: inset 0 0 0 1px hsl(var(--cyc-h, 245) 80% 55% / 0.45),
+		0 8px 18px -10px hsl(var(--cyc-h, 245) 80% 52% / 0.9);
+}
+
+.aurora-on .dock .dock-items .dock-item.active > svg,
+.aurora-on .dock .dock-items .dock-item.active .sidebar-item-icon > svg {
+	color: #fff;
+	stroke: #fff;
+}
+
+[data-theme="dark"].aurora-on .dock .dock-items .dock-item > svg,
+[data-theme="dark"].aurora-on .dock .dock-items .dock-item .sidebar-item-icon > svg {
+	color: hsl(var(--cyc-h, 245) 80% 70%);
+	stroke: hsl(var(--cyc-h, 245) 80% 70%);
+}
+
+/* -------------------------------------------------------------------------
+   27. Print — drop the theatrics, keep the document
+   ---------------------------------------------------------------------- */
+
+@media print {
+	.aur-bar,
+	.aur-mega,
+	.aur-scrim,
+	.aur-pop,
+	.aur-select-pop,
+	.aur-glow {
+		display: none !important;
+	}
+
+	.aurora-on body::before {
+		display: none !important;
+	}
+
+	.aurora-on *,
+	.aurora-on *::before,
+	.aurora-on *::after {
+		box-shadow: none !important;
+		backdrop-filter: none !important;
+		animation: none !important;
+	}
+}
+
+/* -------------------------------------------------------------------------
+   28. Responsive + motion preferences
+   ---------------------------------------------------------------------- */
+
+@media (max-width: 991px) {
+	.aur-search {
+		width: 140px;
+	}
+
+	.aur-search:focus {
+		width: 200px;
+	}
+
+	.aur-mega-cols {
+		grid-template-columns: 1fr;
+	}
+
+	.aur-mega-groups {
+		display: flex;
+		gap: 6px;
+		overflow-x: auto;
+		border-right: none;
+		border-bottom: 1px solid var(--aur-line);
+		padding: 10px;
+	}
+
+	.aur-group {
+		white-space: nowrap;
+	}
+}
+
+@media (max-width: 767px) {
+	.aur-brand span:not(.aur-brand-dot) {
+		display: none;
+	}
+
+	.aur-search-kbd {
+		display: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.aurora-on *,
+	.aurora-on *::before,
+	.aurora-on *::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+	}
+
+	.aurora-on .aur-reveal {
+		opacity: 1;
+		transform: none;
+	}
+}

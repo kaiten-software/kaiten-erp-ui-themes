@@ -1,0 +1,2716 @@
+/* =========================================================================
+   Kaiten ERP UI Themes — sticky mega menu + desk micro-interactions
+   -------------------------------------------------------------------------
+   Builds a command bar under the stock navbar exposing every workspace,
+   doctype, report and admin tool the user can reach, replaces the native
+   select popup with a styled listbox, and layers hover, click and scroll
+   motion onto the desk.
+
+   Icons come from the Lucide sprite Frappe already inlines into the page, so
+   every entry gets a relevant glyph without shipping any assets.
+   ========================================================================= */
+
+(function () {
+	if (window.__kaitenUI) return;
+	window.__kaitenUI = true;
+
+	var KEY = {
+		enabled: "kaiten_ui_enabled",
+		accent: "kaiten_ui_accent",
+		density: "kaiten_ui_density",
+		pins: "kaiten_ui_pins",
+		pinGroups: "kaiten_ui_pin_groups",
+		recent: "kaiten_ui_recent",
+	};
+
+	// Always present, never deleted: anything pinned without an answer lands here.
+	var DEFAULT_PIN_GROUP = { id: "default", label: "Pinned", icon: "star", hue: 42 };
+
+	// Its own drag type, so filing a pin and reordering shelves never collide.
+	var SHELF_MIME = "application/x-kaiten-shelf";
+
+	// Offered for shelves; anything missing from the desk's sprite is dropped.
+	var SHELF_ICONS = [
+		"folder", "star", "bookmark", "heart", "flag", "target", "rocket", "zap",
+		"sun", "moon", "cloud", "flame", "leaf", "gem", "crown", "award",
+		"briefcase", "building-2", "factory", "store", "truck", "package",
+		"users", "user-check", "handshake", "phone", "mail", "calendar",
+		"clipboard-list", "file-text", "receipt", "wallet", "credit-card", "coins",
+		"chart-line", "chart-pie", "activity", "gauge", "settings-2", "wrench",
+		"shield", "lock", "globe", "map-pin", "compass", "lightbulb",
+	];
+
+	var ACCENTS = [
+		{ id: "aurora", label: "Aurora", swatch: "linear-gradient(135deg,#6366f1,#8b5cf6,#ec4899)" },
+		{ id: "sunset", label: "Sunset", swatch: "linear-gradient(135deg,#f43f5e,#fb7185,#f59e0b)" },
+		{ id: "ocean", label: "Ocean", swatch: "linear-gradient(135deg,#06b6d4,#0ea5e9,#6366f1)" },
+		{ id: "forest", label: "Forest", swatch: "linear-gradient(135deg,#10b981,#34d399,#84cc16)" },
+		{ id: "grape", label: "Grape", swatch: "linear-gradient(135deg,#a855f7,#d946ef,#ec4899)" },
+	];
+
+	var TABS = [
+		{ id: "pinned", label: "Pinned", icon: "star" },
+		{ id: "workspaces", label: "Workspaces", icon: "layers" },
+		{ id: "modules", label: "Modules", icon: "grid-3x3" },
+		{ id: "create", label: "Create", icon: "plus" },
+		{ id: "insights", label: "Insights", icon: "chart-column" },
+		{ id: "tools", label: "Tools", icon: "settings" },
+		{ id: "recent", label: "Recent", icon: "history" },
+	];
+
+	/* Most specific first — the first match wins. */
+	var ICON_RULES = [
+		[/invoice|billing/, "receipt-text"],
+		[/credit note|debit note|refund/, "receipt"],
+		[/payment|remittance/, "hand-coins"],
+		[/journal|ledger|gl entry/, "book-open"],
+		[/budget/, "piggy-bank"],
+		[/tax|gst|hsn|tds|tcs|cess/, "percent"],
+		[/currency|exchange|pricing|price list|discount/, "circle-dollar-sign"],
+		[/bank|chart of accounts|accounting|account/, "landmark"],
+		[/cash|cheque|banknote/, "banknote"],
+		[/fiscal year|period|closing|opening/, "calendar-days"],
+		[/cost center|dimension|allocation/, "split"],
+		[/subscription|recurring|auto repeat/, "repeat"],
+		[/loyalty|coupon|promotion|gift|reward/, "gift"],
+		[/warehouse/, "warehouse"],
+		[/stock|inventory|bin|reposting|reconcil/, "boxes"],
+		[/item|product|material|bundle/, "package"],
+		[/delivery|shipment|shipping|dispatch|packing/, "truck"],
+		[/purchase|supplier|vendor|procurement|rfq|request for quotation/, "shopping-cart"],
+		[/sales|selling|quotation|pos /, "store"],
+		[/customer|client|party/, "users"],
+		[/lead|opportunity|campaign|prospect|deal/, "target"],
+		[/contact|salutation/, "contact"],
+		[/address|territory|country|region|geo|location/, "map-pin"],
+		[/attendance|shift|checkin|check-in/, "clock"],
+		[/leave|holiday/, "calendar"],
+		[/salary|payroll|gratuity|payslip|compensation/, "banknote"],
+		[/appraisal|performance|goal|award|kra/, "award"],
+		[/job|recruit|applicant|interview|offer|onboarding/, "briefcase"],
+		[/employee|staff|human resource|training/, "users"],
+		[/asset|equipment|depreciation/, "building-2"],
+		[/maintenance|repair|servic/, "wrench"],
+		[/project/, "folder-kanban"],
+		[/task|todo|to do|checklist/, "list-checks"],
+		[/timesheet|time log|duration/, "clock"],
+		[/manufactur|work order|bom|production|operation|workstation|routing|job card/, "factory"],
+		[/quality|inspection|review/, "badge-check"],
+		[/dashboard|chart|graph/, "chart-pie"],
+		[/report|statement|analytic|summary|register/, "chart-column"],
+		[/share|equity|shareholder|dividend/, "chart-line"],
+		[/setting|config|preference|default/, "settings"],
+		[/role|permission|access|security/, "shield"],
+		[/user|profile|session/, "user"],
+		[/email|newsletter|mail|inbox/, "mail"],
+		[/notification|alert|reminder/, "bell"],
+		[/print|letter head|format|stationery/, "printer"],
+		[/website|web page|web form|blog|portal|homepage|seo/, "globe"],
+		[/attachment|folder|version/, "files"],
+		[/log|error|exception|trace/, "activity"],
+		[/scheduled|cron|queue|background|history/, "history"],
+		[/workflow|approval|transition/, "workflow"],
+		[/webhook|api|integration|connected app|oauth|token|social login/, "webhook"],
+		[/import|export|migration|spreadsheet|csv/, "file-spreadsheet"],
+		[/naming|series|sequence|abbreviation/, "tag"],
+		[/company|organisation|organization|branch|department|division/, "building"],
+		[/uom|unit|measure|weight|dimension/, "ruler"],
+		[/serial|batch|barcode|scan/, "barcode"],
+		[/terms|condition|agreement|contract|policy/, "scroll-text"],
+		[/template|letter/, "files"],
+		[/support|issue|ticket|warranty|complaint/, "ticket"],
+		[/call|telephony|phone|voice/, "phone-call"],
+		[/comment|communication|message|chat|thread/, "message-square"],
+		[/vehicle|transport|logistic|route/, "truck"],
+		[/transaction|transfer|bulk|entry/, "arrow-left-right"],
+		[/type|category|group|class|tag/, "tags"],
+		[/tool|utility|bench/, "hammer"],
+		[/file|document|note/, "file-text"],
+	];
+
+	var MODULE_ICONS = {
+		Accounts: "landmark",
+		Assets: "building-2",
+		Automation: "workflow",
+		"Bulk Transaction": "layers",
+		Buying: "shopping-cart",
+		Communication: "message-square",
+		Contacts: "contact",
+		CRM: "target",
+		Core: "database",
+		Custom: "puzzle",
+		Desk: "layers",
+		EDI: "arrow-left-right",
+		Email: "mail",
+		"ERPNext Integrations": "plug",
+		Geo: "earth",
+		"GST India": "percent",
+		HR: "users",
+		Integrations: "plug",
+		Maintenance: "wrench",
+		Manufacturing: "factory",
+		Payroll: "banknote",
+		Portal: "globe",
+		Printing: "printer",
+		Projects: "folder-kanban",
+		Quality: "badge-check",
+		Regional: "map-pin",
+		Selling: "store",
+		Setup: "settings",
+		Social: "users",
+		Stock: "boxes",
+		Subcontracting: "factory",
+		Subscription: "repeat",
+		Support: "headset",
+		Telephony: "phone-call",
+		Utilities: "wrench",
+		Website: "globe",
+		Workflow: "workflow",
+	};
+
+	var MAX_RECENT = 24;
+	var SMALL_GROUP = 10;
+
+	var root = document.documentElement;
+	var el = {};
+	var state = { tabs: {}, activeTab: null, index: [], cursor: -1, searching: false, groups: [], megaQuery: "" };
+	var hover = { timer: null, tabTimer: null, vx: 0, x: 0, t: 0 };
+
+	/* ---------------------------------------------------------------------
+	   Storage
+	   ------------------------------------------------------------------ */
+
+	function read(key, fallback) {
+		try {
+			var raw = localStorage.getItem(key);
+			var value = raw ? JSON.parse(raw) : fallback;
+			return Array.isArray(fallback) && !Array.isArray(value) ? fallback : value;
+		} catch (e) {
+			return fallback;
+		}
+	}
+
+	function write(key, value) {
+		try {
+			localStorage.setItem(key, JSON.stringify(value));
+		} catch (e) {}
+	}
+
+	function adopt(from, to) {
+		try {
+			if (localStorage.getItem(to) != null) return;
+			var value = localStorage.getItem(from);
+			if (value != null) localStorage.setItem(to, value);
+		} catch (e) {}
+	}
+
+	function adoptLegacy() {
+		adopt("aurora_ui_enabled", KEY.enabled);
+		adopt("aurora_ui_accent", KEY.accent);
+		adopt("aurora_ui_density", KEY.density);
+		adopt("aurora_ui_pins", KEY.pins);
+		adopt("aurora_ui_pin_groups", KEY.pinGroups);
+		adopt("aurora_ui_recent", KEY.recent);
+		adopt("aurora:accent", KEY.accent);
+	}
+
+	/* ---------------------------------------------------------------------
+	   Helpers
+	   ------------------------------------------------------------------ */
+
+	function make(tag, attrs, kids) {
+		var node = document.createElement(tag);
+		attrs = attrs || {};
+		Object.keys(attrs).forEach(function (key) {
+			if (key === "class") node.className = attrs[key];
+			else if (key === "text") node.textContent = attrs[key];
+			else if (key === "style") node.style.cssText = attrs[key];
+			else if (key.indexOf("--") === 0) node.style.setProperty(key, attrs[key]);
+			else node.setAttribute(key, attrs[key]);
+		});
+		(kids || []).forEach(function (kid) {
+			if (kid) node.appendChild(kid);
+		});
+		return node;
+	}
+
+	function hue(text) {
+		var sum = 0;
+		text = String(text || "");
+		for (var i = 0; i < text.length; i++) sum = (sum * 31 + text.charCodeAt(i)) % 100000;
+		return sum % 360;
+	}
+
+	function titleize(text) {
+		return String(text || "")
+			.replace(/[-_]/g, " ")
+			.replace(/\b\w/g, function (c) {
+				return c.toUpperCase();
+			});
+	}
+
+	function slugify(name) {
+		try {
+			if (window.frappe && frappe.router && frappe.router.slug) return frappe.router.slug(name);
+		} catch (e) {}
+		return String(name).toLowerCase().replace(/ /g, "-");
+	}
+
+	function canCreate(doctype) {
+		try {
+			return (frappe.boot.user.can_create || []).indexOf(doctype) !== -1;
+		} catch (e) {
+			return false;
+		}
+	}
+
+	function clamp(value, min, max) {
+		return Math.min(Math.max(value, min), Math.max(min, max));
+	}
+
+	/* ---------------------------------------------------------------------
+	   Icons — resolved against the sprite already on the page
+	   ------------------------------------------------------------------ */
+
+	var iconCache = {};
+
+	function spriteHas(name) {
+		if (!name) return false;
+		if (!(name in iconCache)) iconCache[name] = !!document.getElementById("icon-" + name);
+		return iconCache[name];
+	}
+
+	function guessIcon(label, context) {
+		var text = (String(label || "") + " " + String(context || "")).toLowerCase();
+		for (var i = 0; i < ICON_RULES.length; i++) {
+			if (ICON_RULES[i][0].test(text)) return ICON_RULES[i][1];
+		}
+		return "file-text";
+	}
+
+	function resolveIcon(preferred, label, context) {
+		if (spriteHas(preferred)) return preferred;
+		var guess = guessIcon(label, context);
+		return spriteHas(guess) ? guess : "file-text";
+	}
+
+	function iconNode(name, extraClass) {
+		var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		svg.setAttribute("class", "aur-glyph" + (extraClass ? " " + extraClass : ""));
+		svg.setAttribute("viewBox", "0 0 24 24");
+		svg.setAttribute("fill", "none");
+		svg.setAttribute("stroke", "currentColor");
+		svg.setAttribute("aria-hidden", "true");
+
+		var use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+		use.setAttribute("href", "#icon-" + name);
+		svg.appendChild(use);
+		return svg;
+	}
+
+	/* ---------------------------------------------------------------------
+	   Routing
+	   ------------------------------------------------------------------ */
+
+	function prefix() {
+		return location.pathname.split("/")[1] === "desk" ? "/desk" : "/app";
+	}
+
+	function hrefFor(desc) {
+		var route = desc.route || [];
+		if (desc.act === "new") return prefix() + "/" + slugify(desc.doctype) + "/new";
+		if (route[0] === "List") return prefix() + "/" + slugify(route[1]);
+		if (route[0] === "Form") return prefix() + "/" + slugify(route[1]) + "/" + encodeURIComponent(route[2]);
+		if (route[0] === "query-report") return prefix() + "/query-report/" + encodeURIComponent(route[1]);
+		return prefix() + "/" + route.map(slugify).join("/");
+	}
+
+	function runItem(desc) {
+		if (!desc) return;
+		try {
+			if (desc.act === "new") frappe.new_doc(desc.doctype);
+			else frappe.set_route.apply(frappe, desc.route);
+		} catch (e) {
+			window.location.href = hrefFor(desc);
+		}
+		closeMega();
+	}
+
+	function doctypeItem(dt, module) {
+		return {
+			id: "list:" + dt.name,
+			label: dt.label,
+			sub: dt.single ? "Settings" : "List",
+			hue: hue(dt.name),
+			icon: resolveIcon(dt.icon, dt.label, module),
+			search: dt.label + " " + dt.name,
+			act: "route",
+			route: dt.single ? ["Form", dt.name, dt.name] : ["List", dt.name],
+			extra: !dt.single && canCreate(dt.name) ? { label: "New", act: "new", doctype: dt.name } : null,
+		};
+	}
+
+	/* ---------------------------------------------------------------------
+	   Pins and recents
+	   ------------------------------------------------------------------ */
+
+	function pins() {
+		return read(KEY.pins, []);
+	}
+
+	function isPinned(id) {
+		return pins().some(function (item) {
+			return item.id === id;
+		});
+	}
+
+	function strip(item) {
+		return {
+			id: item.id,
+			label: item.label,
+			sub: item.sub,
+			hue: item.hue,
+			icon: item.icon,
+			act: item.act,
+			route: item.route,
+			doctype: item.doctype,
+		};
+	}
+
+	/* ---------------------------------------------------------------------
+	   Pin groups — user-made shelves inside the Pinned tab
+	   ------------------------------------------------------------------ */
+
+	var MAX_SHELF_DEPTH = 1;
+
+	/* Shelves are stored flat with a parent reference; this is the one place
+	   that turns them into display order. Rebuilding the tree and walking it
+	   guarantees a child always follows its parent, whatever order the entries
+	   happen to be saved in. A parent that no longer exists, or nesting deeper
+	   than the limit, drops the shelf back to the root. */
+	function normalizeShelves(list) {
+		var seen = {};
+		var clean = (list || []).filter(function (group) {
+			if (!group || !group.id || group.id === DEFAULT_PIN_GROUP.id || seen[group.id]) return false;
+			seen[group.id] = true;
+			return true;
+		});
+
+		var children = {};
+		clean.forEach(function (group) {
+			var parent = group.parent && seen[group.parent] && group.parent !== group.id ? group.parent : "";
+			(children[parent] = children[parent] || []).push(group);
+		});
+
+		var out = [];
+		var walk = function (parent, depth) {
+			(children[parent] || []).forEach(function (group) {
+				var copy = Object.assign({}, group);
+				copy.parent = depth ? parent : "";
+				copy.depth = depth;
+				out.push(copy);
+
+				// Anything below the limit is promoted rather than dropped.
+				if (depth + 1 > MAX_SHELF_DEPTH) walk(group.id, depth);
+				else walk(group.id, depth + 1);
+			});
+		};
+
+		walk("", 0);
+		return out;
+	}
+
+	function customPinGroups() {
+		return normalizeShelves(read(KEY.pinGroups, []));
+	}
+
+	function pinGroups() {
+		return [Object.assign({ depth: 0 }, DEFAULT_PIN_GROUP)].concat(customPinGroups());
+	}
+
+	function shelfIndex(list, id) {
+		for (var i = 0; i < list.length; i++) {
+			if (list[i].id === id) return i;
+		}
+		return -1;
+	}
+
+	/* A shelf and everything nested under it move as one block. */
+	function subtreeLength(list, at) {
+		var depth = list[at].depth;
+		var end = at + 1;
+		while (end < list.length && list[end].depth > depth) end += 1;
+		return end - at;
+	}
+
+	/* Nesting works like an outliner: a shelf tucks under the nearest row above
+	   it that sits at its own level. */
+	function indentTarget(list, at) {
+		if (at < 1) return null;
+
+		var self = list[at];
+		for (var i = at - 1; i >= 0; i--) {
+			if (list[i].depth === self.depth) return list[i];
+			if (list[i].depth < self.depth) break;
+		}
+		return null;
+	}
+
+	// How many levels the subtree adds below its own row.
+	function subtreeHeight(list, at) {
+		var span = subtreeLength(list, at);
+		var height = 0;
+		for (var i = at; i < at + span; i++) height = Math.max(height, list[i].depth - list[at].depth);
+		return height;
+	}
+
+	function canIndent(id) {
+		var list = customPinGroups();
+		var at = shelfIndex(list, id);
+		if (at < 0) return false;
+
+		var parent = indentTarget(list, at);
+		if (!parent) return false;
+
+		// Nothing carried along may end up deeper than the limit allows.
+		return parent.depth + 1 + subtreeHeight(list, at) <= MAX_SHELF_DEPTH;
+	}
+
+	function indentShelf(id) {
+		if (!canIndent(id)) return;
+
+		var list = customPinGroups();
+		var at = shelfIndex(list, id);
+		list[at].parent = indentTarget(list, at).id;
+		write(KEY.pinGroups, list);
+	}
+
+	function outdentShelf(id) {
+		var list = customPinGroups();
+		var at = shelfIndex(list, id);
+		if (at < 0 || !list[at].parent) return;
+
+		var parent = list[shelfIndex(list, list[at].parent)];
+		list[at].parent = parent ? parent.parent || "" : "";
+		write(KEY.pinGroups, list);
+	}
+
+	/* Dropping a shelf makes it a sibling of the row it was dropped on, and its
+	   own nesting is left to the indent controls. Reordering and re-parenting
+	   in one gesture is guesswork; this way the result is always the one the
+	   drop marker showed. */
+	function moveShelf(id, targetId, after) {
+		var list = customPinGroups();
+		var from = shelfIndex(list, id);
+		var to = shelfIndex(list, targetId);
+		if (from < 0 || to < 0 || from === to) return;
+
+		var span = subtreeLength(list, from);
+		if (to >= from && to < from + span) return;
+
+		var target = list[to];
+		var block = list.splice(from, span);
+		var shift = target.depth - block[0].depth;
+
+		block.forEach(function (group) {
+			group.depth += shift;
+		});
+		block[0].parent = target.parent || "";
+
+		var at = shelfIndex(list, targetId);
+		list.splice(after ? at + subtreeLength(list, at) : at, 0, ...block);
+
+		write(KEY.pinGroups, list);
+	}
+
+	function setShelfIcon(id, icon) {
+		write(
+			KEY.pinGroups,
+			customPinGroups().map(function (group) {
+				if (group.id !== id) return group;
+				var copy = Object.assign({}, group);
+				copy.icon = icon;
+				return copy;
+			})
+		);
+	}
+
+	function groupExists(id) {
+		return pinGroups().some(function (group) {
+			return group.id === id;
+		});
+	}
+
+	function createPinGroup(label) {
+		label = String(label || "").trim();
+		if (!label) return null;
+
+		var list = customPinGroups();
+		var id = "g" + Date.now().toString(36);
+		// Spread new shelves around the hue wheel so they are told apart at a glance.
+		var group = { id: id, label: label.slice(0, 32), icon: "folder", hue: (list.length * 47 + 190) % 360, parent: "" };
+
+		list.push(group);
+		write(KEY.pinGroups, list.slice(0, 24));
+		return group;
+	}
+
+	function renamePinGroup(id, label) {
+		label = String(label || "").trim();
+		if (!label) return;
+
+		write(
+			KEY.pinGroups,
+			customPinGroups().map(function (group) {
+				if (group.id !== id) return group;
+				var copy = Object.assign({}, group);
+				copy.label = label.slice(0, 32);
+				return copy;
+			})
+		);
+	}
+
+	/* Deleting a shelf must never lose what is on it: its pins fall back to the
+	   default group, and any shelf nested under it is promoted rather than
+	   taken down with it. */
+	function deletePinGroup(id) {
+		var list = customPinGroups();
+		var doomed = list[shelfIndex(list, id)];
+
+		write(
+			KEY.pinGroups,
+			list
+				.filter(function (group) {
+					return group.id !== id;
+				})
+				.map(function (group) {
+					if (group.parent !== id) return group;
+					var copy = Object.assign({}, group);
+					copy.parent = doomed ? doomed.parent || "" : "";
+					return copy;
+				})
+		);
+
+		write(
+			KEY.pins,
+			pins().map(function (item) {
+				if ((item.group || DEFAULT_PIN_GROUP.id) !== id) return item;
+				var copy = Object.assign({}, item);
+				copy.group = DEFAULT_PIN_GROUP.id;
+				return copy;
+			})
+		);
+	}
+
+	var PIN_LIMIT = 60;
+
+	function pinIndex(list, id) {
+		for (var i = 0; i < list.length; i++) {
+			if (list[i].id === id) return i;
+		}
+		return -1;
+	}
+
+	/* Filing a pin sends it to the end of its new shelf, which is where the
+	   drop marker sat when it was let go. */
+	function movePin(itemId, groupId) {
+		if (!groupExists(groupId)) return;
+
+		var list = pins();
+		var at = pinIndex(list, itemId);
+		if (at < 0) return;
+
+		var moved = Object.assign({}, list[at]);
+		moved.group = groupId;
+		list.splice(at, 1);
+
+		// Sit behind the last entry already on that shelf, not at the very end
+		// of every shelf's worth of pins.
+		var insert = list.length;
+		for (var i = list.length - 1; i >= 0; i--) {
+			if ((list[i].group || DEFAULT_PIN_GROUP.id) === groupId) {
+				insert = i + 1;
+				break;
+			}
+		}
+
+		list.splice(insert, 0, moved);
+		write(KEY.pins, list);
+	}
+
+	/* Dropping one pin onto another both files it on that shelf and places it
+	   exactly where the marker showed. */
+	function reorderPin(itemId, targetId, after) {
+		if (itemId === targetId) return;
+
+		var list = pins();
+		var from = pinIndex(list, itemId);
+		if (from < 0) return;
+
+		var moved = Object.assign({}, list[from]);
+		list.splice(from, 1);
+
+		var to = pinIndex(list, targetId);
+		if (to < 0) return;
+
+		moved.group = list[to].group || DEFAULT_PIN_GROUP.id;
+		list.splice(after ? to + 1 : to, 0, moved);
+		write(KEY.pins, list);
+	}
+
+	function togglePin(item, anchor) {
+		var before = pins();
+		var list = before.filter(function (entry) {
+			return entry.id !== item.id;
+		});
+		var added = list.length === before.length;
+
+		if (added) {
+			var entry = strip(item);
+			entry.group = DEFAULT_PIN_GROUP.id;
+			// New pins join the end of the shelf, so nothing already placed shifts.
+			list.push(entry);
+		}
+
+		// Over the cap the oldest pin gives way, never the one just added.
+		write(KEY.pins, list.slice(Math.max(0, list.length - PIN_LIMIT)));
+		setCounts();
+		syncPinButton();
+
+		// Offer the shelves, but only ever as an offer: ignoring the popover
+		// leaves the pin where it already is, in the default group.
+		if (added && anchor && customPinGroups().length) openPinPicker(anchor, entry.id);
+		else if (megaOpen() && state.activeTab === "pinned" && !state.searching) renderGroups("pinned");
+	}
+
+	/* The desk routes by name but shows the document's title in its breadcrumb,
+	   so a recent entry would otherwise read as an id. The loaded document
+	   carries the title; one that has never been saved carries nothing worth
+	   showing, and is better described by its doctype. */
+	function docInfo(doctype, name) {
+		var out = { title: "", fresh: /^new-[a-z0-9-]+$/i.test(name) };
+
+		try {
+			var doc = window.locals && locals[doctype] ? locals[doctype][name] : null;
+			if (!doc) return out;
+
+			out.fresh = !!doc.__islocal;
+			if (out.fresh) return out;
+
+			var meta = frappe.get_meta ? frappe.get_meta(doctype) : null;
+			var field = meta && meta.title_field;
+			var title = String((field && doc[field]) || doc.title || "").trim();
+			if (title && title !== name) out.title = title;
+		} catch (e) {}
+
+		return out;
+	}
+
+	function describeRoute(route) {
+		if (!route || !route.length) return null;
+		var head = route[0];
+
+		if (head === "Form" && route[2]) {
+			var doctype = route[1];
+			var name = route[2];
+			var info = docInfo(doctype, name);
+
+			return {
+				id: "form:" + doctype + ":" + name,
+				label: info.fresh ? "New " + doctype : info.title || name,
+				// The id still earns its place underneath, just quietly.
+				sub: info.fresh ? doctype : info.title ? doctype + " \u00b7 " + name : doctype,
+				hue: hue(doctype),
+				icon: resolveIcon(null, doctype),
+				act: "route",
+				route: ["Form", doctype, name],
+			};
+		}
+		if (head === "List" && route[1]) {
+			return {
+				id: "list:" + route[1],
+				label: route[1],
+				sub: "List",
+				hue: hue(route[1]),
+				icon: resolveIcon(null, route[1]),
+				act: "route",
+				route: ["List", route[1]],
+			};
+		}
+		if (head === "query-report" && route[1]) {
+			return {
+				id: "report:" + route[1],
+				label: route[1],
+				sub: "Report",
+				hue: hue(route[1]),
+				icon: "chart-column",
+				act: "route",
+				route: ["query-report", route[1]],
+			};
+		}
+		if (route.length === 1) {
+			return {
+				id: "ws:" + head,
+				label: titleize(head),
+				sub: "Workspace",
+				hue: hue(head),
+				icon: resolveIcon(null, titleize(head)),
+				act: "route",
+				route: [head],
+			};
+		}
+		return null;
+	}
+
+	function currentDesc() {
+		try {
+			return describeRoute(frappe.get_route());
+		} catch (e) {
+			return null;
+		}
+	}
+
+	function noteRoute() {
+		var desc = currentDesc();
+		syncPinButton();
+		if (!desc) return;
+
+		var list = read(KEY.recent, []).filter(function (item) {
+			return item.id !== desc.id;
+		});
+		list.unshift(desc);
+		write(KEY.recent, list.slice(0, MAX_RECENT));
+
+		// The badge counts what is in storage, so it has to be refreshed on the
+		// way past or it only catches up on the next reload.
+		setCounts();
+		if (megaOpen() && state.activeTab === "recent" && !state.searching) renderGroups("recent");
+
+		// The route changes before the document arrives, so the title is not
+		// knowable yet. Look again once it has had time to load.
+		setTimeout(refineRecent, 700);
+		setTimeout(refineRecent, 2200);
+	}
+
+	function formRef(item) {
+		var id = String((item && item.id) || "");
+		if (id.indexOf("form:") !== 0) return null;
+
+		var parts = id.split(":");
+		var doctype = parts[1];
+		var name = parts.slice(2).join(":");
+		return doctype && name ? [doctype, name] : null;
+	}
+
+	/* Entries stored before their document loaded, or in an earlier session,
+	   are still labelled with an id. One round trip relabels the lot. */
+	function backfillTitles() {
+		var lists = [KEY.recent, KEY.pins];
+		var refs = [];
+
+		lists.forEach(function (key) {
+			read(key, []).forEach(function (item) {
+				var ref = formRef(item);
+				if (ref && item.label === ref[1]) refs.push(ref);
+			});
+		});
+
+		if (!refs.length) return;
+
+		frappe
+			.xcall("kaiten_erp_ui_themes.api.get_titles", { refs: JSON.stringify(refs) })
+			.then(function (titles) {
+				if (!titles) return;
+
+				lists.forEach(function (key) {
+					var changed = false;
+
+					var next = read(key, []).map(function (item) {
+						var ref = formRef(item);
+						if (!ref || item.label !== ref[1]) return item;
+
+						var title = titles[ref[0] + ":" + ref[1]];
+						if (!title) return item;
+
+						changed = true;
+						var copy = Object.assign({}, item);
+						copy.label = title;
+						copy.sub = ref[0] + " \u00b7 " + ref[1];
+						return copy;
+					});
+
+					if (changed) write(key, next);
+				});
+
+				if (megaOpen() && !state.searching) renderGroups(state.activeTab || "workspaces");
+			})
+			.catch(function () {});
+	}
+
+	/* Upgrade the newest entry in place once its document is available, so an
+	   id recorded on arrival turns into the title the desk itself shows. */
+	function refineRecent() {
+		var desc = currentDesc();
+		if (!desc) return;
+
+		var list = read(KEY.recent, []);
+		if (!list.length || list[0].id !== desc.id) return;
+		if (list[0].label === desc.label && list[0].sub === desc.sub) return;
+
+		list[0] = desc;
+		write(KEY.recent, list);
+		syncPinButton();
+		if (megaOpen() && state.activeTab === "recent" && !state.searching) renderGroups("recent");
+	}
+
+	function trackRoutes() {
+		try {
+			if (frappe.router && frappe.router.on) frappe.router.on("change", noteRoute);
+		} catch (e) {}
+
+		var last = "";
+		setInterval(function () {
+			var now = location.pathname + location.hash;
+			if (now === last) return;
+			last = now;
+			noteRoute();
+		}, 1200);
+
+		noteRoute();
+	}
+
+	function syncPinButton() {
+		if (!el.pinBtn) return;
+		var desc = currentDesc();
+		var on = desc && isPinned(desc.id);
+		el.pinBtn.classList.toggle("aur-pinned", !!on);
+		el.pinBtn.setAttribute("title", on ? "Unpin this page" : "Pin this page");
+	}
+
+	/* ---------------------------------------------------------------------
+	   Menu model
+	   ------------------------------------------------------------------ */
+
+	function buildWorkspaces(menu) {
+		var pages = menu.workspaces || [];
+		if (!pages.length) return [];
+
+		var byParent = {};
+		pages.forEach(function (page) {
+			(byParent[page.parent || ""] = byParent[page.parent || ""] || []).push(page);
+		});
+
+		function itemFor(page) {
+			return {
+				id: "ws:" + page.name,
+				label: page.label,
+				sub: page.public ? "Public workspace" : "Private workspace",
+				hue: hue(page.name),
+				icon: resolveIcon(page.icon, page.label, page.module),
+				search: page.label + " " + page.name + " " + (page.module || ""),
+				act: "route",
+				route: [slugify(page.name)],
+			};
+		}
+
+		var groups = [{ key: "__all", label: "All workspaces", icon: "layers", hue: 245, items: pages.map(itemFor) }];
+
+		(byParent[""] || []).forEach(function (parent) {
+			groups.push({
+				key: parent.name,
+				label: parent.label,
+				hue: hue(parent.name),
+				icon: resolveIcon(parent.icon, parent.label, parent.module),
+				items: [parent].concat(byParent[parent.name] || []).map(itemFor),
+			});
+		});
+
+		return groups;
+	}
+
+	function moduleGroup(mod, items) {
+		return {
+			key: mod.module,
+			label: mod.label,
+			hue: hue(mod.module),
+			icon: resolveIcon(MODULE_ICONS[mod.module], mod.label),
+			items: items,
+		};
+	}
+
+	function buildModules(menu) {
+		return (menu.modules || []).map(function (mod) {
+			return moduleGroup(
+				mod,
+				mod.doctypes.map(function (dt) {
+					return doctypeItem(dt, mod.label);
+				})
+			);
+		});
+	}
+
+	function buildCreate(menu) {
+		var groups = [];
+		(menu.modules || []).forEach(function (mod) {
+			var items = mod.doctypes
+				.filter(function (dt) {
+					return !dt.single && canCreate(dt.name);
+				})
+				.map(function (dt) {
+					return {
+						id: "new:" + dt.name,
+						label: dt.label,
+						sub: "New " + dt.label,
+						hue: hue(dt.name),
+						icon: resolveIcon(dt.icon, dt.label, mod.label),
+						search: dt.label + " " + dt.name,
+						act: "new",
+						doctype: dt.name,
+						extra: { label: "List", act: "route", route: ["List", dt.name] },
+					};
+				});
+
+			if (items.length) groups.push(moduleGroup(mod, items));
+		});
+		return groups;
+	}
+
+	function buildInsights(menu) {
+		var byModule = {};
+		(menu.reports || []).forEach(function (report) {
+			(byModule[report.module] = byModule[report.module] || []).push(report);
+		});
+
+		return Object.keys(byModule)
+			.sort()
+			.map(function (module) {
+				return {
+					key: module,
+					label: module,
+					hue: hue(module),
+					icon: resolveIcon(MODULE_ICONS[module], module),
+					items: byModule[module].map(function (report) {
+						return {
+							id: "report:" + report.name,
+							label: report.label,
+							sub: report.type + " \u00b7 " + report.doctype,
+							hue: hue(report.name),
+							icon: resolveIcon(null, report.label, "report"),
+							search: report.label + " " + report.doctype + " " + report.type,
+							act: "route",
+							route:
+								report.type === "Report Builder"
+									? ["List", report.doctype, "Report", report.name]
+									: ["query-report", report.name],
+						};
+					}),
+				};
+			});
+	}
+
+	function buildTools(menu) {
+		return (menu.tools || []).map(function (group) {
+			return {
+				key: group.label,
+				label: group.label,
+				hue: hue(group.label),
+				icon: resolveIcon(null, group.label),
+				items: group.items.map(function (dt) {
+					return doctypeItem(dt, group.label);
+				}),
+			};
+		});
+	}
+
+	function buildModel(menu) {
+		state.tabs = {
+			workspaces: buildWorkspaces(menu),
+			modules: buildModules(menu),
+			create: buildCreate(menu),
+			insights: buildInsights(menu),
+			tools: buildTools(menu),
+		};
+
+		state.index = [];
+		["workspaces", "modules", "create", "insights", "tools"].forEach(function (tabId) {
+			var tab = TABS.filter(function (entry) {
+				return entry.id === tabId;
+			})[0];
+
+			(state.tabs[tabId] || []).forEach(function (group) {
+				if (group.key === "__all") return;
+				group.items.forEach(function (item) {
+					var copy = Object.assign({}, item);
+					copy.sub = tab.label + " \u00b7 " + group.label;
+					copy.search = (item.search + " " + group.label).toLowerCase();
+					state.index.push(copy);
+				});
+			});
+		});
+	}
+
+	function groupsFor(tabId) {
+		if (tabId === "pinned") {
+			var all = pins();
+			return pinGroups().map(function (group) {
+				return {
+					key: "pin:" + group.id,
+					label: group.label,
+					// A saved icon can outlive the sprite, so it is resolved rather than trusted.
+					icon: resolveIcon(group.icon, group.label, "folder"),
+					hue: group.hue,
+					pinGroup: group.id,
+					depth: group.depth || 0,
+					items: all.filter(function (item) {
+						return (item.group || DEFAULT_PIN_GROUP.id) === group.id;
+					}),
+				};
+			});
+		}
+		if (tabId === "recent")
+			return [{ key: "__recent", label: "Recently visited", icon: "history", hue: 200, items: read(KEY.recent, []) }];
+		return state.tabs[tabId] || [];
+	}
+
+	/* ---------------------------------------------------------------------
+	   Rendering
+	   ------------------------------------------------------------------ */
+
+	function renderItem(item, i, options) {
+		options = options || {};
+		var actions = make("div", { class: "aur-item-actions" });
+
+		if (item.extra) {
+			var chip = make("button", { class: "aur-chip", type: "button", title: item.extra.label, text: item.extra.label });
+			chip.addEventListener("click", function (event) {
+				event.preventDefault();
+				event.stopPropagation();
+				runItem(item.extra);
+			});
+			actions.appendChild(chip);
+		}
+
+		var star = make("button", {
+			class: "aur-star" + (isPinned(item.id) ? " aur-pinned" : ""),
+			type: "button",
+			title: "Pin to the Pinned tab",
+			text: "\u2605",
+		});
+		star.addEventListener("click", function (event) {
+			event.preventDefault();
+			event.stopPropagation();
+			togglePin(item, star);
+			star.classList.toggle("aur-pinned", isPinned(item.id));
+		});
+		actions.appendChild(star);
+
+		var parts = [
+			make("div", { class: "aur-item-icon" }, [iconNode(item.icon || "file-text")]),
+			make("div", { class: "aur-item-text" }, [
+				make("div", { class: "aur-item-label", text: item.label }),
+				make("div", { class: "aur-item-sub", text: item.sub || "" }),
+			]),
+			actions,
+		];
+
+		if (options.drag) parts.unshift(make("span", { class: "aur-grip", title: "Drag onto a shelf", text: "\u2059" }));
+
+		var node = make(
+			"a",
+			{
+				class: "aur-item aur-stagger" + (options.drag ? " aur-draggable" : ""),
+				href: hrefFor(item),
+				title: item.sub ? item.label + " \u2014 " + item.sub : item.label,
+				"--h": String(item.hue),
+				"--i": String(i),
+			},
+			parts
+		);
+
+		if (options.drag) {
+			node.setAttribute("draggable", "true");
+			node.addEventListener("dragstart", function (event) {
+				event.dataTransfer.setData("text/plain", item.id);
+				event.dataTransfer.effectAllowed = "move";
+				node.classList.add("aur-dragging");
+			});
+			node.addEventListener("dragend", function () {
+				node.classList.remove("aur-dragging");
+			});
+
+			/* Entries reorder against each other. The grid flows left to right,
+			   so which side of the target the pointer is on decides whether the
+			   entry lands before or after it. */
+			var side = function (event) {
+				var box = node.getBoundingClientRect();
+				return event.clientX > box.left + box.width / 2;
+			};
+
+			var clearMark = function () {
+				node.classList.remove("aur-item-before", "aur-item-after");
+			};
+
+			node.addEventListener("dragover", function (event) {
+				if (Array.prototype.indexOf.call(event.dataTransfer.types || [], SHELF_MIME) !== -1) return;
+				event.preventDefault();
+				event.stopPropagation();
+				event.dataTransfer.dropEffect = "move";
+
+				var after = side(event);
+				node.classList.toggle("aur-item-after", after);
+				node.classList.toggle("aur-item-before", !after);
+			});
+
+			node.addEventListener("dragleave", clearMark);
+
+			node.addEventListener("drop", function (event) {
+				event.preventDefault();
+				event.stopPropagation();
+
+				var after = side(event);
+				clearMark();
+
+				var dragged = event.dataTransfer.getData("text/plain");
+				if (!dragged || dragged === item.id) return;
+
+				reorderPin(dragged, item.id, after);
+				refreshShelves(options.groupKey);
+			});
+		}
+
+		node.addEventListener("click", function (event) {
+			// Let the browser handle modified clicks so Cmd/Ctrl/middle click
+			// opens the entry in a new tab like any other link.
+			if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+			event.preventDefault();
+			runItem(item);
+		});
+
+		return node;
+	}
+
+	function alignBody(count) {
+		el.body.style.paddingTop = "";
+		var node = state.activeNode;
+		if (!node || count > SMALL_GROUP) return;
+
+		var panel = el.mega.getBoundingClientRect();
+		var row = node.getBoundingClientRect();
+		var content = el.body.scrollHeight;
+		var offset = row.top - panel.top - 16;
+
+		// Drop the short list down beside the row that opened it, but never so
+		// far that it runs off the bottom of the panel.
+		el.body.style.paddingTop = Math.round(clamp(offset, 16, panel.height - content - 20)) + "px";
+	}
+
+	function renderItems(title, items, options) {
+		options = options || {};
+		el.body.innerHTML = "";
+
+		var head = make("div", { class: "aur-mega-title", text: title });
+		if (options.action) {
+			var chip = make("button", { class: "aur-chip", type: "button", text: options.action.label });
+			chip.addEventListener("click", options.action.run);
+			head.appendChild(chip);
+		}
+		el.body.appendChild(head);
+
+		if (!items.length) {
+			el.body.appendChild(make("div", { class: "aur-empty", text: options.empty || "Nothing here you have access to." }));
+			return;
+		}
+
+		var grid = make("div", { class: "aur-grid" });
+		items.slice(0, 300).forEach(function (item, i) {
+			grid.appendChild(renderItem(item, i, options));
+		});
+
+		// Dropping on the empty space past the last entry sends it to the end,
+		// which is otherwise an awkward target to hit.
+		if (options.drag && options.pinGroup) {
+			grid.addEventListener("dragover", function (event) {
+				event.preventDefault();
+				event.dataTransfer.dropEffect = "move";
+				grid.classList.add("aur-grid-drop");
+			});
+			grid.addEventListener("dragleave", function () {
+				grid.classList.remove("aur-grid-drop");
+			});
+			grid.addEventListener("drop", function (event) {
+				event.preventDefault();
+				grid.classList.remove("aur-grid-drop");
+
+				var dragged = event.dataTransfer.getData("text/plain");
+				if (!dragged) return;
+
+				movePin(dragged, options.pinGroup);
+				refreshShelves(options.groupKey);
+			});
+		}
+
+		el.body.appendChild(grid);
+		el.body.scrollTop = 0;
+		alignBody(items.length);
+	}
+
+	function selectGroup(tabId, key) {
+		var groups = state.groups || [];
+
+		groups.forEach(function (group) {
+			if (group.node) group.node.classList.toggle("aur-active", group.key === key);
+		});
+
+		var active = groups.filter(function (group) {
+			return group.key === key;
+		})[0];
+		if (!active) return;
+
+		state.activeNode = active.node;
+
+		var options = {};
+		if (tabId === "pinned") {
+			options.drag = true;
+			options.pinGroup = active.pinGroup;
+			options.groupKey = active.key;
+			options.empty =
+				active.pinGroup === DEFAULT_PIN_GROUP.id
+					? "Nothing pinned yet. Hover any item and click its star, or use the star in the bar."
+					: "Empty shelf. Drag entries onto it from the list on the left.";
+
+			if (active.items.length) {
+				options.action = {
+					label: "Clear",
+					run: function () {
+						write(
+							KEY.pins,
+							pins().filter(function (item) {
+								return (item.group || DEFAULT_PIN_GROUP.id) !== active.pinGroup;
+							})
+						);
+						setCounts();
+						syncPinButton();
+						renderGroups("pinned");
+					},
+				};
+			}
+		} else if (tabId === "recent") {
+			options.empty = "No history yet. Open a few pages and they will show up here.";
+			if (active.items.length) {
+				options.action = {
+					label: "Clear",
+					run: function () {
+						write(KEY.recent, []);
+						setCounts();
+						renderGroups("recent");
+					},
+				};
+			}
+		}
+
+		renderItems(active.label, active.items, options);
+	}
+
+	/* Narrow a tab's groups to a query without flattening them. A group whose
+	   own name matches keeps all of its children, so searching for a module
+	   still shows everything inside it; otherwise only matching children
+	   survive, and a group left with none is dropped. */
+	function filterGroups(groups, query) {
+		var needle = String(query || "").trim().toLowerCase();
+		if (!needle) return groups;
+
+		var terms = needle.split(/\s+/);
+		var hit = function (text) {
+			return terms.every(function (term) {
+				return text.indexOf(term) !== -1;
+			});
+		};
+
+		var kept = [];
+		groups.forEach(function (group) {
+			var items = hit(String(group.label || "").toLowerCase())
+				? group.items
+				: (group.items || []).filter(function (item) {
+						return hit(String(item.search || item.label || "").toLowerCase());
+				  });
+
+			if (items.length) {
+				var copy = Object.assign({}, group);
+				copy.items = items;
+				kept.push(copy);
+			}
+		});
+
+		return kept;
+	}
+
+	function clearMegaFilter() {
+		state.megaQuery = "";
+		if (el.megaSearch) el.megaSearch.value = "";
+		renderGroups(state.activeTab || "workspaces");
+		if (el.megaSearch) el.megaSearch.focus();
+	}
+
+	/* The filter survives a tab change, so the panel has to say so: without a
+	   standing notice a tab narrowed by an earlier search just looks empty. */
+	function updateFilterBar(query, groups) {
+		if (!el.filterBar) return;
+
+		var needle = String(query || "").trim();
+		el.filterBar.classList.toggle("aur-on", !!needle);
+		if (!needle) return;
+
+		var items = 0;
+		var shown = 0;
+		groups.forEach(function (group) {
+			if (group.key === "__all") return;
+			items += (group.items || []).length;
+			shown += 1;
+		});
+
+		var plural = function (n, word) {
+			return n + " " + word + (n === 1 ? "" : "s");
+		};
+
+		el.filterText.textContent = items
+			? "Filtered by \u201c" + needle + "\u201d \u00b7 " + plural(items, "match") + " in " + plural(shown, "group")
+			: "Filtered by \u201c" + needle + "\u201d \u00b7 nothing in this tab";
+	}
+
+	function renderGroups(tabId) {
+		var query = state.megaQuery || "";
+		var groups = filterGroups(groupsFor(tabId), query);
+		state.groups = groups;
+		updateFilterBar(query, groups);
+		el.groups.innerHTML = "";
+		if (tabId === "pinned" && !query) el.groups.appendChild(shelfManageBar());
+
+		groups.forEach(function (group) {
+			var button = make("button", { class: "aur-group", type: "button", "--h": String(group.hue) }, [
+				iconNode(group.icon || "layers", "aur-group-icon"),
+				make("span", { text: group.label }),
+				make("span", { class: "aur-group-count", text: String(group.items.length) }),
+			]);
+
+			// Hover intent: a short delay, stretched while the pointer is moving
+			// right, so crossing other rows on the way to the items does not keep
+			// swapping the panel underneath the cursor.
+			button.addEventListener("mouseenter", function () {
+				clearTimeout(hover.timer);
+				var delay = hover.vx > 0.28 ? 450 : 170;
+				hover.timer = setTimeout(function () {
+					selectGroup(tabId, group.key);
+				}, delay);
+			});
+
+			button.addEventListener("click", function () {
+				clearTimeout(hover.timer);
+				selectGroup(tabId, group.key);
+			});
+
+			group.node = button;
+			el.groups.appendChild(tabId === "pinned" ? pinShelfRow(button, group) : button);
+		});
+
+		if (tabId === "pinned" && !query) el.groups.appendChild(newShelfRow());
+
+		if (groups.length) selectGroup(tabId, groups[0].key);
+		else if (query)
+			renderItems("No match", [], { empty: 'Nothing in this tab matches "' + query.trim() + '".' });
+		else renderItems("Nothing available", []);
+	}
+
+	/* ---------------------------------------------------------------------
+	   The shelf rail inside the Pinned tab
+	   ------------------------------------------------------------------ */
+
+	/* One editor serves both renaming and creating: it swaps the row for a
+	   field, and rebuilds the rail either way once it is done with. */
+	function editShelfName(host, value, commit) {
+		var settled = false;
+		var input = make("input", { class: "aur-shelf-input", type: "text", placeholder: "Shelf name", maxlength: "32" });
+		input.value = value || "";
+
+		var finish = function (save) {
+			if (settled) return;
+			settled = true;
+			if (save) commit(input.value);
+			setCounts();
+			renderGroups("pinned");
+		};
+
+		// The menu filters on any printable key, which would eat this field.
+		input.addEventListener("keydown", function (event) {
+			event.stopPropagation();
+			if (event.key === "Enter") {
+				event.preventDefault();
+				finish(true);
+			} else if (event.key === "Escape") {
+				event.preventDefault();
+				finish(false);
+			}
+		});
+		input.addEventListener("blur", function () {
+			finish(true);
+		});
+
+		host.innerHTML = "";
+		host.appendChild(input);
+		input.focus();
+		input.select();
+	}
+
+	function shelfTool(glyph, title, run, extraClass) {
+		var button = make("button", { class: "aur-shelf-tool" + (extraClass ? " " + extraClass : ""), type: "button", title: title }, [
+			iconNode(glyph),
+		]);
+		button.addEventListener("click", function (event) {
+			event.preventDefault();
+			event.stopPropagation();
+			run(button);
+		});
+		return button;
+	}
+
+	function refreshShelves(selectKey) {
+		setCounts();
+		renderGroups("pinned");
+		if (selectKey) selectGroup("pinned", selectKey);
+	}
+
+	/* Editing lives behind a mode rather than on hover. The tools used to share
+	   the row with the shelf itself, so reaching for a shelf kept landing on
+	   rename or delete. */
+	function shelfManageBar() {
+		var bar = make("div", { class: "aur-shelf-bar" + (state.manageShelves ? " aur-on" : "") });
+		bar.appendChild(make("span", { class: "aur-shelf-bar-label", text: state.manageShelves ? "Arranging shelves" : "Shelves" }));
+
+		var toggle = make("button", { class: "aur-shelf-manage", type: "button" }, [
+			iconNode(state.manageShelves ? "check" : "settings-2"),
+			make("span", { text: state.manageShelves ? "Done" : "Edit" }),
+		]);
+		toggle.addEventListener("click", function (event) {
+			event.stopPropagation();
+			state.manageShelves = !state.manageShelves;
+			renderGroups("pinned");
+		});
+
+		bar.appendChild(toggle);
+		return bar;
+	}
+
+	function shelfEditTools(row, group) {
+		var tools = make("div", { class: "aur-shelf-tools" });
+
+		tools.appendChild(
+			shelfTool("smile", "Change icon", function (self) {
+				openIconPicker(self, group);
+			})
+		);
+
+		tools.appendChild(
+			shelfTool("pencil", "Rename shelf", function () {
+				editShelfName(row, group.label, function (name) {
+					renamePinGroup(group.pinGroup, name);
+				});
+			})
+		);
+
+		if (group.depth > 0) {
+			tools.appendChild(
+				shelfTool("chevron-left", "Move out one level", function () {
+					outdentShelf(group.pinGroup);
+					refreshShelves();
+				})
+			);
+		} else if (canIndent(group.pinGroup)) {
+			tools.appendChild(
+				shelfTool("chevron-right", "Nest under the shelf above", function () {
+					indentShelf(group.pinGroup);
+					refreshShelves();
+				})
+			);
+		}
+
+		tools.appendChild(
+			shelfTool(
+				"trash-2",
+				"Delete shelf",
+				function (self) {
+					confirmDeleteShelf(self, group);
+				},
+				"aur-shelf-danger"
+			)
+		);
+
+		return tools;
+	}
+
+	function pinShelfRow(button, group) {
+		var custom = group.pinGroup !== DEFAULT_PIN_GROUP.id;
+		var managing = state.manageShelves && custom;
+
+		var row = make("div", {
+			class: "aur-shelf-row" + (managing ? " aur-managing" : "") + (group.depth ? " aur-nested" : ""),
+			"--d": String(group.depth || 0),
+		});
+
+		if (managing) {
+			var grip = make("span", { class: "aur-shelf-grip", title: "Drag to reorder", text: "\u2059" });
+			grip.setAttribute("draggable", "true");
+			grip.addEventListener("dragstart", function (event) {
+				event.dataTransfer.setData(SHELF_MIME, group.pinGroup);
+				event.dataTransfer.setData("text/plain", "");
+				event.dataTransfer.effectAllowed = "move";
+				row.classList.add("aur-dragging");
+			});
+			grip.addEventListener("dragend", function () {
+				row.classList.remove("aur-dragging");
+			});
+			row.appendChild(grip);
+		}
+
+		row.appendChild(button);
+		if (managing) row.appendChild(shelfEditTools(row, group));
+
+		/* Two kinds of payload land here: a pinned entry being filed, or a
+		   shelf being reordered. They are told apart by the drag's own type. */
+		var isShelfDrag = function (event) {
+			return Array.prototype.indexOf.call(event.dataTransfer.types || [], SHELF_MIME) !== -1;
+		};
+
+		row.addEventListener("dragover", function (event) {
+			event.preventDefault();
+			event.dataTransfer.dropEffect = "move";
+
+			if (isShelfDrag(event)) {
+				if (!custom) return;
+				var box = row.getBoundingClientRect();
+				var after = event.clientY > box.top + box.height / 2;
+				row.classList.toggle("aur-drop-above", !after);
+				row.classList.toggle("aur-drop-below", after);
+			} else {
+				row.classList.add("aur-drop");
+			}
+		});
+
+		var clearDrop = function () {
+			row.classList.remove("aur-drop", "aur-drop-above", "aur-drop-below");
+		};
+		row.addEventListener("dragleave", clearDrop);
+
+		row.addEventListener("drop", function (event) {
+			event.preventDefault();
+			var box = row.getBoundingClientRect();
+			var after = event.clientY > box.top + box.height / 2;
+			clearDrop();
+
+			var shelfId = event.dataTransfer.getData(SHELF_MIME);
+			if (shelfId) {
+				if (!custom) return;
+				moveShelf(shelfId, group.pinGroup, after);
+				refreshShelves();
+				return;
+			}
+
+			var itemId = event.dataTransfer.getData("text/plain");
+			if (!itemId) return;
+
+			movePin(itemId, group.pinGroup);
+			refreshShelves("pin:" + group.pinGroup);
+		});
+
+		return row;
+	}
+
+	function newShelfRow() {
+		var row = make("div", { class: "aur-shelf-row aur-shelf-new" });
+		var button = make("button", { class: "aur-shelf-add", type: "button" }, [
+			iconNode("plus"),
+			make("span", { text: "New shelf" }),
+		]);
+
+		button.addEventListener("click", function () {
+			editShelfName(row, "", createPinGroup);
+		});
+
+		row.appendChild(button);
+		return row;
+	}
+
+	/* A shelf can hold work worth keeping, and its children come with it, so
+	   this states the consequence before it happens. */
+	function confirmDeleteShelf(anchor, group) {
+		closePop();
+
+		var list = customPinGroups();
+		var at = shelfIndex(list, group.pinGroup);
+		var nested = at < 0 ? 0 : subtreeLength(list, at) - 1;
+
+		var consequence = [];
+		if (group.items.length) consequence.push(group.items.length + (group.items.length === 1 ? " pin moves" : " pins move") + " back to Pinned");
+		if (nested) consequence.push(nested + (nested === 1 ? " nested shelf moves" : " nested shelves move") + " up a level");
+
+		var cancel = make("button", { class: "aur-confirm-btn", type: "button", text: "Cancel" });
+		cancel.addEventListener("click", function (event) {
+			event.stopPropagation();
+			closePop();
+		});
+
+		var confirm = make("button", { class: "aur-confirm-btn aur-confirm-danger", type: "button", text: "Delete shelf" });
+		confirm.addEventListener("click", function (event) {
+			event.stopPropagation();
+			deletePinGroup(group.pinGroup);
+			closePop();
+			refreshShelves();
+		});
+
+		var pop = make("div", { class: "aur-pop aur-confirm-pop" }, [
+			make("div", { class: "aur-confirm-title", text: "Delete \u201c" + group.label + "\u201d?" }),
+			make("div", {
+				class: "aur-confirm-body",
+				text: consequence.length ? consequence.join(", and ") + "." : "This shelf is empty.",
+			}),
+			make("div", { class: "aur-confirm-row" }, [cancel, confirm]),
+		]);
+
+		el.pop = pop;
+		document.body.appendChild(pop);
+
+		var rect = anchor.getBoundingClientRect();
+		pop.style.top = Math.round(rect.bottom + 8) + "px";
+		pop.style.left = Math.round(clamp(rect.left - 150, 10, window.innerWidth - 280)) + "px";
+
+		setTimeout(function () {
+			document.addEventListener("click", function once(event) {
+				if (!el.pop) return document.removeEventListener("click", once);
+				if (!el.pop.contains(event.target)) {
+					closePop();
+					document.removeEventListener("click", once);
+				}
+			});
+		}, 0);
+	}
+
+	function openIconPicker(anchor, group) {
+		closePop();
+
+		var grid = make("div", { class: "aur-icon-grid" });
+		SHELF_ICONS.filter(spriteHas).forEach(function (name) {
+			var cell = make("button", {
+				class: "aur-icon-cell" + (group.icon === name ? " aur-on" : ""),
+				type: "button",
+				title: name.replace(/-/g, " "),
+			}, [iconNode(name)]);
+
+			cell.addEventListener("click", function (event) {
+				event.stopPropagation();
+				setShelfIcon(group.pinGroup, name);
+				closePop();
+				refreshShelves();
+			});
+			grid.appendChild(cell);
+		});
+
+		var pop = make("div", { class: "aur-pop aur-icon-pop" }, [make("div", { class: "aur-pop-label", text: "Shelf icon" }), grid]);
+
+		el.pop = pop;
+		document.body.appendChild(pop);
+
+		var rect = anchor.getBoundingClientRect();
+		pop.style.top = Math.round(rect.bottom + 8) + "px";
+		pop.style.left = Math.round(clamp(rect.left - 110, 10, window.innerWidth - 280)) + "px";
+
+		setTimeout(function () {
+			document.addEventListener("click", function once(event) {
+				if (!el.pop) return document.removeEventListener("click", once);
+				if (!el.pop.contains(event.target)) {
+					closePop();
+					document.removeEventListener("click", once);
+				}
+			});
+		}, 0);
+	}
+
+	/* Offered, never demanded: it closes itself, and whatever it was offered
+	   for is already pinned to the default shelf by then. */
+	function openPinPicker(anchor, itemId) {
+		closePop();
+
+		var pop = make("div", { class: "aur-pop aur-pin-pop" }, [make("div", { class: "aur-pop-label", text: "Move to shelf" })]);
+
+		pinGroups().forEach(function (group) {
+			var choice = make("button", { class: "aur-pin-choice", type: "button" }, [
+				iconNode(group.icon || "star"),
+				make("span", { text: group.label }),
+			]);
+			choice.addEventListener("click", function (event) {
+				event.stopPropagation();
+				movePin(itemId, group.id);
+				closePop();
+				setCounts();
+				if (megaOpen() && state.activeTab === "pinned" && !state.searching) renderGroups("pinned");
+			});
+			pop.appendChild(choice);
+		});
+
+		pop.appendChild(make("div", { class: "aur-pin-hint", text: "Ignore this and it stays in Pinned." }));
+
+		el.pop = pop;
+		document.body.appendChild(pop);
+
+		var rect = anchor.getBoundingClientRect();
+		pop.style.top = Math.round(rect.bottom + 8) + "px";
+		pop.style.left = Math.round(clamp(rect.left - 100, 10, window.innerWidth - 240)) + "px";
+
+		state.pinPopTimer = setTimeout(closePop, 4500);
+
+		setTimeout(function () {
+			document.addEventListener("click", function once(event) {
+				if (!el.pop) return document.removeEventListener("click", once);
+				if (!el.pop.contains(event.target)) {
+					closePop();
+					document.removeEventListener("click", once);
+				}
+			});
+		}, 0);
+	}
+
+	function renderSearch(query) {
+		var needle = query.trim().toLowerCase();
+		if (!needle) {
+			state.searching = false;
+			openTab(state.activeTab || "workspaces");
+			return;
+		}
+
+		state.searching = true;
+		state.cursor = -1;
+		state.activeNode = null;
+
+		var terms = needle.split(/\s+/);
+		var hits = state.index
+			.filter(function (item) {
+				return terms.every(function (term) {
+					return item.search.indexOf(term) !== -1;
+				});
+			})
+			.slice(0, 120);
+
+		el.groups.innerHTML = "";
+		el.groups.appendChild(
+			make("div", { class: "aur-mega-title", text: hits.length + " match" + (hits.length === 1 ? "" : "es") })
+		);
+
+		renderItems('Results for "' + query.trim() + '"', hits, { empty: "No match. Try fewer words." });
+		openMega();
+	}
+
+	/* ---------------------------------------------------------------------
+	   Mega panel
+	   ------------------------------------------------------------------ */
+
+	function positionMega() {
+		if (!el.bar || !el.mega) return;
+
+		var rect = el.bar.getBoundingClientRect();
+		var top = Math.round(rect.bottom + 6);
+
+		el.mega.style.top = top + "px";
+		el.mega.style.left = Math.round(rect.left + 8) + "px";
+		el.mega.style.width = Math.max(320, Math.round(rect.width - 16)) + "px";
+
+		// A max-height in viewport units takes no account of how far down the
+		// panel starts, so it could hang past the bottom of the screen with the
+		// overflow unreachable: the panel is fixed, so the page will not scroll
+		// to it and the inner columns believe they have room to spare.
+		el.mega.style.maxHeight = Math.max(240, window.innerHeight - top - 16) + "px";
+	}
+
+	function megaOpen() {
+		return el.mega && el.mega.classList.contains("aur-visible");
+	}
+
+	/* The scrim starts below the bar rather than covering it. Dimming the bar
+	   hid the very thing that says which menu is open, and starting the scrim
+	   lower is safe regardless of what stacking contexts the desk creates
+	   around the bar. */
+	function positionScrim() {
+		if (!el.scrim || !el.bar) return;
+		el.scrim.style.top = Math.max(0, Math.round(el.bar.getBoundingClientRect().bottom)) + "px";
+	}
+
+	function openMega() {
+		el.mega.classList.add("aur-visible");
+		positionMega();
+		if (el.bar) el.bar.classList.add("aur-bar-lifted");
+
+		if (!el.scrim) {
+			el.scrim = make("div", { class: "aur-scrim" });
+			el.scrim.addEventListener("click", closeMega);
+			document.body.appendChild(el.scrim);
+		}
+
+		positionScrim();
+	}
+
+	function closeMega() {
+		if (!el.mega) return;
+		clearTimeout(hover.timer);
+		clearTimeout(hover.tabTimer);
+		el.mega.classList.remove("aur-visible");
+		if (el.bar) el.bar.classList.remove("aur-bar-lifted");
+		state.searching = false;
+		state.cursor = -1;
+		state.megaQuery = "";
+		state.manageShelves = false;
+		if (el.megaSearch) el.megaSearch.value = "";
+		if (el.filterBar) el.filterBar.classList.remove("aur-on");
+
+		Object.keys(el.tabNodes || {}).forEach(function (id) {
+			el.tabNodes[id].classList.remove("aur-open");
+		});
+
+		if (el.scrim) {
+			el.scrim.remove();
+			el.scrim = null;
+		}
+	}
+
+	function openTab(tabId) {
+		state.activeTab = tabId;
+		state.searching = false;
+
+		Object.keys(el.tabNodes).forEach(function (id) {
+			el.tabNodes[id].classList.toggle("aur-open", id === tabId);
+		});
+
+		renderGroups(tabId);
+		openMega();
+	}
+
+	function toggleTab(tabId) {
+		if (megaOpen() && state.activeTab === tabId && !state.searching) closeMega();
+		else openTab(tabId);
+	}
+
+	/* ---------------------------------------------------------------------
+	   Keyboard
+	   ------------------------------------------------------------------ */
+
+	function moveCursor(delta) {
+		var items = Array.prototype.slice.call(el.body.querySelectorAll(".aur-item"));
+		if (!items.length) return;
+
+		state.cursor = (state.cursor + delta + items.length) % items.length;
+		items.forEach(function (item, i) {
+			item.classList.toggle("aur-cursor", i === state.cursor);
+		});
+		items[state.cursor].scrollIntoView({ block: "nearest" });
+	}
+
+	function bindKeys() {
+		document.addEventListener("keydown", function (event) {
+			var tag = (event.target.tagName || "").toLowerCase();
+			var typing = tag === "input" || tag === "textarea" || tag === "select" || event.target.isContentEditable;
+
+			// Alt+1..9 jumps straight to a pinned entry.
+			if (event.altKey && /^[1-9]$/.test(event.key)) {
+				var pinned = pins()[Number(event.key) - 1];
+				if (pinned) {
+					event.preventDefault();
+					runItem(pinned);
+				}
+				return;
+			}
+
+			// Cmd/Ctrl+K belongs to the desk's own awesomebar. This search takes
+			// Cmd/Ctrl+/ and a bare / instead, so the two never collide.
+			if ((event.metaKey || event.ctrlKey) && event.key === "/") {
+				event.preventDefault();
+				el.search.focus();
+				el.search.select();
+				return;
+			}
+
+			if (event.key === "/" && !typing) {
+				event.preventDefault();
+				el.search.focus();
+				el.search.select();
+				return;
+			}
+
+			if (event.key === "Escape") {
+				closeMega();
+				closePop();
+				closeSelect();
+				return;
+			}
+
+			if (!megaOpen()) return;
+
+			// Typing straight into an open menu filters it, without having to
+			// aim for the field first.
+			if (
+				!typing &&
+				el.megaSearch &&
+				event.key.length === 1 &&
+				!event.metaKey &&
+				!event.ctrlKey &&
+				!event.altKey
+			) {
+				el.megaSearch.focus();
+				return;
+			}
+
+			if (event.key === "ArrowDown") {
+				event.preventDefault();
+				moveCursor(1);
+			} else if (event.key === "ArrowUp") {
+				event.preventDefault();
+				moveCursor(-1);
+			} else if (event.key === "Enter" && (event.target === el.search || event.target === el.megaSearch)) {
+				event.preventDefault();
+				var current = el.body.querySelector(".aur-item.aur-cursor") || el.body.querySelector(".aur-item");
+				if (current) current.click();
+			}
+		});
+	}
+
+	/* ---------------------------------------------------------------------
+	   Settings popover
+	   ------------------------------------------------------------------ */
+
+	function closePop() {
+		clearTimeout(state.pinPopTimer);
+		if (el.pop) {
+			el.pop.remove();
+			el.pop = null;
+		}
+	}
+
+	function openSettings(anchor) {
+		if (el.pop) return closePop();
+
+		var swatches = make("div", { class: "aur-swatches" });
+		ACCENTS.forEach(function (accent) {
+			var dot = make("button", {
+				class: "aur-swatch" + (currentAccent() === accent.id ? " aur-on" : ""),
+				type: "button",
+				title: accent.label,
+				style: "background:" + accent.swatch,
+			});
+			dot.addEventListener("click", function () {
+				setAccent(accent.id);
+				Array.prototype.forEach.call(swatches.children, function (node) {
+					node.classList.remove("aur-on");
+				});
+				dot.classList.add("aur-on");
+			});
+			swatches.appendChild(dot);
+		});
+
+		var density = make("div", { class: "aur-seg" });
+		[
+			{ id: "cozy", label: "Cozy" },
+			{ id: "compact", label: "Compact" },
+		].forEach(function (option) {
+			var button = make("button", { class: currentDensity() === option.id ? "aur-on" : "", type: "button", text: option.label });
+			button.addEventListener("click", function () {
+				setDensity(option.id);
+				Array.prototype.forEach.call(density.children, function (node) {
+					node.classList.remove("aur-on");
+				});
+				button.classList.add("aur-on");
+			});
+			density.appendChild(button);
+		});
+
+		var refresh = make("div", { class: "aur-seg" });
+		var refreshBtn = make("button", { type: "button", text: "Rebuild menu cache" });
+		refreshBtn.addEventListener("click", function () {
+			loadMenu(1);
+			closePop();
+		});
+		refresh.appendChild(refreshBtn);
+
+		el.pop = make("div", { class: "aur-pop" }, [
+			make("div", { class: "aur-pop-label", text: "Accent" }),
+			make("div", { class: "aur-pop-row" }, [swatches]),
+			make("div", { class: "aur-pop-label", text: "Density" }),
+			make("div", { class: "aur-pop-row" }, [density]),
+			make("div", { class: "aur-pop-label", text: "Menu" }),
+			make("div", { class: "aur-pop-row" }, [refresh]),
+		]);
+
+		document.body.appendChild(el.pop);
+
+		var rect = anchor.getBoundingClientRect();
+		el.pop.style.top = Math.round(rect.bottom + 8) + "px";
+		el.pop.style.left = Math.round(clamp(rect.right - 268, 10, window.innerWidth - 278)) + "px";
+
+		setTimeout(function () {
+			document.addEventListener("click", function once(event) {
+				if (!el.pop) return document.removeEventListener("click", once);
+				if (!el.pop.contains(event.target)) {
+					closePop();
+					document.removeEventListener("click", once);
+				}
+			});
+		}, 0);
+	}
+
+	/* ---------------------------------------------------------------------
+	   Escaping clipped ancestors
+
+	   Suggestion lists are positioned inside the field that owns them, so a
+	   scrolling dialog body, a child table or a list header cuts them off.
+	   Frappe has plenty of those. Rather than chase each container, an open
+	   list is re-anchored to the viewport, which no ancestor can clip.
+	   ------------------------------------------------------------------ */
+
+	var POPUP_SELECTOR = ".awesomplete > ul:not([hidden]), .datepicker.active, .autocomplete-results:not([hidden])";
+
+	function clippedBy(node) {
+		var parent = node.parentElement;
+		while (parent && parent !== document.body) {
+			var style = getComputedStyle(parent);
+			if (style.overflow !== "visible" || style.overflowX !== "visible" || style.overflowY !== "visible") return true;
+			parent = parent.parentElement;
+		}
+		return false;
+	}
+
+	function anchorOf(list) {
+		var host = list.parentElement;
+		if (!host) return null;
+		return host.querySelector("input, textarea, .control-input") || host;
+	}
+
+	function unclip(list) {
+		if (!list.offsetParent && getComputedStyle(list).display === "none") return;
+
+		var anchor = anchorOf(list);
+		if (!anchor) return;
+
+		if (!list.dataset.aurUnclipped) {
+			if (!clippedBy(list)) return;
+			list.dataset.aurUnclipped = "1";
+			list.classList.add("aur-unclipped");
+		}
+
+		var rect = anchor.getBoundingClientRect();
+		var below = window.innerHeight - rect.bottom - 12;
+		var above = rect.top - 12;
+		var flip = below < 190 && above > below;
+
+		list.style.position = "fixed";
+		list.style.width = Math.round(rect.width) + "px";
+		list.style.minWidth = "0";
+		list.style.maxHeight = Math.round(clamp(flip ? above : below, 140, 360)) + "px";
+		list.style.bottom = "auto";
+
+		/* Fixed is not always relative to the viewport: a transformed ancestor
+		   (a dialog mid-animation, say) becomes the containing block instead.
+		   Parking the list at 0,0 and reading back where that landed gives the
+		   offset to work from, whatever the ancestor turns out to be. */
+		list.style.left = "0px";
+		list.style.top = "0px";
+		var origin = list.getBoundingClientRect();
+
+		var left = clamp(rect.left, 8, Math.max(8, window.innerWidth - rect.width - 8));
+		var top = flip ? rect.top - 6 - Math.min(above, 360) : rect.bottom + 6;
+
+		list.style.left = Math.round(left - origin.left) + "px";
+		list.style.top = Math.round(top - origin.top) + "px";
+	}
+
+	function watchPopups() {
+		var sweep = function () {
+			document.querySelectorAll(POPUP_SELECTOR).forEach(unclip);
+		};
+
+		["focusin", "input", "keyup", "click"].forEach(function (type) {
+			document.addEventListener(type, sweep, true);
+		});
+		document.addEventListener("scroll", sweep, true);
+		window.addEventListener("resize", sweep);
+
+		// Awesomplete opens and closes by toggling hidden; the datepicker by class.
+		new MutationObserver(sweep).observe(document.body, {
+			subtree: true,
+			attributes: true,
+			attributeFilter: ["hidden", "class", "aria-expanded"],
+		});
+	}
+
+	/* ---------------------------------------------------------------------
+	   Native select replacement
+	   ------------------------------------------------------------------ */
+
+	function closeSelect() {
+		if (el.selectPop) {
+			el.selectPop.remove();
+			el.selectPop = null;
+		}
+	}
+
+	function openSelect(select) {
+		closeSelect();
+
+		var options = Array.prototype.slice.call(select.options);
+		var pop = make("div", { class: "aur-select-pop" });
+
+		if (!options.length) pop.appendChild(make("div", { class: "aur-select-empty", text: "No options" }));
+
+		options.forEach(function (option) {
+			var row = make("div", { class: "aur-select-opt" + (option.selected ? " aur-selected" : "") }, [
+				make("span", { class: "aur-select-dot" }),
+				make("span", { text: option.textContent.trim() || "\u2014" }),
+			]);
+
+			row.addEventListener("click", function () {
+				select.value = option.value;
+				select.dispatchEvent(new Event("input", { bubbles: true }));
+				select.dispatchEvent(new Event("change", { bubbles: true }));
+				closeSelect();
+			});
+
+			pop.appendChild(row);
+		});
+
+		document.body.appendChild(pop);
+
+		var rect = select.getBoundingClientRect();
+		var width = Math.max(rect.width, 190);
+		pop.style.minWidth = Math.round(width) + "px";
+		pop.style.left = Math.round(clamp(rect.left, 8, window.innerWidth - width - 8)) + "px";
+
+		var below = window.innerHeight - rect.bottom;
+		if (below < pop.offsetHeight + 16 && rect.top > below) {
+			pop.style.top = Math.round(Math.max(8, rect.top - pop.offsetHeight - 6)) + "px";
+		} else {
+			pop.style.top = Math.round(rect.bottom + 6) + "px";
+		}
+
+		el.selectPop = pop;
+		var selected = pop.querySelector(".aur-selected");
+		if (selected) selected.scrollIntoView({ block: "nearest" });
+	}
+
+	function skinSelects() {
+		document.addEventListener(
+			"mousedown",
+			function (event) {
+				var select = event.target.closest ? event.target.closest("select") : null;
+
+				if (!select) {
+					if (el.selectPop && !event.target.closest(".aur-select-pop")) closeSelect();
+					return;
+				}
+
+				if (select.multiple || select.disabled || select.size > 1 || select.closest(".aur-native")) return;
+
+				// Suppress the OS popup and drive the value from our own listbox.
+				event.preventDefault();
+				select.focus();
+				openSelect(select);
+			},
+			true
+		);
+
+		document.addEventListener("scroll", closeSelect, true);
+		window.addEventListener("resize", closeSelect);
+	}
+
+	/* ---------------------------------------------------------------------
+	   Bar
+	   ------------------------------------------------------------------ */
+
+	function buildBar(anchor) {
+		var brand = make("button", { class: "aur-brand", type: "button", title: "Toggle the theme" }, [
+			make("span", { class: "aur-brand-dot" }),
+			make("span", { text: brandName() }),
+		]);
+		brand.addEventListener("click", toggleTheme);
+
+		var nav = make("nav", { class: "aur-nav" });
+		el.tabNodes = {};
+
+		TABS.forEach(function (tab) {
+			var node = make("button", { class: "aur-tab", type: "button", "data-tab": tab.id }, [
+				iconNode(tab.icon, "aur-tab-glyph"),
+				make("span", { text: tab.label }),
+				make("span", { class: "aur-tab-count", text: "\u2026" }),
+			]);
+			node.addEventListener("click", function () {
+				toggleTab(tab.id);
+			});
+
+			// Once the panel is open, sweeping the bar swaps what is underneath,
+			// so you can read across Workspaces, Modules, Create and the rest
+			// without clicking each one. Any standing filter is kept, because
+			// only closing the panel clears it.
+			node.addEventListener("mouseenter", function () {
+				if (!megaOpen()) return;
+				clearTimeout(hover.tabTimer);
+				hover.tabTimer = setTimeout(function () {
+					if (state.activeTab !== tab.id || state.searching) openTab(tab.id);
+				}, 90);
+			});
+
+			node.addEventListener("mouseleave", function () {
+				clearTimeout(hover.tabTimer);
+			});
+
+			el.tabNodes[tab.id] = node;
+			nav.appendChild(node);
+		});
+
+		el.search = make("input", {
+			class: "aur-search",
+			type: "search",
+			placeholder: "Jump to anything",
+			"aria-label": "Search the desk",
+		});
+		el.search.addEventListener("input", function () {
+			renderSearch(el.search.value);
+		});
+		el.search.addEventListener("focus", function () {
+			if (el.search.value.trim()) renderSearch(el.search.value);
+		});
+
+		var searchWrap = make("div", { class: "aur-search-wrap" }, [
+			make("span", { class: "aur-search-icon", text: "\u2315" }),
+			el.search,
+			make("span", { class: "aur-search-kbd", text: "/" }),
+		]);
+
+		el.pinBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Pin this page", text: "\u2605" });
+		el.pinBtn.addEventListener("click", function (event) {
+			event.stopPropagation();
+			var desc = currentDesc();
+			if (!desc) return;
+			togglePin(desc, el.pinBtn);
+		});
+
+		var paletteBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Accent and density", text: "\u25D5" });
+		paletteBtn.addEventListener("click", function (event) {
+			event.stopPropagation();
+			openSettings(paletteBtn);
+		});
+
+		var themeBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Light / dark theme", text: "\u25D1" });
+		themeBtn.addEventListener("click", openThemeSwitcher);
+
+		var fullBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Toggle fullscreen", text: "\u26F6" });
+		fullBtn.addEventListener("click", toggleFullscreen);
+
+		el.groups = make("div", { class: "aur-mega-groups" });
+		el.body = make("div", { class: "aur-mega-body" });
+
+		el.megaSearch = make("input", {
+			class: "aur-mega-input",
+			type: "search",
+			placeholder: "Filter this menu\u2026",
+			"aria-label": "Filter the open menu",
+		});
+		el.megaSearch.addEventListener("input", function () {
+			state.megaQuery = el.megaSearch.value;
+			renderGroups(state.activeTab || "workspaces");
+		});
+
+		var megaClear = make("button", { class: "aur-mega-clear", type: "button", title: "Clear", text: "\u00d7" });
+		megaClear.addEventListener("click", clearMegaFilter);
+
+		el.filterText = make("span", { class: "aur-filter-text" });
+		var filterClear = make("button", { class: "aur-filter-clear", type: "button", text: "Clear filter" });
+		filterClear.addEventListener("click", clearMegaFilter);
+
+		el.filterBar = make("div", { class: "aur-filter-bar" }, [
+			iconNode(resolveIcon("funnel", "filter", ""), "aur-filter-icon"),
+			el.filterText,
+			filterClear,
+		]);
+
+		el.mega = make("div", { class: "aur-mega" }, [
+			make("div", { class: "aur-mega-search" }, [
+				iconNode("search", "aur-mega-search-icon"),
+				el.megaSearch,
+				megaClear,
+			]),
+			el.filterBar,
+			make("div", { class: "aur-mega-cols" }, [el.groups, el.body]),
+		]);
+
+		// Pointer velocity feeds the hover-intent delay.
+		el.groups.addEventListener("mousemove", function (event) {
+			var now = performance.now();
+			var dt = now - hover.t;
+			if (dt > 0 && dt < 200) hover.vx = (event.clientX - hover.x) / dt;
+			hover.x = event.clientX;
+			hover.t = now;
+		});
+		el.groups.addEventListener("mouseleave", function () {
+			clearTimeout(hover.timer);
+		});
+
+		el.bar = make("div", { class: "aur-bar" }, [
+			make("div", { class: "aur-bar-progress" }),
+			make("div", { class: "aur-bar-inner" }, [
+				brand,
+				nav,
+				make("div", { class: "aur-bar-right" }, [searchWrap, el.pinBtn, paletteBtn, themeBtn, fullBtn]),
+			]),
+		]);
+
+		// v17 puts the content in .main-section (no navbar); older desks have a
+		// navbar to sit under. Either way the bar spans the content column.
+		if (anchor.classList.contains("main-section")) anchor.insertBefore(el.bar, anchor.firstChild);
+		else anchor.insertAdjacentElement("afterend", el.bar);
+
+		// The panel lives on <body> so no ancestor can clip or re-stack it.
+		document.body.appendChild(el.mega);
+
+		window.addEventListener("resize", function () {
+			if (megaOpen()) positionMega();
+			closePop();
+		});
+	}
+
+	function setCounts() {
+		if (!el.tabNodes) return;
+
+		TABS.forEach(function (tab) {
+			var groups = groupsFor(tab.id);
+			var total = 0;
+
+			if (tab.id === "workspaces" && groups.length) {
+				total = (groups[0].items || []).length;
+			} else {
+				groups.forEach(function (group) {
+					if (group.key !== "__all") total += group.items.length;
+				});
+			}
+
+			var node = el.tabNodes[tab.id].querySelector(".aur-tab-count");
+			if (node) node.textContent = String(total);
+		});
+	}
+
+	/* ---------------------------------------------------------------------
+	   Preferences
+	   ------------------------------------------------------------------ */
+
+	function brandName() {
+		try {
+			if (window.frappe && frappe.boot && frappe.boot.kaiten_brand) {
+				return frappe.boot.kaiten_brand;
+			}
+		} catch (e) {}
+		return "Kaiten";
+	}
+
+	function themeEnabled() {
+		return localStorage.getItem(KEY.enabled) !== "0";
+	}
+
+	function currentAccent() {
+		return localStorage.getItem(KEY.accent) || "aurora";
+	}
+
+	function currentDensity() {
+		return localStorage.getItem(KEY.density) || "cozy";
+	}
+
+	function applyPrefs() {
+		root.classList.toggle("aurora-on", themeEnabled());
+		root.setAttribute("data-aur-accent", currentAccent());
+		root.setAttribute("data-aur-density", currentDensity());
+	}
+
+	function setAccent(id) {
+		localStorage.setItem(KEY.accent, id);
+		applyPrefs();
+	}
+
+	function setDensity(id) {
+		localStorage.setItem(KEY.density, id);
+		applyPrefs();
+	}
+
+	function toggleTheme() {
+		localStorage.setItem(KEY.enabled, themeEnabled() ? "0" : "1");
+		applyPrefs();
+		try {
+			frappe.show_alert({
+				message: themeEnabled() ? "Kaiten theme on" : "Kaiten theme off",
+				indicator: themeEnabled() ? "green" : "orange",
+			});
+		} catch (e) {}
+	}
+
+	function openThemeSwitcher() {
+		try {
+			new frappe.ui.ThemeSwitcher().show();
+		} catch (e) {
+			root.setAttribute("data-theme", root.getAttribute("data-theme") === "dark" ? "light" : "dark");
+		}
+	}
+
+	function toggleFullscreen() {
+		if (document.fullscreenElement) document.exitFullscreen();
+		else document.documentElement.requestFullscreen();
+	}
+
+	/* ---------------------------------------------------------------------
+	   Motion
+	   ------------------------------------------------------------------ */
+
+	function bindRipple() {
+		document.addEventListener(
+			"click",
+			function (event) {
+				var target = event.target.closest(".btn, .es-button, .aur-item, .aur-tab, .aur-icon-btn, .dock-item");
+				if (!target) return;
+
+				var rect = target.getBoundingClientRect();
+				var size = Math.max(rect.width, rect.height);
+				var ripple = make("span", { class: "aur-ripple" });
+				ripple.style.width = ripple.style.height = size + "px";
+				ripple.style.left = event.clientX - rect.left - size / 2 + "px";
+				ripple.style.top = event.clientY - rect.top - size / 2 + "px";
+
+				if (getComputedStyle(target).position === "static") target.style.position = "relative";
+				target.appendChild(ripple);
+				setTimeout(function () {
+					ripple.remove();
+				}, 640);
+			},
+			true
+		);
+	}
+
+	function bindCursorGlow() {
+		var pending = false;
+		var last = null;
+
+		document.addEventListener("mousemove", function (event) {
+			last = event;
+			if (pending) return;
+			pending = true;
+
+			requestAnimationFrame(function () {
+				pending = false;
+				if (!last || !last.target.closest) return;
+
+				var target = last.target.closest(".widget, .frappe-card, .aur-item");
+				if (!target) return;
+
+				var rect = target.getBoundingClientRect();
+				target.style.setProperty("--mx", ((last.clientX - rect.left) / rect.width) * 100 + "%");
+				target.style.setProperty("--my", ((last.clientY - rect.top) / rect.height) * 100 + "%");
+			});
+		});
+	}
+
+	function scrollMetrics(target) {
+		var doc = document.documentElement;
+		var isPage = !target || target === document || target === window || target === doc || target === document.body;
+
+		if (isPage) return { top: window.scrollY || doc.scrollTop || 0, max: doc.scrollHeight - window.innerHeight };
+		return { top: target.scrollTop, max: target.scrollHeight - target.clientHeight };
+	}
+
+	function bindScroll() {
+		var pending = false;
+		var target = null;
+
+		function update() {
+			pending = false;
+			var metrics = scrollMetrics(target);
+			var ratio = metrics.max > 0 ? Math.min(1, Math.max(0, metrics.top / metrics.max)) : 0;
+
+			root.style.setProperty("--aur-scroll", ratio.toFixed(4));
+			if (el.bar) el.bar.classList.toggle("aur-bar-stuck", metrics.top > 8);
+		}
+
+		// Capture phase, because the desk scrolls an inner container rather than
+		// the window and scroll events do not bubble.
+		document.addEventListener(
+			"scroll",
+			function (event) {
+				// The mega panel and its lists scroll independently of the page.
+				if (event.target && event.target.closest && event.target.closest(".aur-mega")) return;
+
+				target = event.target;
+				if (pending) return;
+				pending = true;
+				requestAnimationFrame(update);
+			},
+			{ passive: true, capture: true }
+		);
+
+		update();
+	}
+
+	function bindReveal() {
+		if (!("IntersectionObserver" in window)) return;
+
+		var observer = new IntersectionObserver(
+			function (entries) {
+				entries.forEach(function (entry) {
+					if (!entry.isIntersecting) return;
+					entry.target.classList.add("aur-in");
+					observer.unobserve(entry.target);
+				});
+			},
+			{ rootMargin: "0px 0px -40px 0px", threshold: 0.04 }
+		);
+
+		function arm() {
+			Array.prototype.forEach.call(
+				document.querySelectorAll(".widget:not(.aur-reveal), .form-section:not(.aur-reveal)"),
+				function (node) {
+					// Anything already on screen is painted as-is. Only content the
+					// user has to scroll to gets the entrance.
+					if (node.getBoundingClientRect().top < window.innerHeight - 40) {
+						node.classList.add("aur-reveal", "aur-in");
+						return;
+					}
+
+					node.classList.add("aur-reveal");
+					observer.observe(node);
+				}
+			);
+
+			// Safety net: never leave anything permanently invisible.
+			setTimeout(function () {
+				Array.prototype.forEach.call(document.querySelectorAll(".aur-reveal:not(.aur-in)"), function (node) {
+					node.classList.add("aur-in");
+				});
+			}, 900);
+		}
+
+		var timer = null;
+		new MutationObserver(function () {
+			clearTimeout(timer);
+			timer = setTimeout(arm, 180);
+		}).observe(document.body, { childList: true, subtree: true });
+
+		arm();
+	}
+
+	/* ---------------------------------------------------------------------
+	   Boot
+	   ------------------------------------------------------------------ */
+
+	function loadMenu(refresh) {
+		frappe
+			.xcall("kaiten_erp_ui_themes.api.get_menu", refresh ? { refresh: 1 } : {})
+			.then(function (menu) {
+				buildModel(menu);
+				setCounts();
+				if (megaOpen() && state.activeTab) renderGroups(state.activeTab);
+			})
+			.catch(function (error) {
+				console.error("Aurora UI: could not load the menu", error);
+				Object.keys(el.tabNodes).forEach(function (id) {
+					var node = el.tabNodes[id].querySelector(".aur-tab-count");
+					if (node) node.textContent = "!";
+				});
+			});
+	}
+
+	/* ---------------------------------------------------------------------
+	   Workspace sidebar
+	   ---------------------------------------------------------------------
+	   The desk gives top-level entries an icon but leaves nested ones as bare
+	   text, which is what makes an expanded tree read as a wall of labels.
+	   Each undressed row gets a glyph derived from its own name, plus a hue
+	   the stylesheet uses to tint its chip.
+	   ------------------------------------------------------------------ */
+
+	var SIDE_HUES = [245, 285, 325, 8, 35, 165, 192, 212, 265, 305];
+
+	function dressSidebar() {
+		var items = document.querySelector(".body-sidebar .sidebar-items");
+		if (!items) return;
+
+		var rows = items.querySelectorAll(".sidebar-item-container");
+		for (var i = 0; i < rows.length; i++) {
+			var row = rows[i];
+			if (row.dataset.aurDressed) continue;
+
+			var anchor = row.querySelector(".standard-sidebar-item > .item-anchor");
+			if (!anchor) continue;
+
+			var name = row.getAttribute("item-name") || "";
+
+			var slot = anchor.querySelector(".sidebar-item-icon");
+			if (!slot) {
+				slot = make("span", { class: "sidebar-item-icon aur-side-icon" });
+				anchor.insertBefore(slot, anchor.firstChild);
+			}
+
+			// A workspace can name an icon the sprite does not carry, which
+			// renders as an empty chip. Anything unresolvable is replaced.
+			var use = slot.querySelector("use");
+			var named = use ? String(use.getAttribute("href") || "").replace("#icon-", "") : "";
+
+			if (!spriteHas(named)) {
+				slot.textContent = "";
+				slot.appendChild(iconNode(resolveIcon("", name, "doctype")));
+			}
+
+			// Inline, so it beats the nth-child wheel in the stylesheet and
+			// stays stable as the tree expands and collapses.
+			row.style.setProperty("--cyc-h", SIDE_HUES[i % SIDE_HUES.length]);
+			row.style.setProperty("--aur-stagger", Math.min(i, 20) * 22 + "ms");
+			row.dataset.aurDressed = "1";
+		}
+	}
+
+	function watchSidebar() {
+		var pending = null;
+
+		var queue = function () {
+			if (pending) return;
+			pending = requestAnimationFrame(function () {
+				pending = null;
+				dressSidebar();
+			});
+		};
+
+		dressSidebar();
+		new MutationObserver(queue).observe(document.body, { childList: true, subtree: true });
+	}
+
+	function boot() {
+		var anchor = document.querySelector(".main-section") || document.querySelector("header.navbar");
+		if (!anchor || !window.frappe || !frappe.xcall) return false;
+
+		buildBar(anchor);
+		watchSidebar();
+		bindKeys();
+		bindRipple();
+		bindCursorGlow();
+		bindScroll();
+		bindReveal();
+		skinSelects();
+		watchPopups();
+		trackRoutes();
+		backfillTitles();
+		loadMenu(0);
+		return true;
+	}
+
+	adoptLegacy();
+	applyPrefs();
+
+	var attempts = 0;
+	var poll = setInterval(function () {
+		attempts += 1;
+		if (boot() || attempts > 120) clearInterval(poll);
+	}, 250);
+})();

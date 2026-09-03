@@ -1,0 +1,807 @@
+/* =========================================================================
+   Kaiten ERP UI Themes — the sign-in experience
+   -------------------------------------------------------------------------
+   Loaded on every website page via web_include_css, but every rule is keyed
+   to markup that only the login family of pages renders (.page-card and the
+   aur-lg- components the companion script injects), so ordinary portal and
+   web pages are left alone.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   1. Tokens and accent presets
+   -------------------------------------------------------------------------
+   The desk theme is not loaded here, so the handful of accent presets the
+   sign-in page needs are redeclared. Both surfaces read the same
+   localStorage key, which means the accent chosen at the login screen is
+   already in place by the time the desk paints.
+   ---------------------------------------------------------------------- */
+
+:root {
+	--aur-accent: #6366f1;
+	--aur-accent-2: #ec4899;
+	--aur-grad: linear-gradient(120deg, #6366f1, #8b5cf6 45%, #ec4899);
+	--aur-lg-a: #6366f1;
+	--aur-lg-b: #8b5cf6;
+	--aur-lg-c: #ec4899;
+	--aur-lg-base: #eef1fb;
+	--aur-lg-card: rgba(255, 255, 255, 0.62);
+	--aur-lg-card-2: rgba(255, 255, 255, 0.42);
+	--aur-lg-ink: #131a35;
+	--aur-lg-ink-soft: #5b6486;
+	--aur-lg-line: rgba(99, 102, 241, 0.2);
+	--aur-lg-ease: cubic-bezier(0.22, 1, 0.36, 1);
+	--aur-lg-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+html[data-aur-accent="sunset"] {
+	--aur-accent: #f97316;
+	--aur-accent-2: #ec4899;
+	--aur-lg-a: #f97316;
+	--aur-lg-b: #f43f5e;
+	--aur-lg-c: #a855f7;
+	--aur-lg-base: #fdf0e8;
+	--aur-lg-line: rgba(249, 115, 22, 0.22);
+}
+
+html[data-aur-accent="ocean"] {
+	--aur-accent: #0ea5e9;
+	--aur-accent-2: #14b8a6;
+	--aur-lg-a: #0ea5e9;
+	--aur-lg-b: #06b6d4;
+	--aur-lg-c: #14b8a6;
+	--aur-lg-base: #e7f4fd;
+	--aur-lg-line: rgba(14, 165, 233, 0.22);
+}
+
+html[data-aur-accent="forest"] {
+	--aur-accent: #10b981;
+	--aur-accent-2: #84cc16;
+	--aur-lg-a: #10b981;
+	--aur-lg-b: #22c55e;
+	--aur-lg-c: #84cc16;
+	--aur-lg-base: #e8f7ef;
+	--aur-lg-line: rgba(16, 185, 129, 0.22);
+}
+
+html[data-aur-accent="grape"] {
+	--aur-accent: #a855f7;
+	--aur-accent-2: #6366f1;
+	--aur-lg-a: #a855f7;
+	--aur-lg-b: #8b5cf6;
+	--aur-lg-c: #6366f1;
+	--aur-lg-base: #f2ecfd;
+	--aur-lg-line: rgba(168, 85, 247, 0.22);
+}
+
+html[data-theme="dark"] {
+	--aur-lg-base: #080a14;
+	--aur-lg-card: rgba(24, 27, 43, 0.72);
+	--aur-lg-card-2: rgba(18, 21, 35, 0.55);
+	--aur-lg-ink: #e8ecff;
+	--aur-lg-ink-soft: #99a1c4;
+	--aur-lg-line: rgba(148, 163, 255, 0.22);
+}
+
+html[data-aur-accent] {
+	--aur-grad: linear-gradient(120deg, var(--aur-lg-a), var(--aur-lg-b) 45%, var(--aur-lg-c));
+}
+
+/* Chrome and Safari 16.4+ can tween a registered angle, which is what makes
+   the halo rotate. Everywhere else it simply stays put. */
+@property --aur-lg-angle {
+	syntax: "<angle>";
+	initial-value: 0deg;
+	inherits: false;
+}
+
+/* -------------------------------------------------------------------------
+   2. Backdrop — drifting aurora, grid, embers
+   ---------------------------------------------------------------------- */
+
+.aur-lg-bg {
+	position: fixed;
+	inset: 0;
+	z-index: -2;
+	overflow: hidden;
+	background: var(--aur-lg-base);
+	pointer-events: none;
+}
+
+.aur-lg-orb {
+	position: absolute;
+	border-radius: 50%;
+	filter: blur(70px);
+	opacity: 0.55;
+	will-change: transform;
+}
+
+html[data-theme="dark"] .aur-lg-orb {
+	opacity: 0.4;
+}
+
+.aur-lg-orb-1 {
+	width: 46vw;
+	height: 46vw;
+	left: -8vw;
+	top: -10vw;
+	background: radial-gradient(circle, var(--aur-lg-a), transparent 68%);
+	animation: aur-lg-drift-1 24s var(--aur-lg-ease) infinite alternate;
+}
+
+.aur-lg-orb-2 {
+	width: 52vw;
+	height: 52vw;
+	right: -12vw;
+	top: 6vh;
+	background: radial-gradient(circle, var(--aur-lg-c), transparent 68%);
+	animation: aur-lg-drift-2 29s var(--aur-lg-ease) infinite alternate;
+}
+
+.aur-lg-orb-3 {
+	width: 44vw;
+	height: 44vw;
+	left: 22vw;
+	bottom: -18vw;
+	background: radial-gradient(circle, var(--aur-lg-b), transparent 68%);
+	animation: aur-lg-drift-3 34s var(--aur-lg-ease) infinite alternate;
+}
+
+@keyframes aur-lg-drift-1 {
+	to {
+		transform: translate3d(14vw, 10vh, 0) scale(1.18);
+	}
+}
+
+@keyframes aur-lg-drift-2 {
+	to {
+		transform: translate3d(-16vw, 14vh, 0) scale(1.12);
+	}
+}
+
+@keyframes aur-lg-drift-3 {
+	to {
+		transform: translate3d(10vw, -12vh, 0) scale(1.22);
+	}
+}
+
+/* A faint engineering grid gives the soft gradients something to sit on. */
+.aur-lg-grid {
+	position: absolute;
+	inset: 0;
+	background-image: linear-gradient(var(--aur-lg-line) 1px, transparent 1px),
+		linear-gradient(90deg, var(--aur-lg-line) 1px, transparent 1px);
+	background-size: 46px 46px;
+	opacity: 0.5;
+	-webkit-mask-image: radial-gradient(120% 90% at 50% 40%, #000 10%, transparent 72%);
+	mask-image: radial-gradient(120% 90% at 50% 40%, #000 10%, transparent 72%);
+}
+
+.aur-lg-veil {
+	position: absolute;
+	inset: 0;
+	background: radial-gradient(90% 70% at 50% 45%, transparent 30%, var(--aur-lg-base) 100%);
+	opacity: 0.75;
+}
+
+.aur-lg-ember {
+	position: absolute;
+	bottom: -12px;
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+	background: var(--aur-lg-b);
+	opacity: 0;
+	box-shadow: 0 0 12px 2px currentColor;
+	color: var(--aur-lg-c);
+	animation: aur-lg-rise linear infinite;
+}
+
+@keyframes aur-lg-rise {
+	0% {
+		opacity: 0;
+		transform: translateY(0) scale(0.6);
+	}
+	12% {
+		opacity: 0.85;
+	}
+	80% {
+		opacity: 0.6;
+	}
+	100% {
+		opacity: 0;
+		transform: translateY(-104vh) translateX(var(--dx, 0px)) scale(1.15);
+	}
+}
+
+/* -------------------------------------------------------------------------
+   3. Page frame
+   ---------------------------------------------------------------------- */
+
+body:has(.aur-lg-bg) {
+	background: transparent;
+	color: var(--aur-lg-ink);
+}
+
+/* The card is the only thing on the page, so it should sit in the middle of
+   it rather than clinging to the top edge. */
+.aur-lg-on #page-login .page_content {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: calc(100vh - 90px);
+}
+
+.aur-lg-on #page-login .page-breadcrumbs,
+.aur-lg-on #page-login .page-header-wrapper,
+.aur-lg-on #page-login .web-footer,
+.aur-lg-on #page-login footer {
+	display: none;
+}
+
+.aur-lg-on section.for-login,
+.aur-lg-on section.for-signup,
+.aur-lg-on section.for-forgot,
+.aur-lg-on section.for-email-login,
+.aur-lg-on section.for-login-with-email-link {
+	animation: aur-lg-enter 0.85s var(--aur-lg-ease) both;
+}
+
+@keyframes aur-lg-enter {
+	from {
+		opacity: 0;
+		transform: translateY(22px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+/* -------------------------------------------------------------------------
+   4. The card
+   ---------------------------------------------------------------------- */
+
+.aur-lg-on .page-card {
+	position: relative;
+	width: min(430px, 92vw);
+	padding: 34px 32px 28px;
+	border: 1px solid transparent;
+	border-radius: 26px;
+	background: linear-gradient(158deg, var(--aur-lg-card), var(--aur-lg-card-2));
+	backdrop-filter: blur(28px) saturate(165%);
+	-webkit-backdrop-filter: blur(28px) saturate(165%);
+	box-shadow: 0 44px 90px -34px color-mix(in oklab, var(--aur-lg-b) 65%, transparent),
+		0 2px 10px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+	transform: perspective(1100px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+	transition: transform 0.35s var(--aur-lg-ease), box-shadow 0.35s var(--aur-lg-ease);
+	transform-style: preserve-3d;
+}
+
+/* A conic ring drawn only in the border box, so the card is rimmed in light
+   that keeps turning. */
+.aur-lg-on .page-card::before {
+	content: "";
+	position: absolute;
+	inset: -1px;
+	border-radius: inherit;
+	padding: 1.5px;
+	background: conic-gradient(
+		from var(--aur-lg-angle),
+		var(--aur-lg-a),
+		var(--aur-lg-c),
+		#f59e0b,
+		#06b6d4,
+		var(--aur-lg-a)
+	);
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	mask-composite: exclude;
+	opacity: 0.45;
+	filter: blur(0.4px);
+	animation: aur-lg-spin 11s linear infinite;
+	pointer-events: none;
+}
+
+@keyframes aur-lg-spin {
+	to {
+		--aur-lg-angle: 360deg;
+	}
+}
+
+/* A pool of light that tracks the pointer across the glass. */
+.aur-lg-on .page-card::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	background: radial-gradient(
+		260px circle at var(--mx, 50%) var(--my, 0%),
+		color-mix(in oklab, var(--aur-lg-a) 26%, transparent),
+		transparent 70%
+	);
+	opacity: 0;
+	transition: opacity 0.4s var(--aur-lg-ease);
+	pointer-events: none;
+}
+
+.aur-lg-on .page-card:hover::after {
+	opacity: 1;
+}
+
+.aur-lg-on .page-card > * {
+	position: relative;
+	z-index: 1;
+}
+
+/* -------------------------------------------------------------------------
+   5. Brand block
+   ---------------------------------------------------------------------- */
+
+.aur-lg-brand {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.aur-lg-mark {
+	width: 46px;
+	height: 46px;
+	flex: none;
+	border-radius: 15px;
+	box-shadow: 0 14px 28px -12px color-mix(in oklab, var(--aur-lg-b) 90%, transparent);
+	animation: aur-lg-float 6s ease-in-out infinite;
+}
+
+@keyframes aur-lg-float {
+	0%,
+	100% {
+		transform: translateY(0) rotate(0deg);
+	}
+	50% {
+		transform: translateY(-5px) rotate(-3deg);
+	}
+}
+
+.aur-lg-word {
+	font-size: 1.45rem;
+	font-weight: 800;
+	letter-spacing: -0.03em;
+	line-height: 1.1;
+	background: var(--aur-grad);
+	background-size: 200% 100%;
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	animation: aur-lg-hue 7s linear infinite;
+}
+
+@keyframes aur-lg-hue {
+	to {
+		background-position: 200% 0;
+	}
+}
+
+.aur-lg-on .page-card-head img.app-logo {
+	display: none;
+}
+
+.aur-lg-on .page-card-head h4 {
+	font-size: 1.6rem !important;
+	font-weight: 750;
+	letter-spacing: -0.025em;
+	color: var(--aur-lg-ink) !important;
+}
+
+.aur-lg-on .page-card-subtitle {
+	color: var(--aur-lg-ink-soft) !important;
+}
+
+/* The rotating line under the heading. Each phrase is swapped by the script
+   and re-enters with its own animation. */
+.aur-lg-tag {
+	display: block;
+	min-height: 1.25em;
+	font-size: 0.9rem;
+	color: var(--aur-lg-ink-soft);
+}
+
+.aur-lg-tag span {
+	display: inline-block;
+	animation: aur-lg-tag-in 0.55s var(--aur-lg-back) both;
+	font-weight: 600;
+	background: var(--aur-grad);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+@keyframes aur-lg-tag-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px) rotateX(-40deg);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+/* -------------------------------------------------------------------------
+   6. Fields
+   ---------------------------------------------------------------------- */
+
+.aur-lg-on .page-card label {
+	font-size: 0.82rem !important;
+	font-weight: 650;
+	letter-spacing: 0.01em;
+	color: var(--aur-lg-ink-soft) !important;
+	transition: color 0.2s var(--aur-lg-ease);
+}
+
+.aur-lg-on .page-card .form-group:focus-within label {
+	color: var(--aur-accent) !important;
+}
+
+.aur-lg-on .page-card .email-field,
+.aur-lg-on .page-card .password-field {
+	position: relative;
+	width: 100%;
+}
+
+/* web_include_css lands in <head> ahead of the website bundle, so the box
+   metrics have to be forced; everything else wins on its own. */
+.aur-lg-on .page-card .form-control {
+	width: 100%;
+	height: 46px !important;
+	padding: 0 14px 0 42px !important;
+	font-size: 0.95rem;
+	color: var(--aur-lg-ink);
+	border: 1px solid var(--aur-lg-line);
+	border-radius: 14px !important;
+	background: color-mix(in oklab, var(--aur-lg-card) 80%, #fff);
+	transition: border-color 0.2s var(--aur-lg-ease), box-shadow 0.2s var(--aur-lg-ease),
+		background 0.2s var(--aur-lg-ease), transform 0.2s var(--aur-lg-ease);
+}
+
+.aur-lg-on .page-card .form-control::placeholder {
+	color: color-mix(in oklab, var(--aur-lg-ink-soft) 60%, transparent);
+}
+
+.aur-lg-on .page-card .form-control:focus {
+	outline: none;
+	border-color: transparent;
+	transform: translateY(-1px);
+	box-shadow: 0 0 0 1.5px var(--aur-accent),
+		0 0 0 6px color-mix(in oklab, var(--aur-accent) 16%, transparent),
+		0 10px 24px -14px color-mix(in oklab, var(--aur-accent) 90%, transparent);
+}
+
+.aur-lg-on .password-field .form-control {
+	padding-right: 42px !important;
+}
+
+/* The leading glyph inside each field. An <svg> carrying only a viewBox is
+   laid out at 300x150 unless it is told otherwise. */
+.aur-lg-icon {
+	position: absolute;
+	left: 14px;
+	top: 50%;
+	width: 18px;
+	height: 18px;
+	transform: translateY(-50%);
+	color: var(--aur-lg-ink-soft);
+	pointer-events: none;
+	z-index: 2;
+	transition: color 0.2s var(--aur-lg-ease), transform 0.3s var(--aur-lg-back);
+}
+
+.aur-lg-icon svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.aur-lg-caps svg {
+	width: 14px;
+	height: 14px;
+	flex: none;
+}
+
+.aur-lg-on .form-group:focus-within .aur-lg-icon {
+	color: var(--aur-accent);
+	transform: translateY(-50%) scale(1.12);
+}
+
+.aur-lg-on .toggle-password {
+	right: 13px;
+	left: auto;
+	color: var(--aur-lg-ink-soft);
+	cursor: pointer;
+	transition: color 0.2s var(--aur-lg-ease), transform 0.2s var(--aur-lg-back);
+}
+
+.aur-lg-on .toggle-password:hover {
+	color: var(--aur-accent);
+	transform: translateY(-50%) scale(1.15);
+}
+
+/* Caps lock is the single most common reason a correct password fails. */
+.aur-lg-caps {
+	display: none;
+	align-items: center;
+	gap: 6px;
+	margin-top: 6px;
+	font-size: 0.78rem;
+	font-weight: 600;
+	color: #b45309;
+}
+
+.aur-lg-caps.aur-on {
+	display: flex;
+	animation: aur-lg-tag-in 0.35s var(--aur-lg-back) both;
+}
+
+.aur-lg-on .page-card a {
+	color: var(--aur-accent) !important;
+	font-weight: 600;
+	text-decoration: none;
+	transition: opacity 0.2s var(--aur-lg-ease);
+}
+
+.aur-lg-on .page-card a:hover {
+	opacity: 0.75;
+}
+
+/* -------------------------------------------------------------------------
+   7. Buttons
+   ---------------------------------------------------------------------- */
+
+.aur-lg-on .page-card .es-button[data-variant="solid"],
+.aur-lg-on .page-card button[type="submit"] {
+	position: relative;
+	overflow: hidden;
+	height: 48px;
+	border: none;
+	border-radius: 15px;
+	font-size: 0.97rem;
+	font-weight: 650;
+	letter-spacing: 0.01em;
+	color: #fff;
+	background: var(--aur-grad);
+	background-size: 200% 100%;
+	box-shadow: 0 16px 32px -14px color-mix(in oklab, var(--aur-lg-b) 95%, transparent);
+	transition: transform 0.2s var(--aur-lg-ease), box-shadow 0.25s var(--aur-lg-ease),
+		background-position 0.5s var(--aur-lg-ease);
+}
+
+.aur-lg-on .page-card button[type="submit"]:hover {
+	background-position: 100% 0;
+	transform: translateY(-2px);
+	box-shadow: 0 22px 42px -14px color-mix(in oklab, var(--aur-lg-c) 95%, transparent);
+}
+
+.aur-lg-on .page-card button[type="submit"]:active {
+	transform: translateY(0) scale(0.985);
+}
+
+/* A highlight that crosses the button every few seconds. */
+.aur-lg-on .page-card button[type="submit"]::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 45%;
+	background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+	transform: skewX(-18deg);
+	animation: aur-lg-shine 3.6s var(--aur-lg-ease) infinite;
+}
+
+@keyframes aur-lg-shine {
+	0% {
+		left: -60%;
+	}
+	55%,
+	100% {
+		left: 130%;
+	}
+}
+
+.aur-lg-on .page-card .btn-login-option {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 44px;
+	border-radius: 14px;
+	font-weight: 600;
+	color: var(--aur-lg-ink) !important;
+	background: color-mix(in oklab, var(--aur-accent) 8%, transparent);
+	border: 1px solid var(--aur-lg-line);
+	box-shadow: none;
+	transition: background 0.2s var(--aur-lg-ease), transform 0.2s var(--aur-lg-ease),
+		border-color 0.2s var(--aur-lg-ease);
+}
+
+.aur-lg-on .page-card .btn-login-option:hover {
+	background: color-mix(in oklab, var(--aur-accent) 16%, transparent);
+	border-color: var(--aur-accent);
+	transform: translateY(-1px);
+	opacity: 1;
+}
+
+.aur-lg-ripple {
+	position: absolute;
+	border-radius: 50%;
+	transform: translate(-50%, -50%) scale(0);
+	background: rgba(255, 255, 255, 0.5);
+	pointer-events: none;
+	animation: aur-lg-ripple 0.6s var(--aur-lg-ease) forwards;
+}
+
+@keyframes aur-lg-ripple {
+	to {
+		transform: translate(-50%, -50%) scale(1);
+		opacity: 0;
+	}
+}
+
+/* -------------------------------------------------------------------------
+   8. Error banner
+   ---------------------------------------------------------------------- */
+
+.aur-lg-on .login-error-banner {
+	border-radius: 13px;
+	border: 1px solid rgba(244, 63, 94, 0.35);
+	background: rgba(244, 63, 94, 0.1);
+	color: #be123c;
+	animation: aur-lg-shake 0.45s var(--aur-lg-ease) both;
+}
+
+@keyframes aur-lg-shake {
+	0%,
+	100% {
+		transform: translateX(0);
+	}
+	20% {
+		transform: translateX(-7px);
+	}
+	45% {
+		transform: translateX(6px);
+	}
+	70% {
+		transform: translateX(-3px);
+	}
+}
+
+/* -------------------------------------------------------------------------
+   9. Footer strip — accent picker, theme, hint
+   ---------------------------------------------------------------------- */
+
+.aur-lg-foot {
+	position: fixed;
+	left: 50%;
+	bottom: 20px;
+	z-index: 5;
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 8px 14px;
+	transform: translateX(-50%);
+	border: 1px solid var(--aur-lg-line);
+	border-radius: 999px;
+	background: var(--aur-lg-card);
+	backdrop-filter: blur(20px) saturate(160%);
+	-webkit-backdrop-filter: blur(20px) saturate(160%);
+	box-shadow: 0 18px 40px -22px rgba(15, 23, 42, 0.6);
+	animation: aur-lg-enter 0.9s 0.25s var(--aur-lg-ease) both;
+}
+
+.aur-lg-swatches {
+	display: flex;
+	gap: 7px;
+}
+
+.aur-lg-swatch {
+	width: 19px;
+	height: 19px;
+	padding: 0;
+	border: 2px solid transparent;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: transform 0.2s var(--aur-lg-back), border-color 0.2s var(--aur-lg-ease);
+}
+
+.aur-lg-swatch:hover {
+	transform: scale(1.22);
+}
+
+.aur-lg-swatch.aur-on {
+	border-color: var(--aur-lg-ink);
+	transform: scale(1.15);
+}
+
+.aur-lg-sep {
+	width: 1px;
+	height: 18px;
+	background: var(--aur-lg-line);
+}
+
+.aur-lg-btn {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 8px;
+	font-size: 0.78rem;
+	font-weight: 600;
+	color: var(--aur-lg-ink-soft);
+	background: none;
+	border: none;
+	border-radius: 999px;
+	cursor: pointer;
+	transition: color 0.2s var(--aur-lg-ease), background 0.2s var(--aur-lg-ease);
+}
+
+.aur-lg-btn:hover {
+	color: var(--aur-accent);
+	background: color-mix(in oklab, var(--aur-accent) 12%, transparent);
+}
+
+.aur-lg-btn svg {
+	width: 15px;
+	height: 15px;
+}
+
+.aur-lg-hint {
+	font-size: 0.76rem;
+	color: var(--aur-lg-ink-soft);
+}
+
+.aur-lg-kbd {
+	display: inline-block;
+	padding: 1px 6px;
+	margin: 0 2px;
+	font-size: 0.7rem;
+	font-weight: 650;
+	border: 1px solid var(--aur-lg-line);
+	border-radius: 6px;
+	background: color-mix(in oklab, var(--aur-accent) 10%, transparent);
+	color: var(--aur-accent);
+}
+
+/* -------------------------------------------------------------------------
+   10. Responsive + motion preferences
+   ---------------------------------------------------------------------- */
+
+@media (max-width: 575px) {
+	.aur-lg-on .page-card {
+		padding: 26px 22px 22px;
+		border-radius: 22px;
+	}
+
+	.aur-lg-hint,
+	.aur-lg-sep:last-of-type {
+		display: none;
+	}
+}
+
+@media (max-height: 700px) {
+	.aur-lg-foot {
+		display: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.aur-lg-bg *,
+	.aur-lg-on .page-card,
+	.aur-lg-on .page-card::before,
+	.aur-lg-on .page-card button[type="submit"]::after,
+	.aur-lg-mark,
+	.aur-lg-word {
+		animation: none !important;
+		transition: none !important;
+	}
+
+	.aur-lg-on .page-card {
+		transform: none !important;
+	}
+}

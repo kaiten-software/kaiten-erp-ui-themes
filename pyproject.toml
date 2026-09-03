@@ -1,0 +1,18 @@
+[project]
+name = "kaiten_erp_ui_themes"
+version = "1.0.0"
+description = "Kaiten ERP UI Themes — a rich, colorful desk theme and global mega menu for Frappe/ERPNext"
+authors = [{ name = "Kaiten" }]
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["kaiten_erp_ui_themes*"]
+
+[tool.setuptools.package-data]
+kaiten_erp_ui_themes = ["public/**/*", "modules.txt", "patches.txt"]
