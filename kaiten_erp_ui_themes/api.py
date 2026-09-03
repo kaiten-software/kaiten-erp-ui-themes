@@ -50,14 +50,20 @@ TOOL_GROUPS = [
 ]
 
 
-def _readable_doctypes() -> set:
-	"""Names of every doctype the current user may read, or an empty set."""
+def _readable_doctypes(names: list | None = None) -> set:
+	"""Names of every doctype the current user may read.
+
+	An empty result means exactly that, and is filtered on. Reading it as "no
+	filtering available" would show the whole menu to a user who may read none of
+	it, so if the fast path is unavailable each doctype is asked individually
+	instead.
+	"""
 	try:
 		from frappe.permissions import get_doctypes_with_read
 
 		return set(get_doctypes_with_read())
 	except Exception:
-		return set()
+		return {name for name in (names or []) if frappe.has_permission(name, "read")}
 
 
 def _doctype_rows() -> list:
@@ -84,11 +90,12 @@ def _workspaces() -> list:
 
 		pages = get_workspace_sidebar_items().get("pages") or []
 	except Exception:
+		# No ignore_permissions here: this only runs if the desk's own role-aware
+		# helper is unavailable, and it must not become the looser path.
 		pages = frappe.get_all(
 			"Workspace",
 			fields=["name", "title", "module", "icon", "public", "parent_page"],
 			limit_page_length=0,
-			ignore_permissions=True,
 		)
 
 	items = []
@@ -122,7 +129,7 @@ def _modules(rows: list, readable: set) -> list:
 	for row in rows:
 		if row.get("is_virtual"):
 			continue
-		if readable and row.name not in readable:
+		if row.name not in readable:
 			continue
 
 		module = row.module or "Other"
@@ -168,7 +175,7 @@ def _reports(readable: set) -> list:
 	for row in rows:
 		if not row.ref_doctype:
 			continue
-		if readable and row.ref_doctype not in readable:
+		if row.ref_doctype not in readable:
 			continue
 
 		reports.append(
@@ -193,7 +200,7 @@ def _tools(rows: list, readable: set) -> list:
 			row = by_name.get(doctype)
 			if not row:
 				continue
-			if readable and doctype not in readable:
+			if doctype not in readable:
 				continue
 
 			items.append({"name": doctype, "label": _(doctype), "single": bool(row.issingle)})
@@ -230,6 +237,11 @@ def get_brand() -> dict:
 @frappe.whitelist()
 def get_menu(refresh: int | str = 0) -> dict:
 	"""Return the full, permission-filtered menu tree for the current user."""
+	# The bar is a desk feature, and nothing here is meant for a signed-out
+	# visitor. Answering at all would only tell them what the site contains.
+	if frappe.session.user == "Guest":
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
 	cache_key = f"kaiten_erp_ui_themes_menu::{frappe.session.user}"
 
 	if not frappe.utils.cint(refresh):
@@ -238,7 +250,7 @@ def get_menu(refresh: int | str = 0) -> dict:
 			return cached
 
 	rows = _doctype_rows()
-	readable = _readable_doctypes()
+	readable = _readable_doctypes([row.name for row in rows])
 
 	payload = {
 		"user": frappe.session.user,

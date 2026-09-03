@@ -40,7 +40,11 @@ bench --site [site] clear-cache
   heading. Switch with the toggle beside the menu filter; the choice is
   remembered per user.
 - **Login** — branded sign-in with the same accent presets as the desk.
-- **Menu API** — one cached, permission-filtered call that feeds the bar.
+- **Menu API** — one call feeds the whole bar, cached per user for five minutes.
+  Every doctype, report and tool is filtered against that user's read permission,
+  and workspaces come from the same role-aware source the stock sidebar uses, so
+  the menu shows only what its reader could already reach. A user who may read
+  nothing is offered nothing.
 - **Preferences follow the user** — pins, shelves, recents, accent, density and
   layout are stored against the user in the database, so they survive a new
   machine, a different browser or cleared site data.
