@@ -36,7 +36,19 @@ bench --site [site] clear-cache
   gradient wash, with pill controls and ink-black actions. Each theme offers its
   own colour tones, and a colour you mix yourself can be added to the palette.
 - **Mega menu** — Workspaces, Modules, Create, Insights, Tools, Pinned and
-  Recent. Search filters the tree. Pins can be filed onto shelves.
+  Recent. Search filters the tree. Pins can be filed onto shelves. On a narrow
+  window the tab strip scrolls, and each end that still has tabs behind it fades
+  and offers a chevron, so a row short of room never reads as a row that has
+  ended. A tab you arrow onto is always brought into view.
+- **A filter that admits where things are** — the search persists across tabs, so
+  a tab it has emptied says so and offers the tabs that do still match instead of
+  looking like the thing does not exist.
+- **No module held back** — every module appears, Frappe's `Core` included, so
+  `User`, `Role`, `Role Profile` and `User Permission` are in Modules under their
+  own module as well as in Tools → Administration. Read permission is the only
+  thing that decides what a menu contains, which is what the awesomebar already
+  does; a site wanting a shorter list should say so in role permissions, where it
+  holds everywhere rather than in this menu alone.
 - **Two menu layouts** — *Split* keeps the group rail beside the entries;
   *Columns* drops the rail and lays every group out at once, each under its own
   heading. Long groups show their first eight entries with a `+n more` that opens
@@ -116,20 +128,29 @@ The wordmark defaults to **Kaiten**. Override it with either:
 The open menu is driven entirely from the keyboard. Focus stays in the filter
 field the whole time and the selection is drawn onto a row instead of being held
 by it, so typing narrows the list and the arrows walk it in the same breath, with
-no mode to switch between. The first row is armed as soon as the panel opens, and
-the panel prints its own legend along its foot.
+no mode to switch between. The panel prints its own legend along its foot.
+
+Navigation has three floors — the top bar, the group rail, and the items — and
+the floor you are on decides what a direction key means. Along the bar, `←` and
+`→` only ever walk tabs, so the panel below can never catch the cursor and
+nothing down there is highlighted until you ask for it. `↓` goes in one floor at
+a time, `↑` and `←` come back out, and no end wraps.
 
 | Key | Action |
 | --- | --- |
-| `/` or `Ctrl+/` | open the mega menu immediately, ready to filter |
+| `/` or `Ctrl+/` | open the Pinned tab immediately, ready to filter |
 | printable keys | filter the open mega menu |
-| `↑` `↓` `←` `→` | walk the rows; `←` `→` yield to the caret while there is filter text left to cross |
-| `Tab` / `Shift+Tab` | next or previous group — the shelf, workspace or module heading |
-| `Ctrl+←` / `Ctrl+→` | previous or next tab in the bar, keeping any filter |
-| `Home` / `End` | first or last row |
-| `PageUp` / `PageDown` | a screenful at a time |
-| `Enter` | open the selected row, or expand a `+N more` group |
-| `Ctrl+Enter` | open the selected row in a new tab |
+| `←` `→` on the bar | previous / next top tab (Pinned → Workspaces → …; no wrap) |
+| `↓` on the bar | into the group rail — or the first item where there is no rail |
+| `↑` `↓` in the rail | previous / next group; `↑` off the top returns to the bar |
+| `→` in the rail | into the items |
+| `←` in the items | back out to the rail |
+| `↑` `↓` `←` `→` in the items | roam the grid |
+| `Tab` / `Shift+Tab` | next / previous top tab, staying on the bar (no wrap) |
+| `Home` / `End` | first or last tab, group, or row, depending on the floor |
+| `PageUp` / `PageDown` | a screenful of rows at a time |
+| `Enter` | open the selected row, or go in one floor from the bar or the rail |
+| `Ctrl+Enter` | open the selected row in a new tab and switch to it |
 | tap `Alt` | show letter badges (they stay until you pick one) |
 | letter while badges are up | open that row; two letters for `AA` / `AS` style badges |
 | tap `Alt` again / `Esc` | hide the badges |

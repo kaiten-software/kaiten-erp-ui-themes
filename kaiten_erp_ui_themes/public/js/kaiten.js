@@ -270,6 +270,11 @@
 		openCols: {},
 		hints: null,
 		hintPrefix: "",
+		/* Which floor the arrows are on: "bar" = top tabs, "groups" = the left
+		   rail, "items" = the rows. Down descends, Up and Left climb back, and
+		   no end wraps — the bar is the ceiling and the last group a hard stop. */
+		kbZone: "bar",
+		pinCursor: null,
 	};
 	var hover = { timer: null, tabTimer: null, vx: 0, x: 0, t: 0 };
 
@@ -1465,6 +1470,60 @@
 		if (el.megaSearch) el.megaSearch.focus();
 	}
 
+	/* How many entries a tab still has under the standing filter. Used when the
+	   open tab is empty so we can point at the tabs that do still match, instead
+	   of looking like the thing does not exist. */
+	function countFiltered(tabId, query) {
+		var groups = filterGroups(groupsFor(tabId), query);
+		if (tabId === "workspaces") {
+			var all = groups.filter(function (group) {
+				return group.key === "__all";
+			})[0];
+			return all ? all.items.length : 0;
+		}
+		var total = 0;
+		groups.forEach(function (group) {
+			if (group.key === "__all") return;
+			total += (group.items || []).length;
+		});
+		return total;
+	}
+
+	function elsewhereHits(query, exceptTab) {
+		var needle = String(query || "").trim();
+		if (!needle) return [];
+		return TABS.filter(function (tab) {
+			return tab.id !== exceptTab && tab.id !== "pinned" && tab.id !== "recent";
+		})
+			.map(function (tab) {
+				return { id: tab.id, label: tab.label, count: countFiltered(tab.id, needle) };
+			})
+			.filter(function (hit) {
+				return hit.count > 0;
+			});
+	}
+
+	function renderElsewhere(query, exceptTab) {
+		var hits = elsewhereHits(query, exceptTab);
+		if (!hits.length || !el.body) return;
+
+		var row = make("div", { class: "aur-elsewhere" }, [
+			make("div", { class: "aur-elsewhere-label", text: "Found in other tabs" }),
+		]);
+		hits.forEach(function (hit) {
+			var button = make("button", {
+				class: "aur-elsewhere-chip",
+				type: "button",
+				text: hit.label + " \u00b7 " + hit.count,
+			});
+			button.addEventListener("click", function () {
+				openTab(hit.id);
+			});
+			row.appendChild(button);
+		});
+		el.body.appendChild(row);
+	}
+
 	/* The filter survives a tab change, so the panel has to say so: without a
 	   standing notice a tab narrowed by an earlier search just looks empty. */
 	function updateFilterBar(query, groups) {
@@ -1490,13 +1549,27 @@
 			return n + " " + (n === 1 ? one : many);
 		};
 
-		el.filterText.textContent = items
+		if (items) {
+			el.filterText.textContent =
+				"Filtered by \u201c" +
+				needle +
+				"\u201d \u00b7 " +
+				plural(items, "match", "matches") +
+				" in " +
+				plural(shown, "group", "groups");
+			return;
+		}
+
+		var elsew = elsewhereHits(needle, state.activeTab);
+		el.filterText.textContent = elsew.length
 			? "Filtered by \u201c" +
 			  needle +
-			  "\u201d \u00b7 " +
-			  plural(items, "match", "matches") +
-			  " in " +
-			  plural(shown, "group", "groups")
+			  "\u201d \u00b7 nothing here \u00b7 see " +
+			  elsew
+					.map(function (hit) {
+						return hit.label;
+					})
+					.join(", ")
 			: "Filtered by \u201c" + needle + "\u201d \u00b7 nothing in this tab";
 	}
 
@@ -1543,6 +1616,7 @@
 					text: query ? 'Nothing in this tab matches "' + query + '".' : "Nothing here you have access to.",
 				})
 			);
+			if (query) renderElsewhere(query, tabId);
 			armCursor();
 			return;
 		}
@@ -1712,6 +1786,7 @@
 
 		if (currentLayout() === "columns") {
 			renderColumns(tabId, groups);
+			paintKbZone();
 			return;
 		}
 
@@ -1748,9 +1823,13 @@
 		if (tabId === "pinned" && !query) el.groups.appendChild(newShelfRow());
 
 		if (groups.length) selectGroup(tabId, groups[0].key);
-		else if (query)
-			renderItems("No match", [], { empty: 'Nothing in this tab matches "' + query.trim() + '".' });
-		else renderItems("Nothing available", []);
+		else if (query) {
+			renderItems("No match", [], {
+				empty: 'Nothing in this tab matches "' + query.trim() + '".',
+			});
+			renderElsewhere(query, tabId);
+		} else renderItems("Nothing available", []);
+		paintKbZone();
 	}
 
 	/* ---------------------------------------------------------------------
@@ -2150,6 +2229,7 @@
 	}
 
 	function openMega() {
+		var fresh = !el.mega.classList.contains("aur-visible");
 		el.mega.classList.add("aur-visible");
 		positionMega();
 		if (el.bar) el.bar.classList.add("aur-bar-lifted");
@@ -2162,10 +2242,14 @@
 
 		positionScrim();
 
-		/* The keyboard needs somewhere to live while the panel is open. Focus
-		   rests in the filter field and the selection is painted onto a row, so
-		   typing and the arrows are both live from the moment it appears. */
+		/* A fresh open stands on the bar — that is where the click or the
+		   shortcut just was, and every other floor is reached from it. Focus
+		   still rests in the filter field and the selection is painted rather
+		   than held, so typing and the arrows are both live at once. */
+		if (fresh) state.kbZone = "bar";
 		if (el.megaSearch) el.megaSearch.focus({ preventScroll: true });
+		paintKbZone();
+		if (fresh) armCursor();
 	}
 
 	function closeMega() {
@@ -2174,7 +2258,9 @@
 		clearTimeout(hover.tabTimer);
 		hideHints();
 		setCursor(null);
-		el.mega.classList.remove("aur-visible");
+		state.kbZone = "bar";
+		if (el.bar) el.bar.classList.remove("aur-kb-bar");
+		el.mega.classList.remove("aur-visible", "aur-kb-bar", "aur-kb-groups", "aur-kb-items");
 		if (el.bar) el.bar.classList.remove("aur-bar-lifted");
 		state.searching = false;
 		state.cursor = -1;
@@ -2205,6 +2291,7 @@
 
 		renderGroups(tabId);
 		openMega();
+		paintKbZone();
 	}
 
 	function toggleTab(tabId) {
@@ -2226,19 +2313,105 @@
 	var rowSeq = 0;
 
 	// Rows the keyboard can land on. "+N more" counts as one: arriving at the
-	// foot of a capped group and pressing Enter is how the rest of it opens.
+	// foot of a capped group and pressing Enter is how the rest of it opens. So
+	// do the "found in other tabs" chips, which are the only thing to go into
+	// when the filter has emptied this tab.
 	function navRows() {
 		if (!el.body) return [];
-		return Array.prototype.slice.call(el.body.querySelectorAll(".aur-item, .aur-col-more"));
+		return Array.prototype.slice.call(el.body.querySelectorAll(".aur-item, .aur-col-more, .aur-elsewhere-chip"));
 	}
 
-	function cursorRow() {
-		return el.body ? el.body.querySelector(".aur-cursor") : null;
+	/* Every render ends by restoring the pinned keyboard cell, or by arming the
+	   first row. The pin is how arrowing onto a tab or group survives the redraw
+	   that opening that tab or group triggers. */
+	function armCursor() {
+		var pin = state.pinCursor;
+		state.pinCursor = null;
+
+		// Rebuilding the panel while it is shut must not paint a ring onto a bar
+		// tab, which stays on screen after the menu itself has gone.
+		if (!megaOpen()) return setCursor(null);
+
+		/* Standing on the bar or the rail is a place of its own: a redraw must
+		   leave you there rather than falling through to the first row, which
+		   would highlight an item you never navigated to. */
+		if (!pin && state.kbZone === "bar") pin = { kind: "tab", key: state.activeTab };
+		if (!pin && state.kbZone === "groups" && state.activeKey) pin = { kind: "group", key: state.activeKey };
+
+		if (pin && pin.kind === "tab" && el.tabNodes && el.tabNodes[pin.key]) {
+			setCursor(el.tabNodes[pin.key], false);
+			if (state.hints) paintHints();
+			return;
+		}
+		if (pin && pin.kind === "group") {
+			var match = (state.groups || []).filter(function (group) {
+				return group.key === pin.key && group.node;
+			})[0];
+			if (match) {
+				setCursor(match.node, false);
+				if (state.hints) paintHints();
+				return;
+			}
+		}
+
+		setCursor(navRows()[0] || null, false);
+		if (state.hints) paintHints();
+	}
+
+	function tabIds() {
+		return TABS.map(function (tab) {
+			return tab.id;
+		}).filter(function (id) {
+			return el.tabNodes && el.tabNodes[id];
+		});
+	}
+
+	/* Three floors, never one plane: the bar, the group rail, and the items.
+	   A direction key is answered by the floor you are standing on, so Left and
+	   Right along the bar only ever walk tabs — the panel below cannot catch
+	   the cursor, and nothing down there lights up until you ask for it with
+	   Down. */
+	function groupCells() {
+		if (currentLayout() === "columns") return [];
+		return (state.groups || [])
+			.map(function (group) {
+				return group.node;
+			})
+			.filter(Boolean);
+	}
+
+	function paintKbZone() {
+		var zone = state.kbZone || "items";
+		Object.keys(el.tabNodes || {}).forEach(function (id) {
+			el.tabNodes[id].classList.toggle("aur-kb", zone === "bar" && id === state.activeTab);
+		});
+		(state.groups || []).forEach(function (group) {
+			if (group.node) group.node.classList.toggle("aur-kb", zone === "groups" && group.key === state.activeKey);
+		});
+		if (el.mega) {
+			el.mega.classList.toggle("aur-kb-bar", zone === "bar");
+			el.mega.classList.toggle("aur-kb-groups", zone === "groups");
+			el.mega.classList.toggle("aur-kb-items", zone === "items");
+		}
+		if (el.bar) el.bar.classList.toggle("aur-kb-bar", zone === "bar");
+	}
+
+	function setKbZone(zone) {
+		state.kbZone = zone;
+		paintKbZone();
+	}
+
+	function cellKind(node) {
+		if (!node) return "items";
+		if (node.classList.contains("aur-tab")) return "bar";
+		if (node.classList.contains("aur-group")) return "groups";
+		return "items";
 	}
 
 	function setCursor(row, scroll) {
-		var previous = cursorRow();
-		if (previous) previous.classList.remove("aur-cursor");
+		document.querySelectorAll(".aur-cursor").forEach(function (node) {
+			node.classList.remove("aur-cursor");
+		});
 
 		if (!row) {
 			if (el.megaSearch) el.megaSearch.removeAttribute("aria-activedescendant");
@@ -2248,27 +2421,72 @@
 		if (!row.id) row.id = "aur-row-" + ++rowSeq;
 		row.classList.add("aur-cursor");
 		if (el.megaSearch) el.megaSearch.setAttribute("aria-activedescendant", row.id);
-		if (scroll !== false) row.scrollIntoView({ block: "nearest", inline: "nearest" });
+		setKbZone(cellKind(row));
+
+		/* A tab is always brought into view, even on the silent restore after a
+		   redraw: the strip scrolls, and a cursor sitting outside the frame is
+		   the one thing worse than no cursor at all. */
+		if (cellKind(row) === "bar") revealTab(row);
+		else if (scroll !== false) row.scrollIntoView({ block: "nearest", inline: "nearest" });
 	}
 
-	/* Every render ends here, so the first row is always armed: Enter has an
-	   obvious target from the moment the panel opens, and the panel reads as
-	   ready for the keyboard rather than waiting to be aimed at. */
-	function armCursor() {
-		setCursor(navRows()[0] || null, false);
-		if (state.hints) paintHints();
+	function cursorCell() {
+		return document.querySelector(".aur-tab.aur-cursor, .aur-group.aur-cursor, .aur-mega-body .aur-cursor");
 	}
 
-	/* Both layouts are two-dimensional and ragged — a filled grid in one, lanes
-	   of unequal height in the other — so a direction key cannot be index
-	   arithmetic over the DOM. Take the nearest row that genuinely lies the way
-	   the key points, preferring the ones squarely in line with this one. */
-	function stepCursor(dir) {
+	function cursorRow() {
+		return el.body
+			? el.body.querySelector(".aur-item.aur-cursor, .aur-col-more.aur-cursor, .aur-elsewhere-chip.aur-cursor")
+			: null;
+	}
+
+	function landOn(node) {
+		if (!node) return false;
+
+		if (node.classList.contains("aur-tab")) {
+			var tabId = node.getAttribute("data-tab");
+			state.pinCursor = { kind: "tab", key: tabId };
+			if (tabId && tabId !== state.activeTab) openTab(tabId);
+			else {
+				state.pinCursor = null;
+				setCursor(node);
+			}
+			return true;
+		}
+
+		if (node.classList.contains("aur-group")) {
+			var group = (state.groups || []).filter(function (entry) {
+				return entry.node === node;
+			})[0];
+			if (!group) return false;
+			state.pinCursor = { kind: "group", key: group.key };
+			if (group.key !== state.activeKey) selectGroup(state.activeTab, group.key);
+			else {
+				state.pinCursor = null;
+				setCursor(node);
+			}
+			return true;
+		}
+
+		setCursor(node);
+		return true;
+	}
+
+	/* Only the items are ragged enough to need geometry — a filled grid in one
+	   layout, lanes of unequal height in the other — so a direction key there
+	   cannot be index arithmetic over the DOM. Take the nearest row that
+	   genuinely lies the way the key points, preferring rows squarely in line
+	   with this one. Returns false at the edge, which is what lets the caller
+	   hand the press on to the rail. */
+	function stepItems(dir) {
 		var rows = navRows();
-		if (!rows.length) return;
+		if (!rows.length) return false;
 
 		var current = cursorRow();
-		if (!current) return setCursor(rows[0]);
+		if (!current) {
+			setCursor(rows[0]);
+			return true;
+		}
 
 		var from = current.getBoundingClientRect();
 		var cx = from.left + from.width / 2;
@@ -2297,58 +2515,108 @@
 			}
 		});
 
-		/* Nothing that way. Running off the side of a row continues along the
-		   reading order, which is what the eye does anyway; running off the top
-		   or bottom stays put rather than jumping the width of the panel. */
-		if (!best && (dir === "left" || dir === "right")) {
-			best = rows[rows.indexOf(current) + (dir === "right" ? 1 : -1)];
-		}
-
-		if (best) setCursor(best);
+		if (!best) return false;
+		setCursor(best);
+		return true;
 	}
 
-	/* Tab moves by subject rather than by control while the panel is open: one
-	   press per group, which is the unit both layouts are organised around. */
+	function toBar() {
+		var node = el.tabNodes && el.tabNodes[state.activeTab];
+		if (!node) return false;
+		setCursor(node);
+		return true;
+	}
+
+	/* The rail is where Down off the bar lands and where Left out of the items
+	   comes back to, so it has to be reachable without disturbing what is on
+	   show: only an untouched tab needs its first group choosing. */
+	function enterRail() {
+		var cells = groupCells();
+		if (!cells.length) return false;
+
+		var active = (state.groups || []).filter(function (group) {
+			return group.key === state.activeKey && group.node;
+		})[0];
+		if (active) {
+			setCursor(active.node);
+			return true;
+		}
+
+		state.pinCursor = { kind: "group", key: state.groups[0].key };
+		selectGroup(state.activeTab, state.groups[0].key);
+		return true;
+	}
+
+	function enterItems() {
+		var rows = navRows();
+		if (!rows.length) return false;
+		setCursor(rows[0]);
+		return true;
+	}
+
 	function stepGroup(delta) {
-		if (currentLayout() === "columns") {
-			var cols = Array.prototype.slice.call(el.body.querySelectorAll(".aur-col"));
-			if (!cols.length) return;
+		var cells = groupCells();
+		if (!cells.length) return delta < 0 ? toBar() : false;
 
-			var current = cursorRow();
-			var owner = current && current.closest ? current.closest(".aur-col") : null;
-			var at = owner ? cols.indexOf(owner) : -1;
-			var next = cols[(at + delta + cols.length) % cols.length] || cols[0];
+		var index = cells.indexOf(cursorCell());
+		if (index < 0) return enterRail();
 
-			// Bring the heading into view as well, so the group being entered
-			// announces itself instead of the cursor arriving somewhere unnamed.
-			var head = next.querySelector(".aur-col-head");
-			if (head) head.scrollIntoView({ block: "nearest" });
-			setCursor(next.querySelector(".aur-item, .aur-col-more"));
-			return;
-		}
-
-		var groups = state.groups || [];
-		if (groups.length < 2) return;
-
-		var keys = groups.map(function (group) {
-			return group.key;
-		});
-		var index = keys.indexOf(state.activeKey);
-		if (index < 0) index = 0;
-
-		selectGroup(state.activeTab, keys[(index + delta + keys.length) % keys.length]);
-		if (state.activeNode) state.activeNode.scrollIntoView({ block: "nearest" });
+		var next = index + delta;
+		// Off the top of the rail is the way back to the bar; off the bottom is
+		// simply the end of the list.
+		if (next < 0) return toBar();
+		if (next >= cells.length) return false;
+		return landOn(cells[next]);
 	}
 
-	// A whole subject at a time, and the standing filter is deliberately kept:
-	// clicking a tab already behaves that way.
+	function navKey(dir) {
+		var zone = state.kbZone || "items";
+
+		if (zone === "bar") {
+			if (dir === "left") return stepTab(-1);
+			if (dir === "right") return stepTab(1);
+			if (dir === "down") return enterFromBar();
+			return false;
+		}
+
+		if (zone === "groups") {
+			if (dir === "up") return stepGroup(-1);
+			if (dir === "down") return stepGroup(1);
+			if (dir === "right") return enterItems();
+			// The rail is already the leftmost column of the panel.
+			return false;
+		}
+
+		if (stepItems(dir)) return true;
+		if (dir === "left") return enterRail();
+		// The column layout has no rail, so the bar is what lies above.
+		if (dir === "up") return enterRail() || toBar();
+		return false;
+	}
+
+	/* Tab walks the high-level bar in its own order — Pinned, Workspaces,
+	   Modules, and so on — and stops at both ends rather than wrapping, so the
+	   row has a felt beginning and end. Left and Right do the same while the
+	   cursor is on the bar. */
 	function stepTab(delta) {
-		var ids = Object.keys(el.tabNodes || {});
-		if (ids.length < 2) return;
+		var ids = tabIds();
+		if (ids.length < 2) return false;
 
 		var index = ids.indexOf(state.activeTab);
 		if (index < 0) index = 0;
-		openTab(ids[(index + delta + ids.length) % ids.length]);
+		var next = index + delta;
+		if (next < 0 || next >= ids.length) return false;
+
+		// Pinned to the tab, or the redraw that opening it triggers would drop
+		// the cursor onto the first item and light up a row nobody asked for.
+		state.pinCursor = { kind: "tab", key: ids[next] };
+		setKbZone("bar");
+		openTab(ids[next]);
+		return true;
+	}
+
+	function enterFromBar() {
+		return enterRail() || enterItems();
 	}
 
 	// A screenful, then land on whatever is now at the top edge.
@@ -2366,7 +2634,6 @@
 			}
 			return false;
 		});
-
 		// Scrolled to, not merely marked: the row at the edge is usually half cut
 		// off by the jump, and a selection you cannot fully see is no selection.
 		if (landed) setCursor(landed);
@@ -2737,57 +3004,66 @@
 				return;
 			}
 
-			// Ctrl/Cmd with a horizontal arrow changes the whole subject, so the
-			// plain arrows are free to walk the rows.
-			if ((event.metaKey || event.ctrlKey) && (event.key === "ArrowRight" || event.key === "ArrowLeft")) {
-				event.preventDefault();
-				stepTab(event.key === "ArrowRight" ? 1 : -1);
-				return;
-			}
-
+			// Bar, rail, items: each answers the arrows in its own terms.
 			var DIRS = { ArrowDown: "down", ArrowUp: "up", ArrowRight: "right", ArrowLeft: "left" };
 			if (DIRS[event.key]) {
-				/* Horizontal keys are shared with the caret, or a typo in the
-				   filter could not be reached without the mouse. The caret gets
-				   them while it still has somewhere to go; at either end of the
-				   text they pass to the rows. */
-				if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-					var field = event.target === el.megaSearch ? el.megaSearch : null;
-					var at = field ? field.selectionStart : null;
-					var spread = field && field.selectionStart !== field.selectionEnd;
-					if (field && (spread || (event.key === "ArrowLeft" ? at > 0 : at < field.value.length))) return;
-				}
-
 				event.preventDefault();
-				stepCursor(DIRS[event.key]);
+				navKey(DIRS[event.key]);
 				return;
 			}
 
+			// Tab only walks the high-level bar (Pinned → Workspaces → …).
 			if (event.key === "Tab") {
 				event.preventDefault();
-				stepGroup(event.shiftKey ? -1 : 1);
+				stepTab(event.shiftKey ? -1 : 1);
 				return;
 			}
 
 			if (event.key === "Home" || event.key === "End") {
-				var rows = navRows();
-				if (!rows.length) return;
 				event.preventDefault();
-				setCursor(event.key === "Home" ? rows[0] : rows[rows.length - 1]);
+				if (state.kbZone === "bar") {
+					var ids = tabIds();
+					if (!ids.length) return;
+					state.pinCursor = { kind: "tab", key: event.key === "Home" ? ids[0] : ids[ids.length - 1] };
+					setKbZone("bar");
+					openTab(state.pinCursor.key);
+					return;
+				}
+				if (state.kbZone === "groups") {
+					var railCells = groupCells();
+					if (!railCells.length) return;
+					landOn(event.key === "Home" ? railCells[0] : railCells[railCells.length - 1]);
+					return;
+				}
+				var itemRows = navRows();
+				if (!itemRows.length) return;
+				setCursor(event.key === "Home" ? itemRows[0] : itemRows[itemRows.length - 1]);
 				return;
 			}
 
 			if (event.key === "PageDown" || event.key === "PageUp") {
 				event.preventDefault();
+				if (state.kbZone !== "items") {
+					state.pinCursor = null;
+					setKbZone("items");
+					armCursor();
+				}
 				pageCursor(event.key === "PageDown" ? 1 : -1);
 				return;
 			}
 
 			if (event.key === "Enter" || event.code === "Enter" || event.key === "NumpadEnter") {
 				event.preventDefault();
-				// Stop other desk handlers from eating Cmd/Ctrl+Enter (which is
-				// otherwise a common "submit" chord) before we open the new tab.
 				if (event.metaKey || event.ctrlKey) event.stopPropagation();
+
+				if (state.kbZone === "bar") {
+					enterFromBar();
+					return;
+				}
+				if (state.kbZone === "groups") {
+					enterItems();
+					return;
+				}
 				openCursor(event.metaKey || event.ctrlKey);
 			}
 		}, true);
@@ -2801,7 +3077,7 @@
 	/* Open the mega menu ready for typing. Used by / so the panel is on screen
 	   before the first character of the filter, not after it. */
 	function openQuickMenu() {
-		if (!megaOpen()) openTab(state.activeTab || "workspaces");
+		if (!megaOpen() || state.activeTab !== "pinned") openTab("pinned");
 		if (el.megaSearch) {
 			el.megaSearch.focus();
 			el.megaSearch.select();
@@ -3216,7 +3492,64 @@
 
 	/* ---------------------------------------------------------------------
 	   Bar
+	   ---------------------------------------------------------------------
+	   The tab strip runs out of room long before it runs out of tabs — a narrow
+	   window, or a wide brand and search box, and Insights onward sit outside
+	   it. Scrolling alone does not help, because a row cut off at the frame
+	   reads as a row that has ended. So each end says what lies past it, and
+	   arrowing along the strip brings the tab you land on into view.
 	   ------------------------------------------------------------------ */
+
+	function scrollNav(dir) {
+		if (!el.nav) return;
+		var step = Math.max(150, el.nav.clientWidth * 0.6);
+		el.nav.scrollTo({ left: el.nav.scrollLeft + dir * step, behavior: "smooth" });
+	}
+
+	function navMore(side) {
+		var button = make(
+			"button",
+			{
+				class: "aur-nav-more aur-nav-more-" + side,
+				type: "button",
+				tabindex: "-1",
+				"aria-label": side === "left" ? "Earlier tabs" : "More tabs",
+				title: side === "left" ? "Earlier tabs" : "More tabs",
+			},
+			[iconNode("chevron-" + side, "aur-nav-more-glyph")]
+		);
+		button.addEventListener("click", function (event) {
+			event.stopPropagation();
+			scrollNav(side === "left" ? -1 : 1);
+		});
+		return button;
+	}
+
+	function paintNavOverflow() {
+		if (!el.nav || !el.navWrap) return;
+		var slack = el.nav.scrollWidth - el.nav.clientWidth;
+		el.navWrap.classList.toggle("aur-more-left", el.nav.scrollLeft > 2);
+		el.navWrap.classList.toggle("aur-more-right", slack > 2 && el.nav.scrollLeft < slack - 2);
+	}
+
+	/* Land a tab clear of both ends, with room to spare, so its neighbour still
+	   peeks out — that sliver is what says the row carries on. */
+	function revealTab(node) {
+		if (!el.nav || !node) return;
+
+		var peek = 58;
+		var left = node.offsetLeft - peek;
+		var right = node.offsetLeft + node.offsetWidth + peek;
+		var target = el.nav.scrollLeft;
+
+		if (left < target) target = left;
+		else if (right > target + el.nav.clientWidth) target = right - el.nav.clientWidth;
+
+		var max = Math.max(0, el.nav.scrollWidth - el.nav.clientWidth);
+		target = Math.max(0, Math.min(target, max));
+		if (Math.abs(target - el.nav.scrollLeft) > 1) el.nav.scrollTo({ left: target, behavior: "smooth" });
+		paintNavOverflow();
+	}
 
 	function buildBar(anchor) {
 		var brand = make("button", { class: "aur-brand", type: "button", title: "Theme and appearance" }, [
@@ -3229,6 +3562,7 @@
 		});
 
 		var nav = make("nav", { class: "aur-nav" });
+		el.nav = nav;
 		el.tabNodes = {};
 
 		TABS.forEach(function (tab) {
@@ -3260,6 +3594,10 @@
 			el.tabNodes[tab.id] = node;
 			nav.appendChild(node);
 		});
+
+		el.navWrap = make("div", { class: "aur-nav-wrap" }, [navMore("left"), nav, navMore("right")]);
+		nav.addEventListener("scroll", paintNavOverflow);
+		window.addEventListener("resize", paintNavOverflow);
 
 		el.search = make("input", {
 			class: "aur-search",
@@ -3398,8 +3736,9 @@
 		   accident, so the panel says what it answers to along its own foot. */
 		el.footLive = make("span", { class: "aur-foot-live" });
 		el.foot = make("div", { class: "aur-mega-foot" }, [
-			footKey("\u2191\u2193\u2190\u2192", "move"),
-			footKey("Tab", "group"),
+			footKey("\u2190\u2192", "tabs"),
+			footKey("\u2193", "go in"),
+			footKey("\u2191\u2193", "move"),
 			footKey(ALT_LABEL, "then letter"),
 			footKey("\u21b5", "open"),
 			footKey(META_LABEL + "\u21b5", "new tab"),
@@ -3438,7 +3777,7 @@
 			make("div", { class: "aur-bar-progress" }),
 			make("div", { class: "aur-bar-inner" }, [
 				brand,
-				nav,
+				el.navWrap,
 				make("div", { class: "aur-bar-right" }, [searchWrap, el.pinBtn, paletteBtn, themeBtn, fullBtn]),
 			]),
 		]);
@@ -3450,6 +3789,8 @@
 
 		// The panel lives on <body> so no ancestor can clip or re-stack it.
 		document.body.appendChild(el.mega);
+
+		paintNavOverflow();
 
 		window.addEventListener("resize", function () {
 			// A popover that knows how to place itself is repositioned; the rest
@@ -3489,6 +3830,10 @@
 			var node = el.tabNodes[tab.id].querySelector(".aur-tab-count");
 			if (node) node.textContent = String(total);
 		});
+
+		// Real counts are wider than the "…" they replace, so the strip may only
+		// start overflowing once the menu has loaded.
+		paintNavOverflow();
 	}
 
 	/* ---------------------------------------------------------------------

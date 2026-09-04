@@ -367,9 +367,21 @@
 }
 
 .aurora-on[data-kaiten-skin="lumen"] .aur-tab.aur-open {
-	background: var(--aur-surface);
-	color: var(--aur-ink);
-	box-shadow: var(--aur-shadow-sm);
+	background: var(--aur-grad-cool);
+	color: #fff;
+	box-shadow: 0 8px 20px -10px color-mix(in oklab, var(--aur-accent) 70%, transparent);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .aur-tab.aur-open .aur-tab-count {
+	background: rgba(255, 255, 255, 0.28);
+	color: #fff;
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .aur-tab.aur-cursor,
+.aurora-on[data-kaiten-skin="lumen"] .aur-tab.aur-kb {
+	z-index: 3;
+	box-shadow: 0 0 0 2px var(--aur-surface), 0 0 0 4px color-mix(in oklab, var(--aur-accent) 78%, transparent),
+		0 10px 24px -10px color-mix(in oklab, var(--aur-accent) 70%, transparent);
 }
 
 /* -------------------------------------------------------------------------

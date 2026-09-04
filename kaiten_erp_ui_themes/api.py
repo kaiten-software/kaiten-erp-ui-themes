@@ -10,14 +10,29 @@ from frappe import _
 
 CACHE_TTL = 300
 
-# Modules that only ever contain plumbing, never anything worth clicking.
-HIDDEN_MODULES = {"Core", "Custom", "Event Streaming", "Social"}
+# No module is hidden. Core carries User, Role, Role Profile, User Permission and
+# most of what administering a site actually means, so holding it back left the
+# menu unable to reach work people do every day — and it disagreed with the
+# awesomebar, which lists whatever you may read whichever module it lives in.
+# Read permission is the only gate here, and a reader who may not open a doctype
+# never learns it exists. Sites wanting a shorter list should say so in role
+# permissions, where it will hold everywhere rather than in this menu alone.
 
-# Doctypes surfaced under "Tools", regardless of the module they live in.
+# Doctypes also surfaced under "Tools", as a shortcut to what administering a
+# site usually means. They keep their place under their own module as well.
 TOOL_GROUPS = [
 	(
 		"Administration",
-		["User", "Role", "Role Profile", "User Permission", "System Settings", "Session Default Settings"],
+		[
+			"User",
+			"Role",
+			"Role Profile",
+			"User Group",
+			"User Type",
+			"User Permission",
+			"System Settings",
+			"Session Default Settings",
+		],
 	),
 	(
 		"Customisation",
@@ -133,9 +148,6 @@ def _modules(rows: list, readable: set) -> list:
 			continue
 
 		module = row.module or "Other"
-		if module in HIDDEN_MODULES:
-			continue
-
 		grouped.setdefault(module, []).append(
 			{
 				"name": row.name,

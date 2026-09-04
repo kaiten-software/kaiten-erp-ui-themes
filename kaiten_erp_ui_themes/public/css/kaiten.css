@@ -663,6 +663,14 @@
 	}
 }
 
+.aur-nav-wrap {
+	position: relative;
+	display: flex;
+	align-items: center;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
 .aur-nav {
 	display: flex;
 	align-items: center;
@@ -671,10 +679,81 @@
 	min-width: 0;
 	overflow-x: auto;
 	scrollbar-width: none;
+	/* Room for the keyboard ring and the slight lift under it, either of which
+	   the scroll frame would otherwise slice off — including sideways, where the
+	   first and last tab sit flush against the edge. The negative margin keeps
+	   the bar the height it was. */
+	padding: 7px 5px;
+	margin: -7px 0;
 }
 
 .aur-nav::-webkit-scrollbar {
 	display: none;
+}
+
+/* Tabs dissolve into whichever end still has more behind it, rather than being
+   cut off mid-word. A mask does this over the bar's own blurred gradient, which
+   no solid overlay could match. */
+.aur-nav-wrap.aur-more-left .aur-nav {
+	-webkit-mask-image: linear-gradient(90deg, transparent, #000 40px);
+	mask-image: linear-gradient(90deg, transparent, #000 40px);
+}
+
+.aur-nav-wrap.aur-more-right .aur-nav {
+	-webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+	mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+}
+
+.aur-nav-wrap.aur-more-left.aur-more-right .aur-nav {
+	-webkit-mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+	mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+}
+
+/* A handle on each fade, shown only while there is something that way, so the
+   strip admits it continues instead of leaving it to be discovered. */
+.aur-nav-more {
+	position: absolute;
+	top: 50%;
+	z-index: 4;
+	display: none;
+	place-items: center;
+	width: 21px;
+	height: 21px;
+	margin-top: -10px;
+	padding: 0;
+	border-radius: 999px;
+	border: 1px solid var(--aur-line-strong);
+	background: var(--aur-surface);
+	color: var(--aur-ink-soft);
+	cursor: pointer;
+	box-shadow: 0 5px 14px -6px rgba(15, 23, 42, 0.45);
+	transition: color var(--aur-fast) var(--aur-ease), border-color var(--aur-fast) var(--aur-ease),
+		transform var(--aur-fast) var(--aur-ease-back);
+}
+
+.aur-nav-more-left {
+	left: 0;
+}
+
+.aur-nav-more-right {
+	right: 0;
+}
+
+.aur-nav-wrap.aur-more-left .aur-nav-more-left,
+.aur-nav-wrap.aur-more-right .aur-nav-more-right {
+	display: grid;
+}
+
+.aur-nav-more:hover {
+	color: #fff;
+	border-color: transparent;
+	background: var(--aur-grad-cool);
+	transform: scale(1.12);
+}
+
+.aur-nav-more-glyph {
+	width: 13px;
+	height: 13px;
 }
 
 .aur-tab {
@@ -714,6 +793,24 @@
 	color: #fff;
 	background: var(--aur-grad-cool);
 	box-shadow: 0 8px 20px -10px rgba(79, 70, 229, 0.95);
+}
+
+/* Keyboard is on the top tabs: a ring around the open one so ←→ has somewhere
+   visible to land, and the panel below softens so it is clear focus left it. */
+/* The tab you are standing on has to read as the loudest thing in the bar, so
+   it is lifted out of the stack as well as ringed: tabs sit on each other's
+   shoulders in document order, and the panel is right underneath, either of
+   which used to swallow the near edge of the ring. */
+.aur-tab.aur-kb,
+.aur-tab.aur-cursor {
+	z-index: 3;
+	box-shadow: 0 0 0 2px var(--aur-surface), 0 0 0 4px color-mix(in oklab, var(--aur-accent) 78%, transparent),
+		0 10px 24px -10px rgba(79, 70, 229, 0.95);
+}
+
+.aur-bar.aur-kb-bar .aur-tab.aur-open.aur-kb,
+.aur-bar.aur-kb-bar .aur-tab.aur-cursor {
+	transform: translateY(-1px) scale(1.04);
 }
 
 .aur-tab-count {
@@ -911,9 +1008,9 @@
 	background: color-mix(in oklab, var(--aur-accent) 14%, transparent);
 }
 
-/* Set apart from the filter's own controls by a gap and a ring, so the end of
-   the strip reads as "close the panel" rather than as one more thing that acts
-   on the search box. */
+/* Set apart from the filter's own controls by a rule, so the end of the strip
+   reads as "close the panel" rather than as one more thing that acts on the
+   search box. */
 .aur-mega-close {
 	display: grid;
 	place-items: center;
@@ -1092,10 +1189,41 @@
 	transform: translateX(3px);
 }
 
+/* Which list is on show, and where the keyboard is standing, are two different
+   facts about the rail, and drawing them the same — both a full accent fill —
+   read as two cursors at once. Worse, the selection outlived the cursor: move
+   into the items and "All workspaces" still looked like it held focus. So
+   selection is now quiet, a tint with a marker down its edge, and says only
+   "these are the entries you are looking at". */
 .aur-group.aur-active {
+	color: hsl(var(--h, 245) 58% 34%);
+	background: var(--aur-grad-soft);
+	box-shadow: inset 2.5px 0 0 var(--aur-accent);
+	font-weight: 700;
+}
+
+[data-theme="dark"] .aur-group.aur-active {
+	color: #dfe6ff;
+}
+
+.aur-group.aur-active .aur-group-icon {
+	color: var(--aur-accent);
+}
+
+/* The cursor is the loudest thing in the rail, and there is only ever one. It
+   is defined after the selection on purpose: standing on the group already on
+   show must still look like standing on it. */
+.aur-group.aur-kb,
+.aur-group.aur-cursor {
 	color: #fff;
 	background: var(--aur-grad-cool);
-	box-shadow: 0 10px 22px -14px rgba(79, 70, 229, 0.95);
+	box-shadow: 0 0 0 2px color-mix(in oklab, var(--aur-accent) 40%, transparent),
+		0 10px 22px -14px rgba(79, 70, 229, 0.95);
+}
+
+.aur-group.aur-kb .aur-group-icon,
+.aur-group.aur-cursor .aur-group-icon {
+	color: #fff;
 }
 
 /* An <svg> with only a viewBox falls back to 300x150, so every glyph needs a
@@ -1121,10 +1249,6 @@
 
 .aur-group:hover .aur-group-icon {
 	transform: scale(1.18) rotate(-8deg);
-}
-
-.aur-group.aur-active .aur-group-icon {
-	color: #fff;
 }
 
 .aur-group-count {
@@ -1588,6 +1712,53 @@ a.aur-item:focus {
 	text-align: center;
 	color: var(--aur-ink-soft);
 	font-size: 12.5px;
+}
+
+/* When this tab has nothing under the filter, point at the tabs that do —
+   permissions already decided what those tabs contain. */
+.aur-elsewhere {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 4px 10px 18px;
+	padding: 12px 14px;
+	border-radius: var(--aur-r);
+	border: 1px dashed var(--aur-line-strong);
+	background: color-mix(in oklab, var(--aur-accent) 6%, transparent);
+}
+
+.aur-elsewhere-label {
+	width: 100%;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--aur-ink-soft);
+}
+
+.aur-elsewhere-chip {
+	font: inherit;
+	font-size: 12.5px;
+	font-weight: 650;
+	padding: 6px 12px;
+	border-radius: 999px;
+	border: 1px solid color-mix(in oklab, var(--aur-accent) 28%, var(--aur-line));
+	background: var(--aur-surface);
+	color: var(--aur-ink);
+	cursor: pointer;
+	transition: background var(--aur-fast), border-color var(--aur-fast), transform var(--aur-fast);
+}
+
+.aur-elsewhere-chip:hover,
+.aur-elsewhere-chip.aur-cursor {
+	background: color-mix(in oklab, var(--aur-accent) 14%, transparent);
+	border-color: var(--aur-accent);
+	transform: translateY(-1px);
+}
+
+.aur-elsewhere-chip.aur-cursor {
+	box-shadow: 0 0 0 2px color-mix(in oklab, var(--aur-accent) 28%, transparent);
 }
 
 .aur-stagger {
