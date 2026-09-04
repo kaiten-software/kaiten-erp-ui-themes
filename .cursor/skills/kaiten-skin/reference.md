@@ -54,46 +54,60 @@ cheapest way to change the look.
 | Dock wash | `.dock::after` (rotating conic gradient) |
 | Sidebar entrance | `@keyframes aur-side-in`, staggered by `--aur-stagger` |
 
-## Worked example — Nimbus
+## Worked example — Lumen
 
-Nimbus is the calm counterpart to Aurora: flat backdrop, white cards, wide soft
-shadows, near-neutral grays, one blue accent.
+Lumen is the calm counterpart to Aurora: a pale two-stop wash instead of the
+animated mesh, opaque white cards, wide soft shadows, near-neutral grays, pill
+controls and ink-black primary actions.
 
 ```css
-.aurora-on[data-kaiten-skin="nimbus"] {
-	--aur-accent: #4f6bed;
-	--aur-grad: linear-gradient(135deg, #5b78f0, #4f6bed);
-	--aur-mesh-a: transparent;   /* … b, c, d — kills the mesh */
+.aurora-on[data-kaiten-skin="lumen"] {
 	--aur-surface: #ffffff;
-	--aur-line: rgba(16, 24, 40, 0.07);
-	--aur-ink: #101828;
-	--aur-ink-soft: #667085;
-	--aur-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 32px -12px rgba(16, 24, 40, 0.1);
+	--aur-line: rgba(18, 22, 34, 0.07);
+	--aur-ink: #1b1f2a;
+	--aur-ink-soft: #79808f;
+	--aur-shadow: 0 1px 3px rgba(18, 22, 34, 0.04), 0 18px 40px -24px rgba(18, 22, 34, 0.28);
 	--aur-r-lg: 22px;
 	--aur-r-xl: 28px;
+
+	/* One hue for the whole desk, in place of Aurora's eight. */
+	--lum-h: 258;
+
+	/* Derived from the accent, so a mixed tone repaints the page too. */
+	--lum-page: color-mix(in oklab, var(--aur-accent) 5%, #f7f8fb);
+	--lum-page-2: color-mix(in oklab, var(--aur-accent) 13%, #eef0f6);
+	background: linear-gradient(163deg, #fdfdff 0%, var(--lum-page) 52%, var(--lum-page-2) 100%);
 }
 
-.aurora-on[data-kaiten-skin="nimbus"] body::before {
-	background: none;
+/* The blobs stay as a corner glow, but stop moving. */
+.aurora-on[data-kaiten-skin="lumen"] body::before {
+	filter: blur(26px);
+	transform: none;
 	animation: none;
 }
 
-/* One fixed hue instead of the eight-step cycle. */
-.aurora-on[data-kaiten-skin="nimbus"] .list-row-container,
-.aurora-on[data-kaiten-skin="nimbus"] .form-section {
-	--cyc-h: 225;
+/* Doubled class, because the nth-child cycles tie with a plain attribute. */
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .list-row-container,
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .form-section {
+	--cyc-h: var(--lum-h);
 }
 ```
 
-Read the shipped `kaiten-nimbus.css` for the full treatment.
+Read the shipped `kaiten-lumen.css` for the full treatment, including its five
+tones and the dark block.
 
 ## Verification script
 
 ```bash
-node .cursor/skills/kaiten-skin/scripts/shoot.mjs --skin nimbus
-node .cursor/skills/kaiten-skin/scripts/shoot.mjs --skin nimbus --appearance dark
+node .cursor/skills/kaiten-skin/scripts/shoot.mjs --skin lumen
+node .cursor/skills/kaiten-skin/scripts/shoot.mjs --skin lumen --appearance dark
 node .cursor/skills/kaiten-skin/scripts/shoot.mjs --skin aurora   # regression
 ```
+
+The script seeds `kaiten_ui_skin` before boot, which is enough on a site with no
+stored preferences. Once a **Kaiten UI Preference** record exists the server copy
+wins, so drive the panel instead: click the ◕ button, then the theme card and the
+tone. That also exercises the controls rather than only the stylesheet.
 
 Environment:
 
@@ -117,9 +131,13 @@ Assets are plain files; a rebuild is not needed to look at a change.
 cd <frappe_docker>
 for svc in frontend backend; do
   cid=$(docker compose -f pwd.yml ps -q $svc)
-  docker cp <app>/public/css/kaiten-nimbus.css \
-    $cid:/home/frappe/frappe-bench/apps/<app>/<app>/public/css/kaiten-nimbus.css
+  docker cp <app>/public/css/kaiten-lumen.css \
+    $cid:/home/frappe/frappe-bench/apps/<app>/<app>/public/css/kaiten-lumen.css
 done
 ```
+
+A new file also has to be listed in `app_include_css`, and `hooks.py` is Python
+held in memory: copy it in, then `bench --site <site> clear-cache` and restart
+the backend, or the stylesheet is never requested.
 
 Rebuild the image once the look is settled, or the change is lost on restart.

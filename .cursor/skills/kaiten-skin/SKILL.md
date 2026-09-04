@@ -22,8 +22,11 @@ no `!important`.
 | State | `html` attributes |
 | --- | --- |
 | Default (stock Frappe) | neither class nor attribute |
-| A skin | `class="aurora-on" data-kaiten-skin="<id>"` |
-| Light/dark | `data-theme-mode` + `data-theme`, set by Frappe |
+| Aurora | `class="aurora-on"`, no skin attribute — it is the base layer |
+| Another skin | `class="aurora-on" data-kaiten-skin="<id>"` |
+| Colour tone | `data-aur-accent="<tone>"`, or `custom:<id>` with the stops set inline |
+| Light/dark | `data-theme-mode` + `data-theme`, set the way Frappe's own switcher does |
+| Density | `data-aur-density="cozy" \| "compact"`, one setting for every skin |
 
 `.aurora-on` is a legacy class name kept because 369 rules depend on it. Read it
 as "a Kaiten skin is active". Do not rename it.
@@ -110,6 +113,23 @@ Give dark mode its own block:
 .aurora-on[data-kaiten-skin="<id>"][data-theme="dark"] { … }
 ```
 
+#### Tones
+
+A skin that offers colour choices declares one block per tone, and each tone
+sets the accent, the three gradients and the four mesh colours:
+
+```css
+.aurora-on[data-kaiten-skin="<id>"][data-aur-accent="<tone>"] { … }
+```
+
+Repeat one tone's values in the skin's own block as the fallback: the stored
+tone may belong to another skin, and a skin has to look finished regardless.
+
+A tone the user mixes arrives as **inline** custom properties on `html`, which
+beat every block here. So anything derived from the palette — a page wash, a
+tinted rail — must read `--aur-accent` or the mesh tokens rather than a variable
+only your presets define, or a mixed tone will leave it behind.
+
 **Page paint** is gated on the theme, so set it explicitly:
 
 ```css
@@ -132,17 +152,46 @@ The stripe pseudo-elements cover the whole card (`inset: 0`, `border-radius:
 inherit`) and paint the bar as a background stripe so it clips to the curve.
 Keep that structure — override `background-image`, never `position` or `inset`.
 
-### 3. Register the skin
+The hue cycles are set by `:nth-child()` rules that already carry your
+specificity, so a plain attribute selector only ties with them. Repeat the class
+to win the tie without depending on file order:
 
-`public/js/kaiten.js` — add one entry to `SKINS`:
-
-```js
-{ id: "<id>", label: "<Label>", note: "<one short line>", swatch: "<css background>" }
+```css
+.aurora-on.aurora-on[data-kaiten-skin="<id>"] .list-row-container { --cyc-h: 210; }
 ```
 
-`hooks.py` — append the file to `app_include_css` and bump `ASSET_VERSION`.
+#### Density is not yours
 
-Nothing else needs touching. The appearance panel builds its cards from `SKINS`.
+`data-aur-density="compact"` is a preference that applies to every skin, and its
+block in `kaiten.css` is written `.aurora-on.aurora-on[data-aur-density="compact"]`
+so it outranks a skin's token block whatever the file order. It remaps Frappe's
+own spacing variables (`--padding-*`, `--margin-*`, `--input-height`,
+`--btn-height`, `--page-head-height`) and the radius scales, then tightens the
+places that hard-code their spacing.
+
+So express your geometry through the tokens. A skin that hard-codes `padding`
+on a field, a row or a section is either overridden there and inconsistent with
+the rest of the desk, or it wins and compact does nothing where it matters.
+Reach for a real rule only for something density has no opinion about, and keep
+it off the properties above.
+
+### 3. Register the skin
+
+`public/js/kaiten.js` — add one entry to `SKINS`, and a tone list if the skin
+offers colours:
+
+```js
+{ id: "<id>", label: "<Label>", note: "<one short line>", swatch: "<css background>", tones: <TONES> }
+```
+
+Each tone is `{ id, label, swatch }`; the values behind it live in the skin's
+stylesheet. `tones: []` hides the colour row for that skin.
+
+`hooks.py` — append the file to the `app_include_css` list, after `kaiten.css`
+and after every other skin, then bump `ASSET_VERSION`.
+
+Nothing else needs touching. The panel builds its cards from `SKINS`, remembers
+a tone per skin, and appends the user's mixed palettes to every tone list.
 
 ### 4. Verify
 
@@ -160,9 +209,17 @@ Check each of these before declaring done:
 
 - [ ] Workspace, list, form, report and the login page in the new skin
 - [ ] The same in dark mode
+- [ ] Every tone the skin offers, and one mixed in the panel
+- [ ] Compact density: a form, a list and a child table stay legible and nothing
+      overlaps or clips
 - [ ] Aurora is visually unchanged (the skin leaked if it is not)
 - [ ] Default is stock Frappe with only the Kaiten bar added
 - [ ] Mega menu, pin shelves, dropdowns and modals still open and are not clipped
+- [ ] The panel stays open while theme, colour, density and appearance are changed
+
+Drive the panel rather than seeding `localStorage`: preferences are pulled from
+the server on boot and the later revision wins, so a seeded key is overwritten
+before the first paint you would have captured.
 
 ### 5. Bump the asset version
 

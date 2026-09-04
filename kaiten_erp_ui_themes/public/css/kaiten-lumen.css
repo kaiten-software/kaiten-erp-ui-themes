@@ -1,0 +1,603 @@
+/* =========================================================================
+   Lumen — soft light, a tinted wash, pill controls
+   -------------------------------------------------------------------------
+   A skin layered on kaiten.css: white cards floating on a two-hue gradient
+   page, corners at 26px, fully rounded controls, ink-black primary actions
+   and near-neutral grays. Aurora's colour-at-rest hue cycling is collapsed
+   to one hue so a long list or form reads as calm.
+
+   Every rule carries [data-kaiten-skin="lumen"], so nothing here can reach
+   another skin. Where a base rule already matches at the same specificity —
+   the nth-child hue cycles — .aurora-on is repeated to win the tie without
+   depending on file order.
+
+   The whole look is driven by the tone tokens below, which the colour picker
+   in the Kaiten bar sets. A tone the user mixes themselves arrives as inline
+   custom properties, so nothing in this file may assume a preset was chosen:
+   the page wash is derived from --aur-accent and the mesh tokens, which both
+   a preset and a mixed tone always define.
+   ========================================================================= */
+
+.aurora-on[data-kaiten-skin="lumen"] {
+	/* Geometry — the corner radius is the loudest thing about this skin. */
+	--radius-sm: 10px;
+	--radius: 14px;
+	--radius-md: 16px;
+	--radius-lg: 20px;
+	--radius-xl: 26px;
+
+	--aur-r-sm: 12px;
+	--aur-r: 16px;
+	--aur-r-lg: 22px;
+	--aur-r-xl: 28px;
+
+	/* Surfaces — opaque white, not glass: the wash reads through the gaps
+	   between cards instead of through the cards themselves. */
+	--aur-surface: #ffffff;
+	--aur-surface-2: #fbfbfd;
+	--aur-sheet: #ffffff;
+	--aur-row-tint: transparent;
+
+	--aur-line: rgba(18, 22, 34, 0.07);
+	--aur-line-strong: rgba(18, 22, 34, 0.12);
+	--aur-ink: #1b1f2a;
+	--aur-ink-soft: #79808f;
+
+	/* Depth — wide and diffuse, barely tinted. */
+	--aur-shadow-sm: 0 1px 2px rgba(18, 22, 34, 0.04), 0 6px 16px -12px rgba(18, 22, 34, 0.18);
+	--aur-shadow: 0 1px 3px rgba(18, 22, 34, 0.04), 0 18px 40px -24px rgba(18, 22, 34, 0.28);
+	--aur-shadow-lg: 0 2px 6px rgba(18, 22, 34, 0.05), 0 34px 70px -32px rgba(18, 22, 34, 0.34);
+	--aur-glow: 0 0 0 3px color-mix(in oklab, var(--aur-accent) 22%, transparent);
+
+	/* Motion — calm. Nothing here overshoots. */
+	--aur-ease-back: cubic-bezier(0.22, 1, 0.36, 1);
+	--aur-fast: 0.16s;
+	--aur-mid: 0.28s;
+	--aur-slow: 0.5s;
+
+	/* The one hue the whole desk cycles on, in place of Aurora's eight. */
+	--lum-h: 258;
+
+	/* Lilac, repeated from the tone below: a skin has to look finished even if
+	   the stored tone belongs to another skin. */
+	--aur-accent: #7c6cf6;
+	--aur-grad: linear-gradient(135deg, #8b7cf7 0%, #a78bfa 46%, #c4b5fd 100%);
+	--aur-grad-cool: linear-gradient(135deg, #7c6cf6 0%, #a78bfa 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(124, 108, 246, 0.13), rgba(196, 181, 253, 0.09));
+	--aur-mesh-a: rgba(167, 139, 250, 0.3);
+	--aur-mesh-b: rgba(196, 181, 253, 0.22);
+	--aur-mesh-c: rgba(253, 230, 138, 0.22);
+	--aur-mesh-d: rgba(147, 197, 253, 0.16);
+
+	/* Ink-black actions, lifted from the second reference. */
+	--lum-solid: #16181f;
+	--lum-solid-hover: #24272f;
+
+	/* Both references keep the wash pale enough that white cards still read as
+	   the brightest thing on screen. */
+	--lum-page: color-mix(in oklab, var(--aur-accent) 5%, #f7f8fb);
+	--lum-page-2: color-mix(in oklab, var(--aur-accent) 13%, #eef0f6);
+
+	background:
+		linear-gradient(
+			163deg,
+			#fdfdff 0%,
+			var(--lum-page) 52%,
+			var(--lum-page-2) 100%
+		);
+}
+
+/* -------------------------------------------------------------------------
+   Tones — each repaints the accent, the gradients and the page wash
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="lumen"][data-aur-accent="lilac"] {
+	--lum-h: 258;
+	--aur-accent: #7c6cf6;
+	--aur-grad: linear-gradient(135deg, #8b7cf7 0%, #a78bfa 46%, #c4b5fd 100%);
+	--aur-grad-cool: linear-gradient(135deg, #7c6cf6 0%, #a78bfa 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(124, 108, 246, 0.13), rgba(196, 181, 253, 0.09));
+	--aur-mesh-a: rgba(167, 139, 250, 0.3);
+	--aur-mesh-b: rgba(196, 181, 253, 0.22);
+	--aur-mesh-c: rgba(253, 230, 138, 0.22);
+	--aur-mesh-d: rgba(147, 197, 253, 0.16);
+}
+
+.aurora-on[data-kaiten-skin="lumen"][data-aur-accent="honey"] {
+	--lum-h: 38;
+	--aur-accent: #e09112;
+	--aur-grad: linear-gradient(135deg, #f59e0b 0%, #fbbf24 48%, #fde68a 100%);
+	--aur-grad-cool: linear-gradient(135deg, #e09112 0%, #fbbf24 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(245, 158, 11, 0.14), rgba(253, 230, 138, 0.1));
+	--aur-mesh-a: rgba(253, 230, 138, 0.36);
+	--aur-mesh-b: rgba(251, 191, 36, 0.24);
+	--aur-mesh-c: rgba(252, 211, 77, 0.34);
+	--aur-mesh-d: rgba(254, 240, 138, 0.24);
+}
+
+.aurora-on[data-kaiten-skin="lumen"][data-aur-accent="mint"] {
+	--lum-h: 158;
+	--aur-accent: #0f9d76;
+	--aur-grad: linear-gradient(135deg, #10b981 0%, #34d399 48%, #a7f3d0 100%);
+	--aur-grad-cool: linear-gradient(135deg, #0f9d76 0%, #34d399 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(16, 185, 129, 0.13), rgba(167, 243, 208, 0.1));
+	--aur-mesh-a: rgba(52, 211, 153, 0.26);
+	--aur-mesh-b: rgba(167, 243, 208, 0.22);
+	--aur-mesh-c: rgba(253, 230, 138, 0.2);
+	--aur-mesh-d: rgba(125, 211, 252, 0.16);
+}
+
+.aurora-on[data-kaiten-skin="lumen"][data-aur-accent="sky"] {
+	--lum-h: 202;
+	--aur-accent: #0d8ecf;
+	--aur-grad: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 48%, #bae6fd 100%);
+	--aur-grad-cool: linear-gradient(135deg, #0d8ecf 0%, #38bdf8 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(14, 165, 233, 0.13), rgba(186, 230, 253, 0.1));
+	--aur-mesh-a: rgba(56, 189, 248, 0.26);
+	--aur-mesh-b: rgba(186, 230, 253, 0.24);
+	--aur-mesh-c: rgba(199, 210, 254, 0.22);
+	--aur-mesh-d: rgba(253, 230, 138, 0.16);
+}
+
+.aurora-on[data-kaiten-skin="lumen"][data-aur-accent="blush"] {
+	--lum-h: 350;
+	--aur-accent: #e84463;
+	--aur-grad: linear-gradient(135deg, #f43f5e 0%, #fb7185 48%, #fecdd3 100%);
+	--aur-grad-cool: linear-gradient(135deg, #e84463 0%, #fb7185 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(244, 63, 94, 0.12), rgba(254, 205, 211, 0.1));
+	--aur-mesh-a: rgba(251, 113, 133, 0.24);
+	--aur-mesh-b: rgba(254, 205, 211, 0.26);
+	--aur-mesh-c: rgba(253, 230, 138, 0.22);
+	--aur-mesh-d: rgba(216, 180, 254, 0.16);
+}
+
+/* -------------------------------------------------------------------------
+   Neutrals — flat. Aurora tints the whole ramp toward the accent; at this
+   chroma that would tint every stock control while the cards stayed white.
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="lumen"]:not([data-theme="dark"]) {
+	--gray-50: #f8f9fb;
+	--gray-100: #f1f2f6;
+	--gray-200: #e6e8ee;
+	--gray-300: #d8dbe3;
+	--gray-400: #b7bcc8;
+	--gray-450: #a2a8b6;
+	--gray-500: #858b9a;
+	--gray-600: #676d7d;
+	--gray-700: #4a5060;
+	--gray-800: #333846;
+	--gray-900: #21252f;
+	--gray-950: #14171f;
+}
+
+/* -------------------------------------------------------------------------
+   Backdrop — the mesh stops moving. The blobs stay, as the glow the second
+   reference has in its lower corner, but static and soft.
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="lumen"] body::before {
+	inset: -10vh -6vw;
+	background:
+		radial-gradient(52rem 34rem at 4% -6%, var(--aur-mesh-a), transparent 62%),
+		radial-gradient(44rem 30rem at 100% 104%, var(--aur-mesh-c), transparent 60%),
+		radial-gradient(34rem 24rem at 88% 2%, var(--aur-mesh-b), transparent 58%);
+	filter: blur(26px);
+	transform: none;
+	animation: none;
+	opacity: 0.9;
+}
+
+/* One hue everywhere, in place of the eight-step cycle. The doubled class
+   outranks .aurora-on .list-row-container:nth-child(8n+2) and friends. */
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .list-row-container,
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .body-sidebar .sidebar-item-container,
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .dock-items .dock-item,
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .form-section {
+	--cyc-h: var(--lum-h);
+}
+
+/* -------------------------------------------------------------------------
+   Cards — white, generous, no stripe. Both references keep the surface
+   completely plain and let the corner radius and the shadow do the work.
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="lumen"] .widget,
+.aurora-on[data-kaiten-skin="lumen"] .frappe-card,
+.aurora-on[data-kaiten-skin="lumen"] .form-section.card-section,
+.aurora-on[data-kaiten-skin="lumen"] .dashboard-section {
+	background: var(--aur-surface);
+	border-color: var(--aur-line);
+	box-shadow: var(--aur-shadow);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .widget::before,
+.aurora-on[data-kaiten-skin="lumen"] .frappe-card::before,
+.aurora-on[data-kaiten-skin="lumen"] .form-section::before {
+	background-image: none;
+	background-color: transparent;
+}
+
+/* The cursor-following glow is Aurora's signature; here a plain lift reads
+   closer to the references. */
+.aurora-on[data-kaiten-skin="lumen"] .widget::after,
+.aurora-on[data-kaiten-skin="lumen"] .frappe-card::after {
+	background: none;
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .widget:hover,
+.aurora-on[data-kaiten-skin="lumen"] .frappe-card:hover,
+.aurora-on[data-kaiten-skin="lumen"] .form-section:hover {
+	transform: translateY(-2px);
+	border-color: var(--aur-line);
+	box-shadow: var(--aur-shadow-lg);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .widget.shortcut-widget-box {
+	background: var(--aur-surface);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .widget.shortcut-widget-box:hover {
+	transform: translateY(-2px) scale(1.005);
+	background: var(--aur-grad-soft), var(--aur-surface);
+}
+
+/* Inset tiles — the pale rounded cells the first reference fills its
+   calendar grid with. */
+.aurora-on[data-kaiten-skin="lumen"] .widget .widget-body .shortcut-widget-box,
+.aurora-on[data-kaiten-skin="lumen"] .links-widget-box .link-item,
+.aurora-on[data-kaiten-skin="lumen"] .onboarding-step,
+.aurora-on[data-kaiten-skin="lumen"] .form-dashboard-section .document-link,
+.aurora-on[data-kaiten-skin="lumen"] .comment-box .comment-input-wrapper {
+	border-radius: var(--aur-r-sm);
+}
+
+/* -------------------------------------------------------------------------
+   Titles — flat ink. The gradient wordmark belongs to Aurora.
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="lumen"] .page-title .title-text,
+.aurora-on[data-kaiten-skin="lumen"] .page-head .title-text {
+	font-weight: 700;
+	letter-spacing: -0.025em;
+	background: none;
+	-webkit-text-fill-color: currentColor;
+	color: var(--aur-ink);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .page-head {
+	border-bottom: 0;
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+}
+
+/* -------------------------------------------------------------------------
+   Controls — everything is a pill, primary actions are ink-black
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="lumen"] .btn,
+.aurora-on[data-kaiten-skin="lumen"] .es-button,
+.aurora-on[data-kaiten-skin="lumen"] .filter-section .filter-button,
+.aurora-on[data-kaiten-skin="lumen"] .filter-selector .btn,
+.aurora-on[data-kaiten-skin="lumen"] .sort-selector .btn,
+.aurora-on[data-kaiten-skin="lumen"] .list-count,
+.aurora-on[data-kaiten-skin="lumen"] .indicator-pill,
+.aurora-on[data-kaiten-skin="lumen"] .form-tabs .nav-link,
+.aurora-on[data-kaiten-skin="lumen"] .form-tabs-list .nav-link,
+.aurora-on[data-kaiten-skin="lumen"] .document-link .count,
+.aurora-on[data-kaiten-skin="lumen"] .badge-link .count {
+	border-radius: 999px;
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .btn-primary,
+.aurora-on[data-kaiten-skin="lumen"] .es-button[data-variant="solid"]:not([data-theme]) {
+	background: var(--lum-solid);
+	border: 0;
+	color: #fff;
+	box-shadow: 0 10px 22px -14px rgba(18, 22, 34, 0.9);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .btn-primary:hover,
+.aurora-on[data-kaiten-skin="lumen"] .es-button[data-variant="solid"]:not([data-theme]):hover {
+	background: var(--lum-solid-hover);
+	filter: none;
+	box-shadow: 0 14px 28px -14px rgba(18, 22, 34, 0.95);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .btn-default,
+.aurora-on[data-kaiten-skin="lumen"] .btn-secondary {
+	background: var(--aur-surface);
+	border-color: var(--aur-line-strong);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .btn-default:hover,
+.aurora-on[data-kaiten-skin="lumen"] .btn-secondary:hover {
+	background: var(--aur-surface);
+	border-color: var(--aur-line-strong);
+	box-shadow: var(--aur-shadow-sm);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .form-control,
+.aurora-on[data-kaiten-skin="lumen"] .frappe-control input.form-control,
+.aurora-on[data-kaiten-skin="lumen"] .frappe-control select.form-control,
+.aurora-on[data-kaiten-skin="lumen"] .frappe-control textarea.form-control {
+	border-radius: var(--aur-r-sm);
+	background: var(--aur-surface-2);
+	border: 1px solid var(--aur-line);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .form-control:focus {
+	background: var(--aur-surface);
+	border-color: var(--aur-accent);
+	box-shadow: var(--aur-glow);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .indicator-pill {
+	box-shadow: inset 0 0 0 1px rgba(18, 22, 34, 0.05);
+}
+
+/* Big figures read as data, not as decoration. */
+.aurora-on[data-kaiten-skin="lumen"] .widget.number-widget-box .widget-content .number,
+.aurora-on[data-kaiten-skin="lumen"] .number-card .number {
+	background: none;
+	-webkit-text-fill-color: currentColor;
+	color: var(--aur-ink);
+	letter-spacing: -0.025em;
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .progress-bar {
+	border-radius: 999px;
+	background: var(--aur-grad-cool);
+}
+
+/* -------------------------------------------------------------------------
+   Kaiten bar — a white strip of pills
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="lumen"] .aur-bar {
+	background: rgba(255, 255, 255, 0.82);
+	border-bottom-color: var(--aur-line);
+	box-shadow: 0 10px 30px -30px rgba(18, 22, 34, 0.6);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .aur-tab,
+.aurora-on[data-kaiten-skin="lumen"] .aur-icon-btn,
+.aurora-on[data-kaiten-skin="lumen"] .aur-search-wrap {
+	border-radius: 999px;
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .aur-tab.aur-open {
+	background: var(--aur-surface);
+	color: var(--aur-ink);
+	box-shadow: var(--aur-shadow-sm);
+}
+
+/* -------------------------------------------------------------------------
+   List sheet — rows as slices of one white card
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="lumen"] .frappe-list .result,
+.aurora-on[data-kaiten-skin="lumen"] .frappe-list .list-paging-area {
+	background: var(--aur-sheet);
+	border-radius: var(--aur-r-lg);
+	border-color: var(--aur-line);
+	box-shadow: var(--aur-shadow);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .list-row-container:nth-child(even) {
+	--aur-row-tint: color-mix(in oklab, var(--aur-accent) 3%, transparent);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .list-row-container:hover {
+	--aur-row-tint: color-mix(in oklab, var(--aur-accent) 8%, transparent);
+	box-shadow: none;
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .list-row-container::before {
+	background: var(--aur-accent);
+	opacity: 0;
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .list-row-container:hover::before {
+	opacity: 0.7;
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .list-row-head,
+.aurora-on[data-kaiten-skin="lumen"] .list-row-head .level-right {
+	background: var(--aur-surface-2);
+	border-bottom: 1px solid var(--aur-line);
+}
+
+/* -------------------------------------------------------------------------
+   Sidebar and dock — a tinted panel with a white pill for the active item,
+   the way the second reference draws its rail
+   ---------------------------------------------------------------------- */
+
+/* Tinted, not white: against a pale page a white rail is invisible, and the
+   second reference sets its rail apart the same way. */
+.aurora-on[data-kaiten-skin="lumen"] .body-sidebar,
+.aurora-on[data-kaiten-skin="lumen"] .body-sidebar-container,
+.aurora-on[data-kaiten-skin="lumen"] .dock {
+	background: color-mix(in oklab, var(--aur-accent) 6%, #ffffff);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+	border-right: 1px solid var(--aur-line);
+	box-shadow: none;
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .dock::after {
+	content: none;
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .body-sidebar .standard-sidebar-item,
+.aurora-on[data-kaiten-skin="lumen"] .desk-sidebar .standard-sidebar-item,
+.aurora-on[data-kaiten-skin="lumen"] .list-sidebar .sidebar-item-container {
+	border-radius: var(--aur-r-sm);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .body-sidebar .standard-sidebar-item:hover {
+	background: var(--aur-grad-soft);
+	transform: none;
+}
+
+/* Ink on white, not white on a gradient: the label has to stay readable at
+   the low contrast this palette runs at. */
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .body-sidebar .standard-sidebar-item.selected,
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .body-sidebar .standard-sidebar-item.active-sidebar,
+.aurora-on[data-kaiten-skin="lumen"] .desk-sidebar .standard-sidebar-item.selected {
+	background: var(--aur-surface);
+	color: var(--aur-ink);
+	box-shadow: var(--aur-shadow-sm);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .desk-sidebar .standard-sidebar-item.selected .sidebar-item-label {
+	color: var(--aur-ink);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .desk-sidebar .standard-sidebar-item.selected .sidebar-item-icon svg {
+	color: var(--aur-accent);
+	stroke: var(--aur-accent);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .body-sidebar .standard-sidebar-item .sidebar-item-icon,
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .body-sidebar .standard-sidebar-item:hover .sidebar-item-icon {
+	border-radius: 9px;
+	background: color-mix(in oklab, var(--aur-accent) 10%, #ffffff);
+	box-shadow: inset 0 0 0 1px var(--aur-line);
+	transform: none;
+	color: var(--aur-accent);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .dock .dock-items .dock-item {
+	border-radius: 12px;
+	background: rgba(255, 255, 255, 0.72);
+	box-shadow: inset 0 0 0 1px var(--aur-line);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .dock .dock-items .dock-item:hover {
+	background: #ffffff;
+	box-shadow: inset 0 0 0 1px var(--aur-line-strong), var(--aur-shadow-sm);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .dock-item.active {
+	background: color-mix(in oklab, var(--aur-accent) 14%, #ffffff);
+	box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--aur-accent) 28%, transparent);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .dock .dock-items .dock-item > svg,
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .dock .dock-items .dock-item .sidebar-item-icon > svg,
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .body-sidebar .sidebar-item-icon svg {
+	color: color-mix(in oklab, var(--aur-accent) 82%, #1b1f2a);
+	stroke: color-mix(in oklab, var(--aur-accent) 82%, #1b1f2a);
+}
+
+/* -------------------------------------------------------------------------
+   Form — flat sections, one accent spine colour
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="lumen"] .form-section {
+	background: var(--aur-surface);
+	border-color: var(--aur-line);
+	box-shadow: var(--aur-shadow);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .form-section .section-head {
+	color: var(--aur-ink);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .form-section .section-head::before {
+	background: var(--aur-accent);
+	box-shadow: 0 0 0 3px color-mix(in oklab, var(--aur-accent) 16%, transparent);
+}
+
+/* -------------------------------------------------------------------------
+   Overlays
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="lumen"] .modal-content,
+.aurora-on[data-kaiten-skin="lumen"] .dropdown-menu {
+	border-radius: var(--aur-r-xl);
+	background: var(--aur-surface);
+	border: 1px solid var(--aur-line);
+	box-shadow: var(--aur-shadow-lg);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .datatable .dt-header,
+.aurora-on[data-kaiten-skin="lumen"] .datatable .dt-row-header {
+	background: var(--aur-surface-2);
+}
+
+/* -------------------------------------------------------------------------
+   Dark — the same geometry over a deep neutral, wash kept faint
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="lumen"][data-theme="dark"] {
+	--aur-surface: #1d2029;
+	--aur-surface-2: #191c24;
+	--aur-sheet: #1d2029;
+	--aur-line: rgba(255, 255, 255, 0.07);
+	--aur-line-strong: rgba(255, 255, 255, 0.13);
+	--aur-ink: #e9ebf1;
+	--aur-ink-soft: #969db0;
+
+	--aur-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+	--aur-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 18px 40px -24px rgba(0, 0, 0, 0.9);
+	--aur-shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.5), 0 34px 70px -32px rgba(0, 0, 0, 0.95);
+
+	--lum-solid: #f4f5f8;
+	--lum-solid-hover: #ffffff;
+
+	--gray-100: #dfe2ea;
+	--gray-200: #b9bec9;
+	--gray-300: #9ea4b1;
+	--gray-400: #7f8593;
+	--gray-450: #6a7080;
+	--gray-500: #545a69;
+	--gray-600: #454b58;
+	--gray-700: #363b47;
+	--gray-800: #2a2e39;
+	--gray-900: #1e222b;
+	--gray-950: #14171e;
+
+	background: linear-gradient(163deg, #171a22 0%, #14161d 52%, color-mix(in oklab, var(--aur-accent) 12%, #12141a) 100%);
+}
+
+.aurora-on[data-kaiten-skin="lumen"][data-theme="dark"] body::before {
+	opacity: 0.35;
+}
+
+/* Black on black reads as nothing, so the solid action inverts. */
+.aurora-on[data-kaiten-skin="lumen"][data-theme="dark"] .btn-primary,
+.aurora-on[data-kaiten-skin="lumen"][data-theme="dark"] .es-button[data-variant="solid"]:not([data-theme]) {
+	color: #15171d;
+	box-shadow: 0 10px 22px -14px rgba(0, 0, 0, 0.9);
+}
+
+.aurora-on[data-kaiten-skin="lumen"][data-theme="dark"] .aur-bar {
+	background: rgba(25, 28, 36, 0.86);
+}
+
+.aurora-on[data-kaiten-skin="lumen"][data-theme="dark"] .body-sidebar,
+.aurora-on[data-kaiten-skin="lumen"][data-theme="dark"] .body-sidebar-container,
+.aurora-on[data-kaiten-skin="lumen"][data-theme="dark"] .dock {
+	background: rgba(24, 27, 34, 0.72);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="lumen"][data-theme="dark"] .body-sidebar .standard-sidebar-item .sidebar-item-icon,
+.aurora-on.aurora-on[data-kaiten-skin="lumen"][data-theme="dark"] .dock .dock-items .dock-item {
+	background: color-mix(in oklab, var(--aur-accent) 16%, #1d2029);
+	box-shadow: inset 0 0 0 1px var(--aur-line);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="lumen"][data-theme="dark"] .dock .dock-items .dock-item > svg,
+.aurora-on.aurora-on[data-kaiten-skin="lumen"][data-theme="dark"] .dock .dock-items .dock-item .sidebar-item-icon > svg,
+.aurora-on.aurora-on[data-kaiten-skin="lumen"][data-theme="dark"] .body-sidebar .sidebar-item-icon svg {
+	color: color-mix(in oklab, var(--aur-accent) 60%, #e9ebf1);
+	stroke: color-mix(in oklab, var(--aur-accent) 60%, #e9ebf1);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="lumen"][data-theme="dark"] .body-sidebar .standard-sidebar-item.selected,
+.aurora-on.aurora-on[data-kaiten-skin="lumen"][data-theme="dark"] .body-sidebar .standard-sidebar-item.active-sidebar {
+	background: color-mix(in oklab, var(--aur-accent) 20%, #1d2029);
+	color: var(--aur-ink);
+}

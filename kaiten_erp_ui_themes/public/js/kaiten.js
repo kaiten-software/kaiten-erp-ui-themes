@@ -16,7 +16,10 @@
 
 	var KEY = {
 		enabled: "kaiten_ui_enabled",
+		skin: "kaiten_ui_skin",
 		accent: "kaiten_ui_accent",
+		skinAccent: "kaiten_ui_skin_accent",
+		palettes: "kaiten_ui_palettes",
 		density: "kaiten_ui_density",
 		pins: "kaiten_ui_pins",
 		pinGroups: "kaiten_ui_pin_groups",
@@ -27,8 +30,10 @@
 
 	// Everything worth carrying between machines. Anything not listed here stays
 	// local to the browser it was set in.
-	var SYNC_KEYS = ["pins", "pinGroups", "recent"];
-	var SYNC_FLAGS = ["accent", "density", "enabled", "layout"];
+	var SYNC_KEYS = ["pins", "pinGroups", "recent", "palettes"];
+	var SYNC_FLAGS = ["accent", "density", "enabled", "layout", "skin"];
+	// Keyed objects rather than lists: which tone each skin was last left on.
+	var SYNC_MAPS = ["skinAccent"];
 
 	// "split" keeps the master rail beside the entries; "columns" drops the rail
 	// and lays every group out at once, the way classic ERP top menus do.
@@ -54,13 +59,64 @@
 		"shield", "lock", "globe", "map-pin", "compass", "lightbulb",
 	];
 
-	var ACCENTS = [
+	// Tones offered inside a skin. The stylesheets hold the real values, keyed
+	// [data-aur-accent]; these entries only name them and draw the swatch.
+	var AURORA_TONES = [
 		{ id: "aurora", label: "Aurora", swatch: "linear-gradient(135deg,#6366f1,#8b5cf6,#ec4899)" },
 		{ id: "sunset", label: "Sunset", swatch: "linear-gradient(135deg,#f43f5e,#fb7185,#f59e0b)" },
 		{ id: "ocean", label: "Ocean", swatch: "linear-gradient(135deg,#06b6d4,#0ea5e9,#6366f1)" },
 		{ id: "forest", label: "Forest", swatch: "linear-gradient(135deg,#10b981,#34d399,#84cc16)" },
 		{ id: "grape", label: "Grape", swatch: "linear-gradient(135deg,#a855f7,#d946ef,#ec4899)" },
 	];
+
+	var LUMEN_TONES = [
+		{ id: "lilac", label: "Lilac", swatch: "linear-gradient(135deg,#8b7cf7,#a78bfa,#c4b5fd)" },
+		{ id: "honey", label: "Honey", swatch: "linear-gradient(135deg,#f59e0b,#fbbf24,#fde68a)" },
+		{ id: "mint", label: "Mint", swatch: "linear-gradient(135deg,#10b981,#34d399,#a7f3d0)" },
+		{ id: "sky", label: "Sky", swatch: "linear-gradient(135deg,#0ea5e9,#38bdf8,#bae6fd)" },
+		{ id: "blush", label: "Blush", swatch: "linear-gradient(135deg,#f43f5e,#fb7185,#fecdd3)" },
+	];
+
+	/* A skin is a look, and nothing more: one stylesheet of token overrides
+	   layered on kaiten.css, picked with data-kaiten-skin. It is independent of
+	   the light/dark appearance, which stays Frappe's. "default" carries no
+	   stylesheet — it is the stock desk with only the Kaiten bar added — so
+	   choosing it switches the theme off rather than layering anything. */
+	var SKINS = [
+		{
+			id: "default",
+			label: "Default",
+			note: "Stock Frappe desk",
+			swatch: "linear-gradient(135deg,#ffffff 0%,#ffffff 48%,#e2e8f0 52%,#cbd5e1 100%)",
+			tones: [],
+		},
+		{
+			id: "aurora",
+			label: "Aurora",
+			note: "Colour at rest, animated mesh",
+			swatch: "linear-gradient(135deg,#6366f1,#8b5cf6,#ec4899,#f59e0b)",
+			tones: AURORA_TONES,
+		},
+		{
+			id: "lumen",
+			label: "Lumen",
+			note: "Soft light, gradient wash, pill controls",
+			swatch: "linear-gradient(135deg,#ede9fe 0%,#c4b5fd 38%,#fbcfe8 68%,#fde68a 100%)",
+			tones: LUMEN_TONES,
+		},
+	];
+
+	/* Frappe's three appearances. Its own name for the third is "automatic",
+	   which is what has to be stored; "System" is what it is called on screen. */
+	var APPEARANCES = [
+		{ id: "light", label: "Light", glyph: "\u2600", next: "dark" },
+		{ id: "dark", label: "Dark", glyph: "\u263D", next: "automatic" },
+		{ id: "automatic", label: "System", glyph: "\u25D1", next: "light" },
+	];
+
+	// A tone the user mixed themselves is stored as one of these and referenced
+	// as "custom:<id>", so it can sit beside the built-in swatches.
+	var CUSTOM_PREFIX = "custom:";
 
 	var TABS = [
 		{ id: "pinned", label: "Pinned", icon: "star" },
@@ -196,6 +252,12 @@
 	// entry labels start truncating into "Account..." and stop being readable.
 	var LANE_WIDTH = 250;
 
+	// Named for the keyboard in front of the reader, not for the one this was
+	// written on: an Apple keyboard has no key labelled Alt.
+	var IS_MAC = /mac|iphone|ipad/i.test(navigator.platform || navigator.userAgent || "");
+	var ALT_LABEL = IS_MAC ? "\u2325" : "Alt";
+	var META_LABEL = IS_MAC ? "\u2318" : "Ctrl+";
+
 	var state = {
 		tabs: {},
 		activeTab: null,
@@ -203,8 +265,11 @@
 		cursor: -1,
 		searching: false,
 		groups: [],
+		activeKey: null,
 		megaQuery: "",
 		openCols: {},
+		hints: null,
+		hintPrefix: "",
 	};
 	var hover = { timer: null, tabTimer: null, vx: 0, x: 0, t: 0 };
 
@@ -229,7 +294,7 @@
 
 		// The single choke point for pins, shelves and history, so the server copy
 		// follows along without every caller having to remember to ask.
-		if (SYNC_KEYS.some(function (name) { return KEY[name] === key; })) schedulePush();
+		if (SYNC_KEYS.concat(SYNC_MAPS).some(function (name) { return KEY[name] === key; })) schedulePush();
 	}
 
 	function adopt(from, to) {
@@ -242,7 +307,10 @@
 
 	function adoptLegacy() {
 		adopt("aurora_ui_enabled", KEY.enabled);
+		adopt("aurora_ui_skin", KEY.skin);
 		adopt("aurora_ui_accent", KEY.accent);
+		adopt("aurora_ui_skin_accent", KEY.skinAccent);
+		adopt("aurora_ui_palettes", KEY.palettes);
 		adopt("aurora_ui_density", KEY.density);
 		adopt("aurora_ui_pins", KEY.pins);
 		adopt("aurora_ui_pin_groups", KEY.pinGroups);
@@ -329,6 +397,13 @@
 		if (spriteHas(preferred)) return preferred;
 		var guess = guessIcon(label, context);
 		return spriteHas(guess) ? guess : "file-text";
+	}
+
+	function footKey(keys, label) {
+		return make("span", { class: "aur-foot-key" }, [
+			make("kbd", { text: keys }),
+			make("span", { text: label }),
+		]);
 	}
 
 	function iconNode(name, extraClass) {
@@ -1289,6 +1364,7 @@
 		el.body.appendChild(grid);
 		el.body.scrollTop = 0;
 		alignBody(items.length);
+		armCursor();
 	}
 
 	function selectGroup(tabId, key) {
@@ -1304,6 +1380,7 @@
 		if (!active) return;
 
 		state.activeNode = active.node;
+		state.activeKey = active.key;
 
 		var options = {};
 		if (tabId === "pinned") {
@@ -1394,6 +1471,10 @@
 		if (!el.filterBar) return;
 
 		var needle = String(query || "").trim();
+		// Runs on every render, so it is the one place that catches typing, tab
+		// changes, clearing and reopening alike.
+		if (el.megaClear) el.megaClear.hidden = !needle;
+
 		el.filterBar.classList.toggle("aur-on", !!needle);
 		if (!needle) return;
 
@@ -1462,6 +1543,7 @@
 					text: query ? 'Nothing in this tab matches "' + query + '".' : "Nothing here you have access to.",
 				})
 			);
+			armCursor();
 			return;
 		}
 
@@ -1618,6 +1700,8 @@
 			lane.appendChild(entry.node);
 			used += entry.weight;
 		});
+
+		armCursor();
 	}
 
 	function renderGroups(tabId) {
@@ -1930,15 +2014,7 @@
 		pop.style.top = Math.round(rect.bottom + 8) + "px";
 		pop.style.left = Math.round(clamp(rect.left - 150, 10, window.innerWidth - 280)) + "px";
 
-		setTimeout(function () {
-			document.addEventListener("click", function once(event) {
-				if (!el.pop) return document.removeEventListener("click", once);
-				if (!el.pop.contains(event.target)) {
-					closePop();
-					document.removeEventListener("click", once);
-				}
-			});
-		}, 0);
+		closeOnOutsideClick();
 	}
 
 	function openIconPicker(anchor, group) {
@@ -1970,15 +2046,7 @@
 		pop.style.top = Math.round(rect.bottom + 8) + "px";
 		pop.style.left = Math.round(clamp(rect.left - 110, 10, window.innerWidth - 280)) + "px";
 
-		setTimeout(function () {
-			document.addEventListener("click", function once(event) {
-				if (!el.pop) return document.removeEventListener("click", once);
-				if (!el.pop.contains(event.target)) {
-					closePop();
-					document.removeEventListener("click", once);
-				}
-			});
-		}, 0);
+		closeOnOutsideClick();
 	}
 
 	/* Offered, never demanded: it closes itself, and whatever it was offered
@@ -2014,15 +2082,7 @@
 
 		state.pinPopTimer = setTimeout(closePop, 4500);
 
-		setTimeout(function () {
-			document.addEventListener("click", function once(event) {
-				if (!el.pop) return document.removeEventListener("click", once);
-				if (!el.pop.contains(event.target)) {
-					closePop();
-					document.removeEventListener("click", once);
-				}
-			});
-		}, 0);
+		closeOnOutsideClick();
 	}
 
 	function renderSearch(query) {
@@ -2101,12 +2161,19 @@
 		}
 
 		positionScrim();
+
+		/* The keyboard needs somewhere to live while the panel is open. Focus
+		   rests in the filter field and the selection is painted onto a row, so
+		   typing and the arrows are both live from the moment it appears. */
+		if (el.megaSearch) el.megaSearch.focus({ preventScroll: true });
 	}
 
 	function closeMega() {
 		if (!el.mega) return;
 		clearTimeout(hover.timer);
 		clearTimeout(hover.tabTimer);
+		hideHints();
+		setCursor(null);
 		el.mega.classList.remove("aur-visible");
 		if (el.bar) el.bar.classList.remove("aur-bar-lifted");
 		state.searching = false;
@@ -2149,15 +2216,389 @@
 	   Keyboard
 	   ------------------------------------------------------------------ */
 
-	function moveCursor(delta) {
-		var items = Array.prototype.slice.call(el.body.querySelectorAll(".aur-item"));
-		if (!items.length) return;
+	/* Focus stays in the filter field for as long as the panel is open and the
+	   selection is drawn on a row instead of being held by it. That is what lets
+	   typing and the arrows work at the same moment without a mode to switch
+	   between: the letters still narrow the list while the arrows walk it. The
+	   field carries aria-activedescendant, which is how a screen reader is told
+	   which row is current. */
 
-		state.cursor = (state.cursor + delta + items.length) % items.length;
-		items.forEach(function (item, i) {
-			item.classList.toggle("aur-cursor", i === state.cursor);
+	var rowSeq = 0;
+
+	// Rows the keyboard can land on. "+N more" counts as one: arriving at the
+	// foot of a capped group and pressing Enter is how the rest of it opens.
+	function navRows() {
+		if (!el.body) return [];
+		return Array.prototype.slice.call(el.body.querySelectorAll(".aur-item, .aur-col-more"));
+	}
+
+	function cursorRow() {
+		return el.body ? el.body.querySelector(".aur-cursor") : null;
+	}
+
+	function setCursor(row, scroll) {
+		var previous = cursorRow();
+		if (previous) previous.classList.remove("aur-cursor");
+
+		if (!row) {
+			if (el.megaSearch) el.megaSearch.removeAttribute("aria-activedescendant");
+			return;
+		}
+
+		if (!row.id) row.id = "aur-row-" + ++rowSeq;
+		row.classList.add("aur-cursor");
+		if (el.megaSearch) el.megaSearch.setAttribute("aria-activedescendant", row.id);
+		if (scroll !== false) row.scrollIntoView({ block: "nearest", inline: "nearest" });
+	}
+
+	/* Every render ends here, so the first row is always armed: Enter has an
+	   obvious target from the moment the panel opens, and the panel reads as
+	   ready for the keyboard rather than waiting to be aimed at. */
+	function armCursor() {
+		setCursor(navRows()[0] || null, false);
+		if (state.hints) paintHints();
+	}
+
+	/* Both layouts are two-dimensional and ragged — a filled grid in one, lanes
+	   of unequal height in the other — so a direction key cannot be index
+	   arithmetic over the DOM. Take the nearest row that genuinely lies the way
+	   the key points, preferring the ones squarely in line with this one. */
+	function stepCursor(dir) {
+		var rows = navRows();
+		if (!rows.length) return;
+
+		var current = cursorRow();
+		if (!current) return setCursor(rows[0]);
+
+		var from = current.getBoundingClientRect();
+		var cx = from.left + from.width / 2;
+		var cy = from.top + from.height / 2;
+
+		var best = null;
+		var bestScore = Infinity;
+
+		rows.forEach(function (row) {
+			if (row === current) return;
+
+			var box = row.getBoundingClientRect();
+			var dx = box.left + box.width / 2 - cx;
+			var dy = box.top + box.height / 2 - cy;
+
+			var along = dir === "down" ? dy : dir === "up" ? -dy : dir === "right" ? dx : -dx;
+			if (along < 4) return;
+
+			// Drift sideways costs more than distance travelled, which keeps a
+			// run of Down presses inside one column instead of wandering.
+			var across = dir === "up" || dir === "down" ? Math.abs(dx) : Math.abs(dy);
+			var score = along + across * 2.6;
+			if (score < bestScore) {
+				bestScore = score;
+				best = row;
+			}
 		});
-		items[state.cursor].scrollIntoView({ block: "nearest" });
+
+		/* Nothing that way. Running off the side of a row continues along the
+		   reading order, which is what the eye does anyway; running off the top
+		   or bottom stays put rather than jumping the width of the panel. */
+		if (!best && (dir === "left" || dir === "right")) {
+			best = rows[rows.indexOf(current) + (dir === "right" ? 1 : -1)];
+		}
+
+		if (best) setCursor(best);
+	}
+
+	/* Tab moves by subject rather than by control while the panel is open: one
+	   press per group, which is the unit both layouts are organised around. */
+	function stepGroup(delta) {
+		if (currentLayout() === "columns") {
+			var cols = Array.prototype.slice.call(el.body.querySelectorAll(".aur-col"));
+			if (!cols.length) return;
+
+			var current = cursorRow();
+			var owner = current && current.closest ? current.closest(".aur-col") : null;
+			var at = owner ? cols.indexOf(owner) : -1;
+			var next = cols[(at + delta + cols.length) % cols.length] || cols[0];
+
+			// Bring the heading into view as well, so the group being entered
+			// announces itself instead of the cursor arriving somewhere unnamed.
+			var head = next.querySelector(".aur-col-head");
+			if (head) head.scrollIntoView({ block: "nearest" });
+			setCursor(next.querySelector(".aur-item, .aur-col-more"));
+			return;
+		}
+
+		var groups = state.groups || [];
+		if (groups.length < 2) return;
+
+		var keys = groups.map(function (group) {
+			return group.key;
+		});
+		var index = keys.indexOf(state.activeKey);
+		if (index < 0) index = 0;
+
+		selectGroup(state.activeTab, keys[(index + delta + keys.length) % keys.length]);
+		if (state.activeNode) state.activeNode.scrollIntoView({ block: "nearest" });
+	}
+
+	// A whole subject at a time, and the standing filter is deliberately kept:
+	// clicking a tab already behaves that way.
+	function stepTab(delta) {
+		var ids = Object.keys(el.tabNodes || {});
+		if (ids.length < 2) return;
+
+		var index = ids.indexOf(state.activeTab);
+		if (index < 0) index = 0;
+		openTab(ids[(index + delta + ids.length) % ids.length]);
+	}
+
+	// A screenful, then land on whatever is now at the top edge.
+	function pageCursor(delta) {
+		if (!el.body) return;
+		el.body.scrollTop += delta * Math.max(120, el.body.clientHeight * 0.85);
+
+		var frame = el.body.getBoundingClientRect();
+		var landed = null;
+		navRows().some(function (row) {
+			var box = row.getBoundingClientRect();
+			if (box.bottom > frame.top + 4 && box.top < frame.bottom - 4) {
+				landed = row;
+				return delta > 0;
+			}
+			return false;
+		});
+
+		// Scrolled to, not merely marked: the row at the edge is usually half cut
+		// off by the jump, and a selection you cannot fully see is no selection.
+		if (landed) setCursor(landed);
+	}
+
+	function openCursor(newTab) {
+		var row = cursorRow();
+		if (!row) return;
+
+		if (newTab && row.href) {
+			window.open(row.href, "_blank");
+			return;
+		}
+		row.click();
+	}
+
+	/* ---------------------------------------------------------------------
+	   Tap-Alt shortcuts
+	   ---------------------------------------------------------------------
+	   Bare letters have to go on filtering: Modules alone carries over five
+	   hundred entries and narrowing is the only way through a list that long. So
+	   the direct shortcuts sit on Alt, where this theme already keeps Alt+1..9
+	   for pinned entries.
+
+	   Tap Alt once — the badges stay. Press the letter(s) shown. Tap Alt again
+	   or Esc to put them away. Holding Alt while pressing a letter still works;
+	   releasing Alt no longer clears the badges (that used to look broken).
+
+	   The letters come from the rows' own names, so S really is Sales Invoice.
+	   Rows sharing an initial take a second letter from their next word, giving
+	   SI for Sales Invoice against SO for Sales Order. A row whose initial is
+	   unique keeps the bare letter, and since no other row can then begin with
+	   it, nothing is ever ambiguous. Only rows on screen are lettered, so the
+	   alphabet never runs out however long the list underneath is.
+	   ------------------------------------------------------------------ */
+
+	var HINT_POOL = "asdfghjklqwertyuiopzxcvbnm".split("");
+
+	function plainLetters(text) {
+		return String(text || "")
+			.toLowerCase()
+			.replace(/[^a-z ]+/g, " ")
+			.replace(/\s+/g, " ")
+			.trim();
+	}
+
+	function rowLabel(row) {
+		var label = row.querySelector(".aur-item-label");
+		return plainLetters(label ? label.textContent : row.textContent);
+	}
+
+	// Second characters worth remembering: the initials of the following words
+	// first, then the row's own remaining letters, then whatever is still free.
+	function tiebreaks(text) {
+		var words = text.split(" ").filter(Boolean);
+		var initials = words.slice(1).map(function (word) {
+			return word.charAt(0);
+		});
+		return initials.concat(text.replace(/ /g, "").split(""), HINT_POOL);
+	}
+
+	function assignHints(rows) {
+		var byInitial = {};
+		var order = [];
+
+		rows.forEach(function (row) {
+			var text = rowLabel(row);
+			var initial = text.charAt(0);
+			if (!/^[a-z]$/.test(initial)) initial = "";
+			if (!byInitial[initial]) {
+				byInitial[initial] = [];
+				order.push(initial);
+			}
+			byInitial[initial].push({ row: row, text: text });
+		});
+
+		var taken = {};
+		var map = [];
+		var spare = [];
+
+		// Singles first: that is what guarantees a bare letter is never also the
+		// start of a longer one.
+		order.forEach(function (initial) {
+			if (!initial || byInitial[initial].length !== 1) return;
+			taken[initial] = true;
+			map.push({ row: byInitial[initial][0].row, hint: initial });
+		});
+
+		order.forEach(function (initial) {
+			var group = byInitial[initial];
+			if (!initial || group.length < 2) return;
+
+			// Spoken for as a prefix now, so the fallback below cannot hand the
+			// bare letter to some other row.
+			taken[initial] = true;
+
+			var used = {};
+			group.forEach(function (entry) {
+				var pick = null;
+				tiebreaks(entry.text).some(function (candidate) {
+					if (!/^[a-z]$/.test(candidate) || used[candidate]) return false;
+					pick = candidate;
+					return true;
+				});
+
+				if (!pick) return spare.push(entry);
+				used[pick] = true;
+				map.push({ row: entry.row, hint: initial + pick });
+			});
+		});
+
+		// Rows that could not use their own name: no letters in it, or an
+		// initial with nothing left to pair it with.
+		(byInitial[""] || []).concat(spare).forEach(function (entry) {
+			var free = null;
+			HINT_POOL.some(function (candidate) {
+				if (taken[candidate]) return false;
+				free = candidate;
+				return true;
+			});
+			if (!free) return;
+			taken[free] = true;
+			map.push({ row: entry.row, hint: free });
+		});
+
+		return map;
+	}
+
+	function onScreen(row) {
+		var frame = el.body.getBoundingClientRect();
+		var box = row.getBoundingClientRect();
+		return box.bottom > frame.top + 2 && box.top < frame.bottom - 2;
+	}
+
+	function clearHints() {
+		(state.hints || []).forEach(function (entry) {
+			if (entry.badge && entry.badge.parentNode) entry.badge.parentNode.removeChild(entry.badge);
+			entry.row.classList.remove("aur-hinted", "aur-hint-dim");
+		});
+		state.hints = null;
+	}
+
+	function paintPrefix() {
+		var prefix = state.hintPrefix || "";
+
+		(state.hints || []).forEach(function (entry) {
+			var match = !prefix || entry.hint.indexOf(prefix) === 0;
+			entry.row.classList.toggle("aur-hint-dim", !match);
+			// Once a prefix is down, the badge shows only what is left to press.
+			entry.badge.textContent = (match ? entry.hint.slice(prefix.length) : entry.hint).toUpperCase();
+			entry.badge.classList.toggle("aur-hint-live", !!prefix && match);
+		});
+
+		if (el.footLive) el.footLive.textContent = prefix ? prefix.toUpperCase() + "\u2026" : "";
+	}
+
+	function paintHints() {
+		clearHints();
+		if (!megaOpen() || !el.body) return;
+
+		var rows = navRows().filter(onScreen);
+		if (!rows.length) return;
+
+		state.hints = assignHints(rows);
+		state.hints.forEach(function (entry) {
+			entry.badge = make("span", { class: "aur-hint", "aria-hidden": "true" });
+			entry.row.appendChild(entry.badge);
+			entry.row.classList.add("aur-hinted");
+		});
+
+		paintPrefix();
+	}
+
+	function showHints() {
+		if (state.hints || !megaOpen()) return;
+		state.hintPrefix = "";
+		paintHints();
+		if (el.mega) el.mega.classList.add("aur-hints-on");
+	}
+
+	function hideHints() {
+		state.hintPrefix = "";
+		clearHints();
+		if (el.mega) el.mega.classList.remove("aur-hints-on");
+		if (el.footLive) el.footLive.textContent = "";
+	}
+
+	/* The physical key, not the character: on macOS Alt is Option, so Option+A
+	   arrives as "å" and event.key cannot be matched against a badge. */
+	function codeLetter(event) {
+		return /^Key[A-Z]$/.test(event.code || "") ? event.code.charAt(3).toLowerCase() : "";
+	}
+
+	function codeDigit(event) {
+		return /^Digit[1-9]$/.test(event.code || "") ? event.code.charAt(5) : "";
+	}
+
+	function fireHint(letter) {
+		var wanted = state.hintPrefix + letter;
+
+		var exact = (state.hints || []).filter(function (entry) {
+			return entry.hint === wanted;
+		})[0];
+		if (exact) {
+			var row = exact.row;
+			hideHints();
+			row.click();
+			return true;
+		}
+
+		// Not a whole label yet, but the start of one: hold the prefix and let
+		// the badges narrow to the rows still in play.
+		var deeper = (state.hints || []).some(function (entry) {
+			return entry.hint.indexOf(wanted) === 0;
+		});
+		if (deeper) {
+			state.hintPrefix = wanted;
+			paintPrefix();
+			return true;
+		}
+
+		return false;
+	}
+
+	// The badges stay after Alt is released (sticky). A key that answers to
+	// nothing is the sign that the reader has moved on, so it puts them away
+	// and types instead of vanishing.
+	function typeIntoFilter(letter) {
+		if (!el.megaSearch) return;
+		el.megaSearch.focus();
+		el.megaSearch.value += letter;
+		el.megaSearch.dispatchEvent(new Event("input", { bubbles: true }));
 	}
 
 	function bindKeys() {
@@ -2165,9 +2606,10 @@
 			var tag = (event.target.tagName || "").toLowerCase();
 			var typing = tag === "input" || tag === "textarea" || tag === "select" || event.target.isContentEditable;
 
-			// Alt+1..9 jumps straight to a pinned entry.
-			if (event.altKey && /^[1-9]$/.test(event.key)) {
-				var pinned = pins()[Number(event.key) - 1];
+			// Alt+1..9 jumps straight to a pinned entry. Read off the physical
+			// key, because macOS turns Option+1 into "\u00a1".
+			if (event.altKey && codeDigit(event)) {
+				var pinned = pins()[Number(codeDigit(event)) - 1];
 				if (pinned) {
 					event.preventDefault();
 					runItem(pinned);
@@ -2175,19 +2617,12 @@
 				return;
 			}
 
-			// Cmd/Ctrl+K belongs to the desk's own awesomebar. This search takes
-			// Cmd/Ctrl+/ and a bare / instead, so the two never collide.
-			if ((event.metaKey || event.ctrlKey) && event.key === "/") {
+			// Cmd/Ctrl+K belongs to the desk's own awesomebar. Bare / and
+			// Cmd/Ctrl+/ open this menu immediately so there is something to
+			// type into, rather than waiting for the first character of a jump.
+			if (((event.metaKey || event.ctrlKey) && event.key === "/") || (event.key === "/" && !typing)) {
 				event.preventDefault();
-				el.search.focus();
-				el.search.select();
-				return;
-			}
-
-			if (event.key === "/" && !typing) {
-				event.preventDefault();
-				el.search.focus();
-				el.search.select();
+				openQuickMenu();
 				return;
 			}
 
@@ -2197,6 +2632,12 @@
 			   in one press instead of two only when nothing of ours was open. */
 			if (event.key === "Escape") {
 				var closed = false;
+				// The shortcut badges come off first: they are an overlay on the
+				// panel, so dismissing them should not take the panel with them.
+				if (state.hints) {
+					hideHints();
+					return;
+				}
 				if (el.selectPop) {
 					closeSelect();
 					closed = true;
@@ -2221,8 +2662,41 @@
 
 			if (!megaOpen()) return;
 
-			// Typing straight into an open menu filters it, without having to
-			// aim for the field first.
+			/* The panel's own field holds focus while it is open, so "typing" is
+			   true for nearly every key that reaches here. What must be left
+			   alone is any other field — a shelf being renamed — where the
+			   arrows and Tab have to keep their ordinary meaning. */
+			var mine = !typing || event.target === el.megaSearch || event.target === el.search;
+			if (!mine) return;
+
+			/* Tap Alt once: badges stay until a letter fires, Esc, or Alt again.
+			   Holding Alt while typing a letter also works, but releasing Alt no
+			   longer puts the badges away — that was the trap that made them look
+			   broken on a Mac keyboard. */
+			if (event.key === "Alt" && !event.repeat) {
+				event.preventDefault();
+				if (state.hints) hideHints();
+				else showHints();
+				return;
+			}
+
+			if (state.hints || event.altKey) {
+				var letter = codeLetter(event);
+				if (letter) {
+					// Always swallowed, or macOS would post a diacritic into the
+					// filter field behind the badges.
+					event.preventDefault();
+					if (!state.hints) showHints();
+					if (!fireHint(letter)) {
+						hideHints();
+						typeIntoFilter(letter);
+					}
+					return;
+				}
+			}
+
+			// Typing straight into an open menu filters it, without having to aim
+			// for the field first.
 			if (
 				!typing &&
 				el.megaSearch &&
@@ -2235,18 +2709,72 @@
 				return;
 			}
 
-			if (event.key === "ArrowDown") {
+			// Ctrl/Cmd with a horizontal arrow changes the whole subject, so the
+			// plain arrows are free to walk the rows.
+			if ((event.metaKey || event.ctrlKey) && (event.key === "ArrowRight" || event.key === "ArrowLeft")) {
 				event.preventDefault();
-				moveCursor(1);
-			} else if (event.key === "ArrowUp") {
+				stepTab(event.key === "ArrowRight" ? 1 : -1);
+				return;
+			}
+
+			var DIRS = { ArrowDown: "down", ArrowUp: "up", ArrowRight: "right", ArrowLeft: "left" };
+			if (DIRS[event.key]) {
+				/* Horizontal keys are shared with the caret, or a typo in the
+				   filter could not be reached without the mouse. The caret gets
+				   them while it still has somewhere to go; at either end of the
+				   text they pass to the rows. */
+				if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+					var field = event.target === el.megaSearch ? el.megaSearch : null;
+					var at = field ? field.selectionStart : null;
+					var spread = field && field.selectionStart !== field.selectionEnd;
+					if (field && (spread || (event.key === "ArrowLeft" ? at > 0 : at < field.value.length))) return;
+				}
+
 				event.preventDefault();
-				moveCursor(-1);
-			} else if (event.key === "Enter" && (event.target === el.search || event.target === el.megaSearch)) {
+				stepCursor(DIRS[event.key]);
+				return;
+			}
+
+			if (event.key === "Tab") {
 				event.preventDefault();
-				var current = el.body.querySelector(".aur-item.aur-cursor") || el.body.querySelector(".aur-item");
-				if (current) current.click();
+				stepGroup(event.shiftKey ? -1 : 1);
+				return;
+			}
+
+			if (event.key === "Home" || event.key === "End") {
+				var rows = navRows();
+				if (!rows.length) return;
+				event.preventDefault();
+				setCursor(event.key === "Home" ? rows[0] : rows[rows.length - 1]);
+				return;
+			}
+
+			if (event.key === "PageDown" || event.key === "PageUp") {
+				event.preventDefault();
+				pageCursor(event.key === "PageDown" ? 1 : -1);
+				return;
+			}
+
+			if (event.key === "Enter") {
+				event.preventDefault();
+				openCursor(event.metaKey || event.ctrlKey);
 			}
 		});
+
+		// Alt+Tab out of the window leaves no keyup behind.
+		window.addEventListener("blur", function () {
+			if (state.hints) hideHints();
+		});
+	}
+
+	/* Open the mega menu ready for typing. Used by / so the panel is on screen
+	   before the first character of the filter, not after it. */
+	function openQuickMenu() {
+		if (!megaOpen()) openTab(state.activeTab || "workspaces");
+		if (el.megaSearch) {
+			el.megaSearch.focus();
+			el.megaSearch.select();
+		}
 	}
 
 	/* ---------------------------------------------------------------------
@@ -2255,34 +2783,163 @@
 
 	function closePop() {
 		clearTimeout(state.pinPopTimer);
+		el.popPlace = null;
+		el.paintAppearanceSeg = null;
 		if (el.pop) {
 			el.pop.remove();
 			el.pop = null;
 		}
 	}
 
+	/* Every popover closes when a click lands outside it, and contains() alone
+	   cannot tell where a click landed: a handler that redraws its own section —
+	   a theme card, a colour swatch — detaches the very node that was clicked
+	   before this listener runs, which read as a click on the outside world and
+	   shut the panel on the first choice made in it. The event path is fixed at
+	   dispatch, so it still remembers the panel the click came from. */
+	function closeOnOutsideClick() {
+		setTimeout(function () {
+			document.addEventListener("click", function once(event) {
+				if (!el.pop) return document.removeEventListener("click", once);
+
+				var path = typeof event.composedPath === "function" ? event.composedPath() : [];
+				if (path.indexOf(el.pop) >= 0 || el.pop.contains(event.target)) return;
+
+				closePop();
+				document.removeEventListener("click", once);
+			});
+		}, 0);
+	}
+
+	/* All three appearances on screen at once, one click each: no modal, and no
+	   cycling through a state you did not want to stop on. */
+	function appearanceSeg() {
+		var seg = make("div", { class: "aur-seg aur-appearance-seg", role: "radiogroup", "aria-label": "Appearance" });
+		var buttons = {};
+
+		el.paintAppearanceSeg = function () {
+			var current = currentAppearance();
+			APPEARANCES.forEach(function (item) {
+				var on = item.id === current;
+				buttons[item.id].classList.toggle("aur-on", on);
+				buttons[item.id].setAttribute("aria-checked", on ? "true" : "false");
+			});
+		};
+
+		APPEARANCES.forEach(function (item) {
+			var button = make("button", { type: "button", role: "radio", title: item.label }, [
+				make("span", { class: "aur-appearance-glyph", text: item.glyph }),
+				make("span", { text: item.label }),
+			]);
+			button.addEventListener("click", function () {
+				if (item.id !== currentAppearance()) setAppearance(item.id);
+			});
+			buttons[item.id] = button;
+			seg.appendChild(button);
+		});
+
+		el.paintAppearanceSeg();
+		return seg;
+	}
+
 	function openSettings(anchor) {
 		if (el.pop) return closePop();
 
-		var swatches = make("div", { class: "aur-swatches" });
-		ACCENTS.forEach(function (accent) {
-			var dot = make("button", {
-				class: "aur-swatch" + (currentAccent() === accent.id ? " aur-on" : ""),
-				type: "button",
-				title: accent.label,
-				style: "background:" + accent.swatch,
-			});
-			dot.addEventListener("click", function () {
-				setAccent(accent.id);
-				Array.prototype.forEach.call(swatches.children, function (node) {
-					node.classList.remove("aur-on");
+		// The tone row belongs to the chosen theme, so both are rebuilt together
+		// and the row simply disappears for a theme that offers no tones.
+		var tones = make("div", { class: "aur-swatches" });
+		var toneLabel = make("div", { class: "aur-pop-label", text: "Colour" });
+		var toneRow = make("div", { class: "aur-pop-row" }, [tones]);
+		var editor = make("div", { class: "aur-mixer" });
+		var skins = make("div", { class: "aur-skins" });
+
+		// Density rides on the skin layer, and Default deliberately has none: it
+		// is stock Frappe with only the bar added, spacing included.
+		var density = make("div", { class: "aur-seg" });
+		var densityLabel = make("div", { class: "aur-pop-label", text: "Density" });
+		var densityRow = make("div", { class: "aur-pop-row" }, [density]);
+
+		var renderTones = function () {
+			var offered = tonesFor(currentSkin());
+			var active = currentAccent();
+
+			toneLabel.hidden = toneRow.hidden = !offered.length;
+			tones.innerHTML = "";
+			if (!offered.length) return;
+
+			offered.forEach(function (tone) {
+				var dot = make("button", {
+					class: "aur-swatch" + (active === tone.id ? " aur-on" : "") + (tone.custom ? " aur-swatch-own" : ""),
+					type: "button",
+					title: tone.custom ? tone.label + " — right-click to remove" : tone.label,
+					style: "background:" + tone.swatch,
 				});
-				dot.classList.add("aur-on");
+				dot.addEventListener("click", function () {
+					setAccent(tone.id);
+					renderTones();
+				});
+				if (tone.custom) {
+					dot.addEventListener("contextmenu", function (event) {
+						event.preventDefault();
+						removePalette(tone.id);
+						renderTones();
+					});
+				}
+				tones.appendChild(dot);
 			});
-			swatches.appendChild(dot);
+
+			var add = make("button", { class: "aur-swatch aur-swatch-add", type: "button", title: "Mix a colour", text: "+" });
+			add.addEventListener("click", function () {
+				editor.classList.toggle("aur-open");
+			});
+			tones.appendChild(add);
+		};
+
+		var renderSkins = function () {
+			var active = currentSkin();
+			densityLabel.hidden = densityRow.hidden = active === "default";
+			skins.innerHTML = "";
+
+			SKINS.forEach(function (skin) {
+				var card = make("button", { class: "aur-skin" + (active === skin.id ? " aur-on" : ""), type: "button", title: skin.note }, [
+					make("span", { class: "aur-skin-swatch", style: "background:" + skin.swatch }),
+					make("span", { class: "aur-skin-name", text: skin.label }),
+					make("span", { class: "aur-skin-note", text: skin.note }),
+				]);
+				card.addEventListener("click", function () {
+					setSkin(skin.id);
+					renderSkins();
+					renderTones();
+				});
+				skins.appendChild(card);
+			});
+		};
+
+		// Three stops, because that is what --aur-grad reads: the middle one is
+		// also the flat accent used for focus rings and primary fills.
+		var seeds = ["#8b7cf7", "#a78bfa", "#fde68a"];
+		var pickers = seeds.map(function (seed) {
+			return make("input", { class: "aur-mixer-dot", type: "color", value: seed, "aria-label": "Gradient colour" });
+		});
+		var name = make("input", { class: "aur-mixer-name", type: "text", placeholder: "Name this colour", maxlength: "24" });
+		var save = make("button", { class: "aur-mixer-save", type: "button", text: "Add to palette" });
+
+		save.addEventListener("click", function () {
+			var stops = pickers.map(function (picker) {
+				return picker.value;
+			});
+			setAccent(addPalette(stops, name.value.trim() || "Custom"));
+			name.value = "";
+			editor.classList.remove("aur-open");
+			renderTones();
 		});
 
-		var density = make("div", { class: "aur-seg" });
+		editor.appendChild(make("div", { class: "aur-mixer-dots" }, pickers));
+		editor.appendChild(make("div", { class: "aur-mixer-foot" }, [name, save]));
+
+		renderSkins();
+		renderTones();
+
 		[
 			{ id: "cozy", label: "Cozy" },
 			{ id: "compact", label: "Compact" },
@@ -2307,29 +2964,34 @@
 		refresh.appendChild(refreshBtn);
 
 		el.pop = make("div", { class: "aur-pop" }, [
-			make("div", { class: "aur-pop-label", text: "Accent" }),
-			make("div", { class: "aur-pop-row" }, [swatches]),
-			make("div", { class: "aur-pop-label", text: "Density" }),
-			make("div", { class: "aur-pop-row" }, [density]),
+			make("div", { class: "aur-pop-label", text: "Appearance" }),
+			make("div", { class: "aur-pop-row" }, [appearanceSeg()]),
+			make("div", { class: "aur-pop-label", text: "Theme" }),
+			make("div", { class: "aur-pop-row" }, [skins]),
+			toneLabel,
+			toneRow,
+			editor,
+			densityLabel,
+			densityRow,
 			make("div", { class: "aur-pop-label", text: "Menu" }),
 			make("div", { class: "aur-pop-row" }, [refresh]),
 		]);
 
 		document.body.appendChild(el.pop);
 
-		var rect = anchor.getBoundingClientRect();
-		el.pop.style.top = Math.round(rect.bottom + 8) + "px";
-		el.pop.style.left = Math.round(clamp(rect.right - 268, 10, window.innerWidth - 278)) + "px";
+		/* This panel is where the theme, the colour and the density are changed,
+		   and each of those resizes the document — which used to close it after
+		   a single click. It follows its anchor instead, so a look can be tried
+		   on, adjusted and compared without reopening anything. */
+		el.popPlace = function () {
+			var box = anchor.getBoundingClientRect();
+			var width = el.pop.offsetWidth || 300;
+			el.pop.style.top = Math.round(box.bottom + 8) + "px";
+			el.pop.style.left = Math.round(clamp(box.right - width, 10, window.innerWidth - width - 10)) + "px";
+		};
+		el.popPlace();
 
-		setTimeout(function () {
-			document.addEventListener("click", function once(event) {
-				if (!el.pop) return document.removeEventListener("click", once);
-				if (!el.pop.contains(event.target)) {
-					closePop();
-					document.removeEventListener("click", once);
-				}
-			});
-		}, 0);
+		closeOnOutsideClick();
 	}
 
 	/* ---------------------------------------------------------------------
@@ -2526,11 +3188,14 @@
 	   ------------------------------------------------------------------ */
 
 	function buildBar(anchor) {
-		var brand = make("button", { class: "aur-brand", type: "button", title: "Toggle the theme" }, [
+		var brand = make("button", { class: "aur-brand", type: "button", title: "Theme and appearance" }, [
 			make("span", { class: "aur-brand-dot" }),
 			make("span", { text: brandName() }),
 		]);
-		brand.addEventListener("click", toggleTheme);
+		brand.addEventListener("click", function (event) {
+			event.stopPropagation();
+			openSettings(brand);
+		});
 
 		var nav = make("nav", { class: "aur-nav" });
 		el.tabNodes = {};
@@ -2592,20 +3257,46 @@
 			togglePin(desc, el.pinBtn);
 		});
 
-		var paletteBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Accent and density", text: "\u25D5" });
+		var paletteBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Theme, colour and density", text: "\u25D5" });
 		paletteBtn.addEventListener("click", function (event) {
 			event.stopPropagation();
 			openSettings(paletteBtn);
 		});
 
-		var themeBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Light / dark theme", text: "\u25D1" });
-		themeBtn.addEventListener("click", openThemeSwitcher);
+		// The shortcut for light and dark: it moves straight to the next
+		// appearance instead of opening Frappe's three-card dialog. The panel
+		// offers the same three as a direct choice.
+		var themeBtn = make("button", { class: "aur-icon-btn", type: "button" });
+		el.paintThemeBtn = function () {
+			var meta = appearanceMeta(currentAppearance());
+			themeBtn.textContent = meta.glyph;
+			themeBtn.setAttribute("title", meta.label + " — click for " + appearanceMeta(meta.next).label.toLowerCase());
+		};
+		themeBtn.addEventListener("click", function (event) {
+			// Changing the look is never a reason to dismiss the panel that
+			// changes the look, even when the click landed outside it.
+			event.stopPropagation();
+			setAppearance(nextAppearance());
+		});
+		el.paintThemeBtn();
 
 		var fullBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Toggle fullscreen", text: "\u26F6" });
 		fullBtn.addEventListener("click", toggleFullscreen);
 
 		el.groups = make("div", { class: "aur-mega-groups" });
 		el.body = make("div", { class: "aur-mega-body" });
+
+		// Only what is on screen carries a letter, so scrolling has to hand them
+		// out again. One pass per frame, since this rides a scroll event.
+		var relettering = false;
+		el.body.addEventListener("scroll", function () {
+			if (!state.hints || relettering) return;
+			relettering = true;
+			requestAnimationFrame(function () {
+				relettering = false;
+				if (state.hints) paintHints();
+			});
+		});
 
 		el.megaSearch = make("input", {
 			class: "aur-mega-input",
@@ -2618,8 +3309,32 @@
 			renderGroups(state.activeTab || "workspaces");
 		});
 
-		var megaClear = make("button", { class: "aur-mega-clear", type: "button", title: "Clear", text: "\u00d7" });
-		megaClear.addEventListener("click", clearMegaFilter);
+		/* Two different jobs, so two controls. This one empties the filter and
+		   only shows while there is something to empty; sitting there permanently
+		   at the end of the strip it looked like the panel's close button, and did
+		   nothing at all when the box was already empty. */
+		el.megaClear = make("button", {
+			class: "aur-mega-clear",
+			type: "button",
+			title: "Clear the filter",
+			"aria-label": "Clear the filter",
+			text: "\u00d7",
+		});
+		el.megaClear.addEventListener("click", clearMegaFilter);
+		el.megaClear.hidden = true;
+
+		// Dismissing the panel, which every other affordance already does.
+		var megaClose = make("button", {
+			class: "aur-mega-close",
+			type: "button",
+			title: "Close menu (Esc)",
+			"aria-label": "Close menu",
+			text: "\u00d7",
+		});
+		megaClose.addEventListener("click", function (event) {
+			event.stopPropagation();
+			closeMega();
+		});
 
 		// Layout switch, right where the eye already is for the filter.
 		el.layoutBtns = {};
@@ -2648,15 +3363,30 @@
 			filterClear,
 		]);
 
+		/* None of the keyboard is worth having if it has to be discovered by
+		   accident, so the panel says what it answers to along its own foot. */
+		el.footLive = make("span", { class: "aur-foot-live" });
+		el.foot = make("div", { class: "aur-mega-foot" }, [
+			footKey("\u2191\u2193\u2190\u2192", "move"),
+			footKey("Tab", "group"),
+			footKey(ALT_LABEL, "then letter"),
+			footKey("\u21b5", "open"),
+			footKey(META_LABEL + "\u21b5", "new tab"),
+			footKey("Esc", "close"),
+			el.footLive,
+		]);
+
 		el.mega = make("div", { class: "aur-mega" }, [
 			make("div", { class: "aur-mega-search" }, [
 				iconNode("search", "aur-mega-search-icon"),
 				el.megaSearch,
-				megaClear,
+				el.megaClear,
 				layoutSeg,
+				megaClose,
 			]),
 			el.filterBar,
 			make("div", { class: "aur-mega-cols" }, [el.groups, el.body]),
+			el.foot,
 		]);
 
 		applyLayout();
@@ -2691,13 +3421,14 @@
 		document.body.appendChild(el.mega);
 
 		window.addEventListener("resize", function () {
-			if (!megaOpen()) {
-				closePop();
-				return;
-			}
+			// A popover that knows how to place itself is repositioned; the rest
+			// are transient and closing them is the honest answer.
+			if (el.popPlace) el.popPlace();
+			else closePop();
+
+			if (!megaOpen()) return;
 
 			positionMega();
-			closePop();
 
 			// Lane count comes from the panel width, so a resize has to redeal the
 			// groups. Only worth doing when the count actually changes.
@@ -2742,25 +3473,142 @@
 		return "Kaiten";
 	}
 
-	function themeEnabled() {
-		return localStorage.getItem(KEY.enabled) !== "0";
+	function skinById(id) {
+		for (var i = 0; i < SKINS.length; i++) {
+			if (SKINS[i].id === id) return SKINS[i];
+		}
+		return null;
 	}
 
+	/* The theme used to be a bare on/off flag. "off" is now the default skin, so
+	   an old browser that switched it off keeps that look under the new name. */
+	function currentSkin() {
+		var stored = localStorage.getItem(KEY.skin);
+		if (stored && skinById(stored)) return stored;
+		return localStorage.getItem(KEY.enabled) === "0" ? "default" : "aurora";
+	}
+
+	/* Presets first, then anything the user mixed. Custom entries are returned in
+	   the same shape as a preset — prefixed id, ready-made swatch — so the panel
+	   and every lookup below can treat the two alike. */
+	function tonesFor(skin) {
+		var entry = skinById(skin);
+		if (!entry || !entry.tones.length) return [];
+
+		return entry.tones.concat(
+			palettes().map(function (item) {
+				return {
+					id: CUSTOM_PREFIX + item.id,
+					label: item.label || "Custom",
+					swatch: "linear-gradient(135deg," + item.stops.join(",") + ")",
+					custom: true,
+				};
+			})
+		);
+	}
+
+	function palettes() {
+		return read(KEY.palettes, []).filter(function (item) {
+			return item && item.id && Array.isArray(item.stops) && item.stops.length;
+		});
+	}
+
+	function paletteById(id) {
+		var wanted = String(id).slice(CUSTOM_PREFIX.length);
+		return (
+			palettes().filter(function (item) {
+				return item.id === wanted;
+			})[0] || null
+		);
+	}
+
+	/* One tone is remembered per skin, so moving between them does not lose the
+	   choice. The flat accent key is still written, because it is what older
+	   copies of this script and the login page read. */
 	function currentAccent() {
-		return localStorage.getItem(KEY.accent) || "aurora";
+		var skin = currentSkin();
+		var offered = tonesFor(skin);
+		if (!offered.length) return localStorage.getItem(KEY.accent) || "aurora";
+
+		var remembered = read(KEY.skinAccent, {}) || {};
+		var known = function (id) {
+			return Boolean(
+				id &&
+					offered.some(function (tone) {
+						return tone.id === id;
+					})
+			);
+		};
+
+		if (known(remembered[skin])) return remembered[skin];
+		if (known(localStorage.getItem(KEY.accent))) return localStorage.getItem(KEY.accent);
+		return offered[0].id;
 	}
 
 	function currentDensity() {
 		return localStorage.getItem(KEY.density) || "cozy";
 	}
 
+	/* A mixed tone has no stylesheet to live in, so its stops are written onto
+	   the root element as the same custom properties a preset would set. */
+	var CUSTOM_PROPS = [
+		"--aur-accent",
+		"--aur-grad",
+		"--aur-grad-cool",
+		"--aur-grad-soft",
+		"--aur-mesh-a",
+		"--aur-mesh-b",
+		"--aur-mesh-c",
+		"--aur-mesh-d",
+	];
+
+	function paintCustom(palette) {
+		CUSTOM_PROPS.forEach(function (prop) {
+			root.style.removeProperty(prop);
+		});
+		if (!palette) return;
+
+		var stops = palette.stops.slice(0, 3);
+		while (stops.length < 3) stops.push(stops[stops.length - 1]);
+		var wash = function (colour, pct) {
+			return "color-mix(in oklab, " + colour + " " + pct + "%, transparent)";
+		};
+
+		root.style.setProperty("--aur-accent", stops[1]);
+		root.style.setProperty("--aur-grad", "linear-gradient(135deg," + stops.join(",") + ")");
+		root.style.setProperty("--aur-grad-cool", "linear-gradient(135deg," + stops[0] + "," + stops[2] + ")");
+		root.style.setProperty("--aur-grad-soft", "linear-gradient(135deg," + wash(stops[0], 16) + "," + wash(stops[2], 12) + ")");
+		root.style.setProperty("--aur-mesh-a", wash(stops[0], 26));
+		root.style.setProperty("--aur-mesh-b", wash(stops[1], 22));
+		root.style.setProperty("--aur-mesh-c", wash(stops[2], 20));
+		root.style.setProperty("--aur-mesh-d", wash(stops[1], 14));
+	}
+
 	function applyPrefs() {
-		root.classList.toggle("aurora-on", themeEnabled());
-		root.setAttribute("data-aur-accent", currentAccent());
+		var skin = currentSkin();
+		var accent = currentAccent();
+
+		root.classList.toggle("aurora-on", skin !== "default");
+		if (skin === "default") root.removeAttribute("data-kaiten-skin");
+		else root.setAttribute("data-kaiten-skin", skin);
+
+		root.setAttribute("data-aur-accent", accent);
 		root.setAttribute("data-aur-density", currentDensity());
+		paintCustom(accent.indexOf(CUSTOM_PREFIX) === 0 ? paletteById(accent) : null);
+	}
+
+	function setSkin(id) {
+		if (!skinById(id)) return;
+		localStorage.setItem(KEY.skin, id);
+		localStorage.setItem(KEY.enabled, id === "default" ? "0" : "1");
+		applyPrefs();
+		schedulePush();
 	}
 
 	function setAccent(id) {
+		var map = read(KEY.skinAccent, {}) || {};
+		map[currentSkin()] = id;
+		write(KEY.skinAccent, map);
 		localStorage.setItem(KEY.accent, id);
 		applyPrefs();
 		schedulePush();
@@ -2772,24 +3620,79 @@
 		schedulePush();
 	}
 
-	function toggleTheme() {
-		localStorage.setItem(KEY.enabled, themeEnabled() ? "0" : "1");
-		applyPrefs();
-		schedulePush();
-		try {
-			frappe.show_alert({
-				message: themeEnabled() ? "Kaiten theme on" : "Kaiten theme off",
-				indicator: themeEnabled() ? "green" : "orange",
-			});
-		} catch (e) {}
+	function addPalette(stops, label) {
+		var list = palettes();
+		var entry = { id: "p" + Date.now().toString(36), label: label || "Custom", stops: stops };
+		list.push(entry);
+		write(KEY.palettes, list);
+		return CUSTOM_PREFIX + entry.id;
 	}
 
-	function openThemeSwitcher() {
-		try {
-			new frappe.ui.ThemeSwitcher().show();
-		} catch (e) {
-			root.setAttribute("data-theme", root.getAttribute("data-theme") === "dark" ? "light" : "dark");
+	function removePalette(id) {
+		var wanted = String(id).indexOf(CUSTOM_PREFIX) === 0 ? String(id).slice(CUSTOM_PREFIX.length) : String(id);
+		write(
+			KEY.palettes,
+			palettes().filter(function (item) {
+				return item.id !== wanted;
+			})
+		);
+
+		// Nothing to paint with any more: fall back to the skin's first preset.
+		if (currentAccent() === CUSTOM_PREFIX + wanted) {
+			var offered = tonesFor(currentSkin());
+			setAccent(offered.length ? offered[0].id : "aurora");
+		} else {
+			applyPrefs();
 		}
+	}
+
+	/* Appearance is Frappe's, not ours: data-theme-mode holds the choice and
+	   data-theme the resolved value. Both are set the way its own switcher does,
+	   then the choice is saved against the user so a reload keeps it. */
+	function currentAppearance() {
+		return root.getAttribute("data-theme-mode") || "light";
+	}
+
+	function setAppearance(mode) {
+		root.setAttribute("data-theme-mode", mode);
+
+		try {
+			if (mode === "automatic") frappe.ui.set_theme();
+			else frappe.ui.set_theme(mode);
+		} catch (e) {
+			var resolved = mode;
+			if (mode === "automatic") {
+				resolved = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+			}
+			root.setAttribute("data-theme", resolved);
+		}
+
+		try {
+			frappe.xcall("frappe.core.doctype.user.user.switch_theme", {
+				theme: mode.charAt(0).toUpperCase() + mode.slice(1),
+			});
+		} catch (e) {}
+
+		// The bar shortcut and the panel show the same state, and either can be
+		// the one that changed it, so both are repainted from here.
+		if (el.paintThemeBtn) el.paintThemeBtn();
+		if (el.paintAppearanceSeg) el.paintAppearanceSeg();
+	}
+
+	function nextAppearance() {
+		var current = currentAppearance();
+		for (var i = 0; i < APPEARANCES.length; i++) {
+			if (APPEARANCES[i].id === current) return APPEARANCES[i].next;
+		}
+		return "dark";
+	}
+
+	function appearanceMeta(id) {
+		return (
+			APPEARANCES.filter(function (item) {
+				return item.id === id;
+			})[0] || APPEARANCES[0]
+		);
 	}
 
 	function toggleFullscreen() {
@@ -3055,6 +3958,10 @@
 
 	function snapshot() {
 		var data = { pins: read(KEY.pins, []), pinGroups: read(KEY.pinGroups, []), recent: read(KEY.recent, []) };
+		data.palettes = palettes();
+		SYNC_MAPS.forEach(function (name) {
+			data[name] = read(KEY[name], {}) || {};
+		});
 		SYNC_FLAGS.forEach(function (name) {
 			var value = localStorage.getItem(KEY[name]);
 			if (value != null) data[name] = value;
@@ -3092,6 +3999,10 @@
 		try {
 			SYNC_KEYS.forEach(function (name) {
 				if (Array.isArray(data[name])) write(KEY[name], data[name]);
+			});
+			SYNC_MAPS.forEach(function (name) {
+				var value = data[name];
+				if (value && typeof value === "object" && !Array.isArray(value)) write(KEY[name], value);
 			});
 			SYNC_FLAGS.forEach(function (name) {
 				if (typeof data[name] === "string" && data[name] !== "") localStorage.setItem(KEY[name], data[name]);
