@@ -25,13 +25,16 @@
 		pinGroups: "kaiten_ui_pin_groups",
 		recent: "kaiten_ui_recent",
 		layout: "kaiten_ui_layout",
+		shell: "kaiten_ui_shell",
+		pages: "kaiten_ui_pages",
+		navSide: "kaiten_ui_nav_side",
 		rev: "kaiten_ui_rev",
 	};
 
 	// Everything worth carrying between machines. Anything not listed here stays
 	// local to the browser it was set in.
 	var SYNC_KEYS = ["pins", "pinGroups", "recent", "palettes"];
-	var SYNC_FLAGS = ["accent", "density", "enabled", "layout", "skin"];
+	var SYNC_FLAGS = ["accent", "density", "enabled", "layout", "navSide", "pages", "shell", "skin"];
 	// Keyed objects rather than lists: which tone each skin was last left on.
 	var SYNC_MAPS = ["skinAccent"];
 
@@ -40,6 +43,35 @@
 	var LAYOUTS = [
 		{ id: "split", icon: "panel-left", label: "Split", title: "Groups on the left, entries on the right" },
 		{ id: "columns", icon: "layout-grid", label: "Columns", title: "Every group side by side" },
+	];
+
+	/* The shell is a different axis from the skin, and the two must not be
+	   confused: a skin repaints what is on screen, a shell decides what is on
+	   screen. "command" is the bar this app started with. "module" is the
+	   arrangement most ERP users already know — one menu per workspace across
+	   the top, each opening columns of entries, with a sidebar scoped to
+	   whichever module is open. Every feature works in both. */
+	var SHELLS = [
+		{
+			id: "command",
+			label: "Command bar",
+			note: "Tabs, mega menu, jump to anything",
+			swatch: "linear-gradient(180deg,#ffffff 0 38%,#eef1f6 38% 100%)",
+		},
+		{
+			id: "module",
+			label: "Module nav",
+			note: "ERP menus on top, sidebar per module",
+			swatch: "linear-gradient(180deg,#1e293b 0 34%,#ffffff 34% 100%)",
+		},
+	];
+
+	/* Whether the desk's own field and list styling is left as Frappe draws it,
+	   or replaced with the denser boxed treatment. Independent of both the skin
+	   and the shell, because it is a different question. */
+	var PAGE_STYLES = [
+		{ id: "standard", label: "Standard", note: "Frappe's own forms and lists" },
+		{ id: "custom", label: "Custom", note: "Boxed sections, tighter fields" },
 	];
 
 	// Always present, never deleted: anything pinned without an answer lands here.
@@ -369,6 +401,14 @@
 		}
 	}
 
+	function canWrite(doctype) {
+		try {
+			return (frappe.boot.user.can_write || []).indexOf(doctype) !== -1;
+		} catch (e) {
+			return false;
+		}
+	}
+
 	function clamp(value, min, max) {
 		return Math.min(Math.max(value, min), Math.max(min, max));
 	}
@@ -430,6 +470,7 @@
 
 	function hrefFor(desc) {
 		var route = desc.route || [];
+		if (desc.act === "url") return desc.url || "#";
 		if (desc.act === "new") return prefix() + "/" + slugify(desc.doctype) + "/new";
 		if (route[0] === "List") return prefix() + "/" + slugify(route[1]);
 		if (route[0] === "Form") return prefix() + "/" + slugify(route[1]) + "/" + encodeURIComponent(route[2]);
@@ -439,6 +480,15 @@
 
 	function runItem(desc) {
 		if (!desc) return;
+
+		// An external link leaves the desk, so it opens beside it rather than
+		// replacing the app the user is working in.
+		if (desc.act === "url") {
+			if (desc.url) window.open(desc.url, "_blank", "noopener");
+			closeMega();
+			return;
+		}
+
 		try {
 			if (desc.act === "new") frappe.new_doc(desc.doctype);
 			else frappe.set_route.apply(frappe, desc.route);
@@ -885,6 +935,7 @@
 	function noteRoute() {
 		var desc = currentDesc();
 		syncPinButton();
+		syncNavToRoute();
 		if (!desc) return;
 
 		var list = read(KEY.recent, []).filter(function (item) {
@@ -2642,6 +2693,10 @@
 					closeSelect();
 					closed = true;
 				}
+				if (nav.drop) {
+					closeNavDrop();
+					closed = true;
+				}
 				if (el.pop) {
 					closePop();
 					closed = true;
@@ -2955,17 +3010,75 @@
 			density.appendChild(button);
 		});
 
+		/* Swapping the shell replaces the bar this popover is anchored to, so
+		   there is nothing left to follow and the panel closes with the change. */
+		var shells = make("div", { class: "aur-skins" });
+		SHELLS.forEach(function (shell) {
+			var card = make(
+				"button",
+				{ class: "aur-skin" + (currentShell() === shell.id ? " aur-on" : ""), type: "button", title: shell.note },
+				[
+					make("span", { class: "aur-skin-swatch", style: "background:" + shell.swatch }),
+					make("span", { class: "aur-skin-name", text: shell.label }),
+					make("span", { class: "aur-skin-note", text: shell.note }),
+				]
+			);
+			card.addEventListener("click", function () {
+				if (shell.id === currentShell()) return;
+				setShell(shell.id);
+				closePop();
+			});
+			shells.appendChild(card);
+		});
+
+		var pageSeg = make("div", { class: "aur-seg" });
+		PAGE_STYLES.forEach(function (option) {
+			var button = make("button", {
+				class: currentPages() === option.id ? "aur-on" : "",
+				type: "button",
+				title: option.note,
+				text: option.label,
+			});
+			button.addEventListener("click", function () {
+				setPages(option.id);
+				Array.prototype.forEach.call(pageSeg.children, function (node) {
+					node.classList.remove("aur-on");
+				});
+				button.classList.add("aur-on");
+			});
+			pageSeg.appendChild(button);
+		});
+
 		var refresh = make("div", { class: "aur-seg" });
 		var refreshBtn = make("button", { type: "button", text: "Rebuild menu cache" });
 		refreshBtn.addEventListener("click", function () {
 			loadMenu(1);
+			loadShellNav(1);
 			closePop();
 		});
 		refresh.appendChild(refreshBtn);
 
+		// Only someone who can edit the records is shown the way into them.
+		var customise = null;
+		if (canWrite("Kaiten Nav Menu")) {
+			customise = make("div", { class: "aur-seg" });
+			var customiseBtn = make("button", {
+				type: "button",
+				title: "Build the bar for this business: rename menus, regroup links, set who sees what",
+				text: "Customise menu\u2026",
+			});
+			customiseBtn.addEventListener("click", function () {
+				closePop();
+				openNavBuilder();
+			});
+			customise.appendChild(customiseBtn);
+		}
+
 		el.pop = make("div", { class: "aur-pop" }, [
 			make("div", { class: "aur-pop-label", text: "Appearance" }),
 			make("div", { class: "aur-pop-row" }, [appearanceSeg()]),
+			make("div", { class: "aur-pop-label", text: "Navigation" }),
+			make("div", { class: "aur-pop-row" }, [shells]),
 			make("div", { class: "aur-pop-label", text: "Theme" }),
 			make("div", { class: "aur-pop-row" }, [skins]),
 			toneLabel,
@@ -2973,9 +3086,12 @@
 			editor,
 			densityLabel,
 			densityRow,
+			make("div", { class: "aur-pop-label", text: "Pages" }),
+			make("div", { class: "aur-pop-row" }, [pageSeg]),
 			make("div", { class: "aur-pop-label", text: "Menu" }),
 			make("div", { class: "aur-pop-row" }, [refresh]),
-		]);
+			customise ? make("div", { class: "aur-pop-row" }, [customise]) : null,
+		].filter(Boolean));
 
 		document.body.appendChild(el.pop);
 
@@ -3283,6 +3399,24 @@
 		var fullBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Toggle fullscreen", text: "\u26F6" });
 		fullBtn.addEventListener("click", toggleFullscreen);
 
+		var notifBtn = makeNotifBtn();
+		var userBtn = makeUserBtn();
+
+		el.bar = make("div", { class: "aur-bar" }, [
+			make("div", { class: "aur-bar-progress" }),
+			make("div", { class: "aur-bar-inner" }, [
+				brand,
+				nav,
+				make("div", { class: "aur-bar-right" }, [searchWrap, el.pinBtn, paletteBtn, themeBtn, fullBtn, notifBtn, userBtn].filter(Boolean)),
+			]),
+		]);
+
+		mountBar(anchor);
+	}
+
+	/* The mega panel is chrome both shells share: each positions it under its
+	   own bar, so it is built once and knows nothing about which bar that is. */
+	function buildMega() {
 		el.groups = make("div", { class: "aur-mega-groups" });
 		el.body = make("div", { class: "aur-mega-body" });
 
@@ -3403,24 +3537,23 @@
 			clearTimeout(hover.timer);
 		});
 
-		el.bar = make("div", { class: "aur-bar" }, [
-			make("div", { class: "aur-bar-progress" }),
-			make("div", { class: "aur-bar-inner" }, [
-				brand,
-				nav,
-				make("div", { class: "aur-bar-right" }, [searchWrap, el.pinBtn, paletteBtn, themeBtn, fullBtn]),
-			]),
-		]);
+		// The panel lives on <body> so no ancestor can clip or re-stack it.
+		document.body.appendChild(el.mega);
+	}
 
-		// v17 puts the content in .main-section (no navbar); older desks have a
-		// navbar to sit under. Either way the bar spans the content column.
+	/* v17 puts the content in .main-section (no navbar); older desks have a
+	   navbar to sit under. Either way the bar spans the content column. */
+	function mountBar(anchor) {
 		if (anchor.classList.contains("main-section")) anchor.insertBefore(el.bar, anchor.firstChild);
 		else anchor.insertAdjacentElement("afterend", el.bar);
 
-		// The panel lives on <body> so no ancestor can clip or re-stack it.
-		document.body.appendChild(el.mega);
+		document.documentElement.classList.add("kaiten-bar-on");
+	}
 
+	function bindChromeResize() {
 		window.addEventListener("resize", function () {
+			fitNavMenus();
+			placeNavDrop();
 			// A popover that knows how to place itself is repositioned; the rest
 			// are transient and closing them is the honest answer.
 			if (el.popPlace) el.popPlace();
@@ -3444,6 +3577,11 @@
 		if (!el.tabNodes) return;
 
 		TABS.forEach(function (tab) {
+			// The module-nav shell registers only the two tabs it surfaces, so a
+			// missing node means that shell simply does not show this count.
+			var host = el.tabNodes[tab.id];
+			if (!host) return;
+
 			var groups = groupsFor(tab.id);
 			var total = 0;
 
@@ -3455,7 +3593,7 @@
 				});
 			}
 
-			var node = el.tabNodes[tab.id].querySelector(".aur-tab-count");
+			var node = host.querySelector(".aur-tab-count");
 			if (node) node.textContent = String(total);
 		});
 	}
@@ -3549,6 +3687,38 @@
 		return localStorage.getItem(KEY.density) || "cozy";
 	}
 
+	function knownId(list, id) {
+		for (var i = 0; i < list.length; i++) {
+			if (list[i].id === id) return true;
+		}
+		return false;
+	}
+
+	function currentShell() {
+		var stored = localStorage.getItem(KEY.shell);
+		return knownId(SHELLS, stored) ? stored : "command";
+	}
+
+	function currentPages() {
+		var stored = localStorage.getItem(KEY.pages);
+		return knownId(PAGE_STYLES, stored) ? stored : "standard";
+	}
+
+	function setShell(id) {
+		if (!knownId(SHELLS, id) || id === currentShell()) return;
+		localStorage.setItem(KEY.shell, id);
+		applyPrefs();
+		schedulePush();
+		remountShell();
+	}
+
+	function setPages(id) {
+		if (!knownId(PAGE_STYLES, id)) return;
+		localStorage.setItem(KEY.pages, id);
+		applyPrefs();
+		schedulePush();
+	}
+
 	/* A mixed tone has no stylesheet to live in, so its stops are written onto
 	   the root element as the same custom properties a preset would set. */
 	var CUSTOM_PROPS = [
@@ -3594,6 +3764,8 @@
 
 		root.setAttribute("data-aur-accent", accent);
 		root.setAttribute("data-aur-density", currentDensity());
+		root.setAttribute("data-kaiten-shell", currentShell());
+		root.setAttribute("data-kaiten-pages", currentPages());
 		paintCustom(accent.indexOf(CUSTOM_PREFIX) === 0 ? paletteById(accent) : null);
 	}
 
@@ -3698,6 +3870,323 @@
 	function toggleFullscreen() {
 		if (document.fullscreenElement) document.exitFullscreen();
 		else document.documentElement.requestFullscreen();
+	}
+
+	function userLabel() {
+		try {
+			if (frappe.get_fullname) return frappe.get_fullname() || "Account";
+			return (frappe.boot.user && frappe.boot.user.full_name) || (frappe.session && frappe.session.user) || "Account";
+		} catch (e) {
+			return "Account";
+		}
+	}
+
+	function userInitials(name) {
+		var parts = String(name || "")
+			.trim()
+			.split(/\s+/)
+			.filter(Boolean);
+		if (!parts.length) return "U";
+		if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+		return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+	}
+
+	function paintUserBtn(btn) {
+		var label = userLabel();
+		btn.setAttribute("title", label);
+		btn.setAttribute("aria-label", label + " — account menu");
+		btn.textContent = "";
+		try {
+			if (typeof frappe.avatar === "function" && frappe.session && frappe.session.user) {
+				var wrap = document.createElement("span");
+				wrap.className = "aur-user-face";
+				wrap.innerHTML = frappe.avatar(frappe.session.user, "avatar-small");
+				if (wrap.querySelector(".avatar")) {
+					btn.appendChild(wrap);
+					return;
+				}
+			}
+		} catch (e) {}
+		btn.appendChild(make("span", { class: "aur-user-initials", text: userInitials(label) }));
+	}
+
+	function runSafe(fn) {
+		return function () {
+			try {
+				fn();
+			} catch (e) {
+				console.warn("kaiten user menu", e);
+			}
+		};
+	}
+
+	/* Mirrors frappe.app.sidebar.create_user_menu so Profile / Theme / About /
+	   Logout stay the site's Navbar Settings list, not a second invented menu. */
+	function notificationsEnabled() {
+		try {
+			return Boolean(frappe.boot && frappe.boot.desk_settings && frappe.boot.desk_settings.notifications);
+		} catch (e) {
+			return false;
+		}
+	}
+
+	function ensureStockNotifications() {
+		try {
+			if (frappe.app && frappe.app.sidebar && !frappe.app.sidebar.notifications) {
+				frappe.app.sidebar.setup_notifications();
+			}
+		} catch (e) {}
+	}
+
+	function stockNotifDropdown() {
+		ensureStockNotifications();
+		var $dd = $(".body-sidebar .dropdown-notifications").has(".notifications-list");
+		if (!$dd.length) $dd = $(".dropdown-notifications").has(".notifications-list").first();
+		if (!$dd.length) return $();
+		// header.navbar and the collapsed sidebar are display:none on this desk —
+		// a position:fixed child inside them never paints. Park the panel on body.
+		if ($dd.parent()[0] !== document.body) {
+			$dd.appendTo(document.body);
+			$dd.addClass("kaiten-notif-float");
+		}
+		return $dd;
+	}
+
+	function placeNotifPanel($dd, anchor) {
+		var list = $dd.find(".notifications-list").get(0);
+		if (!list || !anchor) return;
+		var box = anchor.getBoundingClientRect();
+		var width = list.offsetWidth || 360;
+		var left = Math.round(clamp(box.right - width, 10, window.innerWidth - width - 10));
+		var top = Math.round(box.bottom + 8);
+		list.style.setProperty("position", "fixed", "important");
+		list.style.setProperty("top", top + "px", "important");
+		list.style.setProperty("left", left + "px", "important");
+		list.style.setProperty("right", "auto", "important");
+	}
+
+	function toggleStockNotifications(anchor) {
+		try {
+			var $dropdown = stockNotifDropdown();
+			if (!$dropdown.length) return;
+			$dropdown.toggleClass("hidden");
+			if (!$dropdown.hasClass("hidden")) {
+				$dropdown.trigger("show.bs.dropdown");
+				placeNotifPanel($dropdown, anchor);
+			}
+			$(".dropdown-background-tasks").addClass("hidden");
+		} catch (e) {
+			console.warn("kaiten notifications", e);
+		}
+	}
+
+	function makeNotifBtn() {
+		if (!notificationsEnabled()) return null;
+		var btn = make("button", {
+			class: "aur-icon-btn aur-notif-btn sidebar-notification notifications-icon",
+			type: "button",
+			title: "Notifications",
+			"aria-label": "Notifications",
+		});
+		btn.appendChild(iconNode("bell", ""));
+		var badge = make("span", { class: "notification-count hidden" });
+		btn.appendChild(badge);
+		try {
+			var unread = Number((frappe.boot && frappe.boot.notification_unread_count) || 0);
+			if (unread > 0) {
+				badge.textContent = unread > 99 ? "99+" : String(unread);
+				badge.classList.remove("hidden");
+			}
+		} catch (e) {}
+		btn.addEventListener("click", function (event) {
+			event.preventDefault();
+			event.stopPropagation();
+			toggleStockNotifications(btn);
+		});
+		return btn;
+	}
+
+	/* Same account menu as the stock sidebar avatar (Settings, Navbar Settings
+	   items, Logout). Own class so kaiten_hrms does not steal the click. The
+	   stock menu is not always built yet, so attaching is retried for a while. */
+	function makeUserBtn() {
+		var btn = make("button", {
+			class: "aur-user-btn",
+			type: "button",
+			title: "Account",
+			"aria-label": "Account menu",
+			"aria-haspopup": "menu",
+		});
+		paintUserBtn(btn);
+
+		if (!attachStockUserMenu(btn)) {
+			var tries = 0;
+			var poll = setInterval(function () {
+				tries += 1;
+				if (attachStockUserMenu(btn) || tries > 40) clearInterval(poll);
+			}, 250);
+		}
+
+		return btn;
+	}
+
+	function goStandardDesk() {
+		try {
+			if (typeof kaiten_desk !== "undefined" && kaiten_desk.goStandard) {
+				kaiten_desk.goStandard();
+				return;
+			}
+		} catch (e) {}
+		window.location.assign("/desk");
+	}
+
+	function extraHas(extras, needle) {
+		return extras.some(function (item) {
+			var hay = String(item.item_label || item.label || "") + " " + String(item.action || "");
+			return hay.toLowerCase().indexOf(needle) >= 0;
+		});
+	}
+
+	function stockUserMenuItems() {
+		var extras = [];
+		try {
+			extras = (frappe.boot.navbar_settings && frappe.boot.navbar_settings.settings_dropdown) || [];
+		} catch (e) {
+			extras = [];
+		}
+
+		var classic = [];
+		if (!extraHas(extras, "profile")) {
+			classic.push({
+				name: "edit-profile",
+				label: __("Edit Profile"),
+				icon: "edit",
+				onClick: runSafe(function () {
+					if (frappe.ui.toolbar && frappe.ui.toolbar.route_to_user) frappe.ui.toolbar.route_to_user();
+					else frappe.set_route("Form", "User", frappe.session.user);
+				}),
+			});
+		}
+		if (!extraHas(extras, "theme")) {
+			classic.push({
+				name: "toggle-theme",
+				label: __("Toggle Theme"),
+				icon: "moon",
+				onClick: runSafe(function () {
+					setAppearance(nextAppearance());
+				}),
+			});
+		}
+		if (!extraHas(extras, "about")) {
+			classic.push({
+				name: "about",
+				label: __("About"),
+				icon: "info",
+				onClick: runSafe(function () {
+					frappe.ui.toolbar.show_about();
+				}),
+			});
+		}
+
+		var head = [];
+		if (!extraHas(extras, "home") && !extraHas(extras, "desk")) {
+			head.push({
+				name: "home",
+				label: __("Home"),
+				icon: "home",
+				onClick: runSafe(goStandardDesk),
+			});
+		}
+
+		return head
+			.concat([
+				{
+					name: "settings",
+					label: __("Settings"),
+					icon: "settings",
+					onClick: runSafe(function () {
+						frappe
+							.require("user_settings_dialog.bundle.js")
+							.then(function () {
+								frappe.ui.show_user_settings("profile");
+							})
+							.catch(function () {
+								if (frappe.ui.toolbar && frappe.ui.toolbar.route_to_user) frappe.ui.toolbar.route_to_user();
+							});
+					}),
+				},
+				{
+					name: "workspace-selector",
+					label: __("Manage Dock"),
+					icon: "monitor",
+					onClick: runSafe(function () {
+						new frappe.ui.DockManager();
+					}),
+				},
+				{
+					name: "reload",
+					label: __("Reload"),
+					icon: "rotate-ccw",
+					onClick: runSafe(function () {
+						frappe.ui.toolbar.clear_cache();
+					}),
+				},
+			])
+			.concat(classic)
+			.concat(
+				extras.map(function (item) {
+					return Object.assign({}, item, { label: item.item_label || item.label });
+				})
+			)
+			.concat([
+				{ is_divider: true },
+				{
+					name: "logout",
+					label: __("Logout"),
+					icon: "log-out",
+					onClick: runSafe(function () {
+						frappe.app.logout();
+					}),
+				},
+			]);
+	}
+
+	function attachStockUserMenu(btn) {
+		if (!btn || btn.dataset.aurUserMenu === "1") return true;
+		if (!window.frappe || !frappe.ui || !frappe.ui.create_menu || !window.$) return false;
+
+		frappe.ui.create_menu({
+			parent: $(btn),
+			open_on_top: false,
+			open_on_left: true,
+			menu_items: stockUserMenuItems(),
+			onShow: function () {
+				btn.classList.add("aur-user-open");
+				try {
+					closePop();
+				} catch (e) {}
+				requestAnimationFrame(function () {
+					var menu = document.querySelector(".frappe-menu.context-menu");
+					if (!menu || menu.style.display === "none") return;
+					var box = btn.getBoundingClientRect();
+					var width = menu.offsetWidth || 200;
+					var height = menu.offsetHeight || 160;
+					var left = Math.round(clamp(box.right - width, 10, window.innerWidth - width - 10));
+					var top = Math.round(box.bottom + 6);
+					if (top + height > window.innerHeight - 10) top = Math.max(10, Math.round(box.top - height - 6));
+					menu.style.left = left + "px";
+					menu.style.top = top + "px";
+				});
+			},
+			onHide: function () {
+				btn.classList.remove("aur-user-open");
+			},
+			onItemClick: function () {
+				btn.classList.remove("aur-user-open");
+			},
+		});
+		btn.dataset.aurUserMenu = "1";
+		return true;
 	}
 
 	/* ---------------------------------------------------------------------
@@ -3836,6 +4325,1165 @@
 		}).observe(document.body, { childList: true, subtree: true });
 
 		arm();
+	}
+
+	/* ---------------------------------------------------------------------
+	   Module-nav shell
+	   ---------------------------------------------------------------------
+	   The arrangement most ERP users already know: one menu per top-level
+	   workspace across the top, each opening columns of entries, and a sidebar
+	   scoped to whichever module the current page belongs to.
+
+	   None of it is invented. A Workspace's own links table is already a run of
+	   rows where a "Card Break" starts a titled group and the rows after it
+	   belong to it, which is exactly the column shape this shell needs — so the
+	   bar is a reading of the desk's own structure and comes out right on any
+	   app rather than only the one it was designed against.
+
+	   Pinned, Recent, search, notifications and the account menu are the same
+	   implementations the command bar uses, opened from the same panel. A shell
+	   decides what is on screen; it does not fork behaviour.
+	   ------------------------------------------------------------------ */
+
+	var nav = {
+		menus: [],
+		byKey: {},
+		active: "",
+		// Which area of each menu the rail is showing, remembered per menu so
+		// stepping back into a module returns to where you were in it.
+		area: {},
+		source: "auto",
+		overflow: [],
+		drop: null,
+		dropFor: "",
+		dropBtn: null,
+	};
+
+	var NAV_KEY_PREFIX = { Report: "rep:", Page: "page:", Dashboard: "dash:", Workspace: "ws:" };
+	var NAV_ID_PREFIX = { Report: "report:", Page: "page:", Dashboard: "dashboard:", Workspace: "ws:" };
+	var NAV_SUB = { Report: "Report", Page: "Page", Dashboard: "Dashboard", Workspace: "Workspace", URL: "Link" };
+
+	function navTargetKey(type, target) {
+		if (type === "Workspace") return "ws:" + slugify(target);
+		return (NAV_KEY_PREFIX[type] || "dt:") + target;
+	}
+
+	function itemKind(entry) {
+		if (entry.kind === "report" || entry.kind === "setup") return entry.kind;
+		if (entry.type === "Report") return "report";
+		if (/Settings$/.test(entry.label || "")) return "setup";
+		return entry.kind || "operate";
+	}
+
+	function areaIsMixed(items) {
+		var seen = {};
+		(items || []).forEach(function (item) {
+			seen[item.kind || "operate"] = true;
+		});
+		return Object.keys(seen).length > 1;
+	}
+
+	function eachKind(items, mixed, write) {
+		[
+			{ kind: "operate", label: "" },
+			{ kind: "report", label: "Reports" },
+			{ kind: "setup", label: "Setup" },
+		].forEach(function (bucket) {
+			var rows = (items || []).filter(function (item) {
+				return (item.kind || "operate") === bucket.kind;
+			});
+			if (!rows.length) return;
+			write(bucket, rows, mixed && bucket.label);
+		});
+	}
+
+	function navItem(entry) {
+		var kind = itemKind(entry);
+
+		// An external link has no route and no place on screen to be "current",
+		// so it carries a url instead of a key and opens in its own tab.
+		if (entry.type === "URL") {
+			return {
+				id: "url:" + entry.url,
+				key: "",
+				label: entry.label,
+				sub: "Link",
+				hue: hue(entry.url || entry.label),
+				icon: resolveIcon(entry.icon, entry.label, "link"),
+				act: "url",
+				url: entry.url,
+				kind: kind,
+			};
+		}
+
+		return {
+			id: (NAV_ID_PREFIX[entry.type] || "list:") + entry.to,
+			key: navTargetKey(entry.type, entry.to),
+			label: entry.label,
+			sub: kind === "report" ? "Report" : NAV_SUB[entry.type] || "List",
+			hue: hue(entry.to),
+			icon: resolveIcon(entry.icon, entry.label, kind === "report" ? "report" : ""),
+			act: "route",
+			route: entry.route,
+			kind: kind,
+		};
+	}
+
+	/* Where the menu's own name points. A configured menu says so outright; a
+	   workspace-derived one is named after the workspace it came from, so the
+	   slug of that name is the answer. */
+	function overviewItem(menu, declared) {
+		if (declared && declared.to) {
+			var item = navItem({
+				type: declared.type,
+				to: declared.to,
+				label: menu.label + " overview",
+				route: declared.type === "Workspace" ? [slugify(declared.to)] : null,
+				kind: "operate",
+			});
+
+			// Only a workspace target can be routed from the client alone; the
+			// rest were resolved server-side and arrive with a route already.
+			if (!item.route) item.route = declared.route || [slugify(declared.to)];
+			item.icon = menu.icon;
+			return item;
+		}
+
+		return {
+			id: "ws:" + menu.name,
+			key: "ws:" + menu.slug,
+			label: menu.label + " overview",
+			sub: "Workspace",
+			hue: hue(menu.name),
+			icon: menu.icon,
+			act: "route",
+			route: [menu.slug],
+			kind: "operate",
+		};
+	}
+
+	/* One index from every entry to the menu that holds it, so both the bar and
+	   the sidebar can tell which module the current page belongs to. First
+	   mention wins: a doctype reached from two modules belongs to the earlier,
+	   which is the order the desk itself lists them in. */
+	function buildNavModel(payload) {
+		// Which mode produced this, so the builder can say so and the bar can
+		// stay honest about whether it maintains itself.
+		nav.source = payload.source || "auto";
+
+		nav.menus = (payload.menus || []).map(function (menu) {
+			var built = {
+				name: menu.name,
+				label: menu.label,
+				module: menu.module || "",
+				slug: slugify(menu.name),
+				icon: resolveIcon(menu.icon, menu.label, menu.module),
+				hue: hue(menu.name),
+				columns: (menu.columns || []).map(function (column) {
+					return {
+						title: column.title || menu.label,
+						items: (column.items || []).map(navItem),
+					};
+				}),
+			};
+			built.overview = overviewItem(built, menu.overview);
+			return built;
+		});
+
+		nav.byKey = {};
+		nav.menus.forEach(function (menu) {
+			if (menu.overview.key && !nav.byKey[menu.overview.key]) nav.byKey[menu.overview.key] = menu.name;
+			menu.columns.forEach(function (column) {
+				column.items.forEach(function (item) {
+					if (item.key && !nav.byKey[item.key]) nav.byKey[item.key] = menu.name;
+				});
+			});
+		});
+	}
+
+	function menuByName(name) {
+		for (var i = 0; i < nav.menus.length; i++) {
+			if (nav.menus[i].name === name) return nav.menus[i];
+		}
+		return null;
+	}
+
+	/* Whatever is on screen, keyed the same way the entries are. */
+	function routeTargetKey() {
+		var route = [];
+		try {
+			route = frappe.get_route() || [];
+		} catch (e) {}
+		if (!route.length) return "";
+
+		var head = String(route[0] || "");
+		if (head === "query-report") return "rep:" + route[1];
+		if (head === "List" && route[2] === "Report") return "rep:" + route[3];
+		if (head === "List" || head === "Form" || head === "Tree" || head === "print") return "dt:" + route[1];
+
+		// A workspace arrives as ["Workspaces", "Buying"] even though its URL is
+		// /desk/buying, so the name has to be read off the second element.
+		if (head === "Workspaces") return "ws:" + slugify(route[1] || "");
+
+		return "ws:" + slugify(head);
+	}
+
+	function activeMenuName() {
+		var found = nav.byKey[routeTargetKey()];
+		if (found) return found;
+
+		// A page no menu claims — a dashboard, a custom page, a form of a
+		// doctype nobody linked — must not blank the sidebar, so whichever
+		// module was last in view stays put.
+		return nav.active && menuByName(nav.active) ? nav.active : "";
+	}
+
+	function paintNavActive() {
+		if (!el.navBtns) return;
+		var active = activeMenuName();
+		Object.keys(el.navBtns).forEach(function (name) {
+			el.navBtns[name].classList.toggle("is-active", name === active);
+		});
+	}
+
+	/* ---- the dropdown ---- */
+
+	function closeNavDrop() {
+		if (nav.drop) {
+			nav.drop.remove();
+			nav.drop = null;
+		}
+		if (nav.dropBtn) nav.dropBtn.classList.remove("is-open");
+		nav.dropBtn = null;
+		nav.dropFor = "";
+	}
+
+	function placeNavDrop() {
+		if (!nav.drop || !nav.dropBtn || !el.navBar) return;
+
+		var bar = el.navBar.getBoundingClientRect();
+		var box = nav.dropBtn.getBoundingClientRect();
+		var width = nav.drop.offsetWidth || 520;
+
+		nav.drop.style.top = Math.round(bar.bottom + 6) + "px";
+		nav.drop.style.left = Math.round(clamp(box.left - 12, 10, Math.max(10, window.innerWidth - width - 10))) + "px";
+		nav.drop.style.maxHeight = Math.max(220, window.innerHeight - bar.bottom - 24) + "px";
+	}
+
+	function navLink(item) {
+		var node = make("a", { class: "knav-link", href: hrefFor(item), title: item.label }, [
+			iconNode(item.icon, "knav-link-glyph"),
+			make("span", { class: "knav-link-label", text: item.label }),
+		]);
+
+		var star = make("button", {
+			class: "knav-star" + (isPinned(item.id) ? " is-on" : ""),
+			type: "button",
+			title: "Pin this entry",
+			"aria-label": "Pin " + item.label,
+			text: "\u2605",
+		});
+		star.addEventListener("click", function (event) {
+			event.preventDefault();
+			event.stopPropagation();
+			togglePin(item, star);
+			star.classList.toggle("is-on", isPinned(item.id));
+		});
+		node.appendChild(star);
+
+		node.addEventListener("click", function (event) {
+			// Modified clicks stay the browser's, so an entry opens in a new tab
+			// like any other link.
+			if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+			event.preventDefault();
+			closeNavDrop();
+			runItem(item);
+		});
+
+		return node;
+	}
+
+	function openNavDrop(menu, btn) {
+		closeNavDrop();
+		if (!menu.columns.length) return;
+
+		var cols = make("div", { class: "knav-drop-cols" });
+
+		menu.columns.forEach(function (column, index) {
+			var parts = [make("div", { class: "knav-col-title", text: column.title })];
+
+			// The workspace itself is reachable from the menu that represents it,
+			// which is where a user goes looking for the module's own dashboard.
+			if (index === 0 && menu.overview) parts.push(navLink(menu.overview));
+
+			eachKind(column.items, areaIsMixed(column.items), function (bucket, rows, heading) {
+				if (heading) parts.push(make("div", { class: "knav-sub", text: heading }));
+				rows.forEach(function (item) {
+					parts.push(navLink(item));
+				});
+			});
+
+			cols.appendChild(make("div", { class: "knav-col" }, parts));
+		});
+
+		nav.drop = make("div", { class: "knav-drop" }, [cols]);
+		document.body.appendChild(nav.drop);
+
+		/* The lane count is set here rather than left to auto-fill, which cannot
+		   work out a width for a panel that is itself sized to its contents: it
+		   collapsed every menu to two narrow columns and made them scroll. */
+		var lanes = Math.max(1, Math.min(menu.columns.length, 6, Math.floor((window.innerWidth - 40) / 212)));
+		nav.drop.style.setProperty("--knav-cols", String(lanes));
+
+		nav.dropFor = menu.name;
+		nav.dropBtn = btn;
+		btn.classList.add("is-open");
+		placeNavDrop();
+	}
+
+	/* The menu behind a button is looked up when it is opened rather than closed
+	   over, because the overflow button's contents depend on how many of the
+	   others currently fit. */
+	function navMenuButton(name, label, icon, getMenu) {
+		var btn = make("button", { class: "knav-menu", type: "button", title: label }, [
+			iconNode(icon, "knav-menu-glyph"),
+			make("span", { class: "knav-menu-label", text: label }),
+		]);
+
+		var open = function () {
+			var menu = getMenu();
+			if (menu) openNavDrop(menu, btn);
+		};
+
+		btn.addEventListener("click", function (event) {
+			event.stopPropagation();
+			if (nav.dropFor === name) closeNavDrop();
+			else open();
+		});
+
+		// Once one menu is open, sweeping the bar swaps what is underneath, the
+		// way a desktop menu bar does. Nothing opens on hover from closed.
+		btn.addEventListener("mouseenter", function () {
+			if (nav.drop && nav.dropFor !== name) open();
+		});
+
+		return btn;
+	}
+
+	/* Sites routinely carry forty-odd workspaces and a bar cannot show them all,
+	   so whatever did not fit folds into one menu of plain workspace links. */
+	function overflowMenu() {
+		var menus = nav.overflow
+			.map(menuByName)
+			.filter(function (menu) {
+				return Boolean(menu);
+			});
+
+		if (!menus.length) return null;
+
+		var columns = [];
+		var size = 12;
+
+		for (var i = 0; i < menus.length; i += size) {
+			columns.push({
+				title: columns.length ? "\u00a0" : "More modules",
+				items: menus.slice(i, i + size).map(function (menu) {
+					return overviewItem(menu);
+				}),
+			});
+		}
+
+		return { name: "__more", label: "More", module: "", slug: "", columns: columns, overview: null };
+	}
+
+	function renderNavMenus() {
+		if (!el.navMenus) return;
+
+		el.navMenus.innerHTML = "";
+		el.navBtns = {};
+		nav.overflow = [];
+
+		nav.menus.forEach(function (menu) {
+			var btn = navMenuButton(menu.name, menu.label, menu.icon, function () {
+				return menu;
+			});
+			el.navBtns[menu.name] = btn;
+			el.navMenus.appendChild(btn);
+		});
+
+		var more = navMenuButton("__more", "More", resolveIcon("ellipsis", "more", ""), overflowMenu);
+		more.classList.add("knav-more");
+		el.navBtns.__more = more;
+		el.navMenus.appendChild(more);
+
+		fitNavMenus();
+		paintNavActive();
+	}
+
+	/* How many menus the bar shows is a question about pixels, not a number
+	   picked in advance: the labels are the site's own and a fixed count either
+	   left the bar half empty or ran it off the edge, where the strip clips and
+	   the rest vanished with nothing to say they were there. */
+	function fitNavMenus() {
+		if (!el.navMenus || !el.navBtns) return;
+
+		var more = el.navBtns.__more;
+		var entries = nav.menus
+			.map(function (menu) {
+				return { name: menu.name, node: el.navBtns[menu.name] };
+			})
+			.filter(function (entry) {
+				return Boolean(entry.node);
+			});
+
+		// Measured with everything showing, or each pass would measure a bar the
+		// previous pass had already trimmed and the strip would creep inward.
+		entries.forEach(function (entry) {
+			entry.node.hidden = false;
+		});
+		if (more) more.hidden = false;
+
+		var available = el.navMenus.clientWidth;
+		if (!available) return;
+
+		entries.forEach(function (entry) {
+			entry.width = entry.node.offsetWidth + 2;
+		});
+
+		var reserve = more ? more.offsetWidth + 2 : 0;
+		var budget = available - reserve;
+
+		/* The module you are in keeps its place whatever else fits. It carries
+		   the "you are here" rule, and a site whose workspace order puts it late
+		   would otherwise hide the one menu the user most needs to see. */
+		var active = activeMenuName();
+		var held = null;
+		entries.forEach(function (entry) {
+			if (entry.name === active) held = entry;
+		});
+		if (held) budget -= held.width;
+
+		var used = 0;
+		var overflow = [];
+
+		entries.forEach(function (entry) {
+			if (entry === held) return;
+
+			// Once one has dropped out, the rest follow: keeping a later, shorter
+			// label would reorder the bar against the desk's own sequence.
+			if (overflow.length || used + entry.width > budget) {
+				overflow.push(entry.name);
+				entry.node.hidden = true;
+				return;
+			}
+
+			used += entry.width;
+		});
+
+		nav.overflow = overflow;
+		if (more) more.hidden = !overflow.length;
+	}
+
+	/* ---- the context sidebar ---- */
+
+	function sideCollapsed() {
+		return localStorage.getItem(KEY.navSide) === "1";
+	}
+
+	function applySideCollapsed() {
+		var on = sideCollapsed();
+		if (el.side) el.side.classList.toggle("is-collapsed", on);
+		root.classList.toggle("kaiten-side-collapsed", on);
+	}
+
+	function setSideCollapsed(on) {
+		localStorage.setItem(KEY.navSide, on ? "1" : "0");
+		applySideCollapsed();
+		schedulePush();
+	}
+
+	function sideLink(item, active) {
+		var node = make("a", { class: "kside-item" + (active ? " is-active" : ""), href: hrefFor(item), title: item.label }, [
+			iconNode(item.icon, "kside-item-glyph"),
+			make("span", { class: "kside-item-label", text: item.label }),
+		]);
+
+		node.addEventListener("click", function (event) {
+			if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+			event.preventDefault();
+			runItem(item);
+		});
+
+		return node;
+	}
+
+	function buildSide() {
+		el.sideIcon = make("span", { class: "kside-head-glyph" });
+		el.sideTitle = make("span", { class: "kside-title" });
+
+		var head = make("button", { class: "kside-head", type: "button", title: "Open this module" }, [el.sideIcon, el.sideTitle]);
+		head.addEventListener("click", function () {
+			var menu = menuByName(activeMenuName());
+			if (menu && menu.overview) runItem(menu.overview);
+		});
+
+		var collapse = make("button", {
+			class: "kside-collapse",
+			type: "button",
+			title: "Collapse sidebar",
+			"aria-label": "Collapse sidebar",
+			text: "\u2039",
+		});
+		collapse.addEventListener("click", function (event) {
+			event.stopPropagation();
+			setSideCollapsed(!sideCollapsed());
+		});
+
+		el.sideBody = make("div", { class: "kside-body" });
+		el.side = make("aside", { class: "kside", "aria-label": "Module navigation" }, [
+			make("div", { class: "kside-top" }, [head, collapse]),
+			el.sideBody,
+		]);
+
+		mountSide();
+		applySideCollapsed();
+	}
+
+	/* The desk's own sidebar sits in a flex row and reserves its width in flow.
+	   Taking that slot means the page beside it needs no offset at all, which is
+	   the difference between a rail that behaves and one that overlaps content
+	   on every layout the desk has. Only if that row is missing does the panel
+	   float, and then the offset is put back by hand. */
+	function mountSide() {
+		var host = document.querySelector(".body-sidebar-container");
+		if (host && host.parentNode) {
+			host.parentNode.insertBefore(el.side, host);
+			return;
+		}
+
+		var body = document.getElementById("body");
+		if (body && body.parentNode) {
+			el.side.classList.add("kside-floating");
+			body.classList.add("kside-pushed");
+			body.parentNode.insertBefore(el.side, body);
+			return;
+		}
+
+		el.side.classList.add("kside-floating");
+		document.body.appendChild(el.side);
+	}
+
+	function renderSide() {
+		if (!el.sideBody) return;
+
+		var menu = menuByName(activeMenuName());
+		root.classList.toggle("kaiten-side-on", Boolean(menu));
+
+		if (!menu) {
+			el.sideBody.innerHTML = "";
+			el.sideTitle.textContent = "";
+			el.sideIcon.textContent = "";
+			return;
+		}
+
+		// Named for the workspace it opens, which also keeps it distinct from the
+		// group below that Frappe often gives the same name as the module.
+		el.sideTitle.textContent = menu.label + " overview";
+		el.sideIcon.textContent = "";
+		el.sideIcon.appendChild(iconNode(menu.icon, ""));
+
+		var here = routeTargetKey();
+		el.sideBody.innerHTML = "";
+
+		// One area at a time. A module here can carry eight groups of nine links,
+		// and an accordion of all of them is a rail nobody reads to the bottom.
+		// The pills name every area in two or three rows; the list below shows
+		// only the one in hand.
+		var holder = menu.columns.findIndex(function (column) {
+			return column.items.some(function (item) {
+				return item.key === here;
+			});
+		});
+
+		/* Which area to show is a negotiation between the route and the user.
+		   Landing on a page opens the area holding it, but browsing the pills
+		   afterwards has to stick — so the pick is remembered against the route
+		   it was made on, and only a move to a different page hands the choice
+		   back to the route. */
+		var picked = nav.area[menu.name];
+		var chosen;
+		if (picked && picked.route === here) chosen = picked.index;
+		else if (holder > -1) chosen = holder;
+		else if (picked) chosen = picked.index;
+		else chosen = 0;
+
+		if (chosen >= menu.columns.length) chosen = 0;
+		nav.area[menu.name] = { index: chosen, route: here };
+
+		if (menu.columns.length > 1) {
+			var pills = make("div", { class: "kside-pills" });
+			menu.columns.forEach(function (column, index) {
+				var pill = make("button", {
+					class: "kside-pill" + (index === chosen ? " is-on" : ""),
+					type: "button",
+					title: column.title + " \u2014 " + column.items.length + " page(s)",
+					text: column.title,
+				});
+				pill.addEventListener("click", function () {
+					nav.area[menu.name] = { index: index, route: routeTargetKey() };
+					renderSide();
+				});
+				pills.appendChild(pill);
+			});
+
+			el.sideBody.appendChild(make("div", { class: "kside-label", text: "Areas" }));
+			el.sideBody.appendChild(pills);
+		}
+
+		var column = menu.columns[chosen];
+		if (!column) {
+			paintNavActive();
+			return;
+		}
+
+		el.sideBody.appendChild(make("div", { class: "kside-area", text: column.title }));
+
+		// Reports and setup sit under their own headings, the way an ERP sidebar
+		// separates what you work in from what you configure. A heading is only
+		// drawn when the area is mixed — an all-reports menu does not need a
+		// Reports line above every list.
+		eachKind(column.items, areaIsMixed(column.items), function (bucket, rows, heading) {
+			if (heading) el.sideBody.appendChild(make("div", { class: "kside-sub", text: heading }));
+
+			var list = make("div", { class: "kside-items" });
+			rows.forEach(function (item) {
+				list.appendChild(sideLink(item, item.key === here));
+			});
+			el.sideBody.appendChild(list);
+		});
+
+		paintNavActive();
+	}
+
+	/* Called on every route change, in both shells: the command bar ignores it
+	   because it has no sidebar to re-scope. */
+	function syncNavToRoute() {
+		if (!el.navMenus) return;
+
+		var name = activeMenuName();
+		if (name) nav.active = name;
+
+		closeNavDrop();
+
+		// The bar holds a place for whichever module is active, so which of the
+		// others fit has to be settled again every time that changes — otherwise
+		// navigating within the desk leaves the new module hidden behind More.
+		fitNavMenus();
+		renderSide();
+	}
+
+	/* ---- the bar ---- */
+
+	function companyName() {
+		try {
+			var company = (frappe.boot && frappe.boot.sysdefaults && frappe.boot.sysdefaults.company) || "";
+			return String(company).trim();
+		} catch (e) {
+			return "";
+		}
+	}
+
+	function navTabBtn(id, label, icon) {
+		var btn = make("button", { class: "knav-tab", type: "button", title: label }, [
+			iconNode(icon, "knav-tab-glyph"),
+			make("span", { class: "knav-tab-label", text: label }),
+			make("span", { class: "aur-tab-count", text: "\u2026" }),
+		]);
+
+		btn.addEventListener("click", function (event) {
+			event.stopPropagation();
+			closeNavDrop();
+			toggleTab(id);
+		});
+
+		el.tabNodes[id] = btn;
+		return btn;
+	}
+
+	/* ---------------------------------------------------------------------
+	   Nav builder
+	   ---------------------------------------------------------------------
+	   The bar can be described by Kaiten Nav Menu records instead of derived
+	   from Workspaces. Editing those is ordinary desk work, so this does not
+	   reimplement a form — it explains which mode the site is in, offers the
+	   one action that is awkward from a list view (writing the first draft from
+	   the menu that already exists), and hands over to the list.
+	   ------------------------------------------------------------------ */
+
+	function navBuilderLine(label, value) {
+		return make("div", { class: "knb-line" }, [
+			make("span", { class: "knb-line-label", text: label }),
+			make("span", { class: "knb-line-value", text: value }),
+		]);
+	}
+
+	function openNavBuilder() {
+		if (!window.frappe || !frappe.ui || !frappe.ui.Dialog) {
+			frappe.set_route("List", "Kaiten Nav Menu");
+			return;
+		}
+
+		var configured = nav.source === "config";
+
+		var dialog = new frappe.ui.Dialog({
+			title: "Customise the menu",
+			size: "large",
+			fields: [{ fieldtype: "HTML", fieldname: "body" }],
+		});
+
+		var body = make("div", { class: "knb" });
+
+		body.appendChild(
+			make("p", {
+				class: "knb-note",
+				text: configured
+					? "This site's bar is built from Kaiten Nav Menu records. Edit them to rename menus, regroup links, or limit a menu to certain roles."
+					: "This site's bar is derived from its Workspaces, so it follows the site on its own. Write it into records to take control of the order, the wording and the grouping.",
+			})
+		);
+
+		body.appendChild(
+			make("div", { class: "knb-stats" }, [
+				navBuilderLine("Source", configured ? "Kaiten Nav Menu records" : "Workspaces (automatic)"),
+				navBuilderLine("Menus on the bar", String((nav.menus || []).length)),
+				navBuilderLine(
+					"Links you can reach",
+					String(
+						(nav.menus || []).reduce(function (sum, menu) {
+							return (
+								sum +
+								menu.columns.reduce(function (inner, column) {
+									return inner + column.items.length;
+								}, 0)
+							);
+						}, 0)
+					)
+				),
+			])
+		);
+
+		var actions = make("div", { class: "knb-actions" });
+
+		var draft = make("button", {
+			class: "btn btn-primary btn-sm",
+			type: "button",
+			text: configured ? "Rewrite from Workspaces" : "Write the first draft from Workspaces",
+		});
+		draft.addEventListener("click", function () {
+			var warn = configured
+				? "Replace every Kaiten Nav Menu record with a fresh copy of the Workspace menu? Any editing you have done is lost."
+				: "Create one Kaiten Nav Menu record per Workspace menu, ready to edit?";
+
+			frappe.confirm(warn, function () {
+				draft.disabled = true;
+				frappe
+					.xcall("kaiten_erp_ui_themes.api.generate_nav_from_workspaces", { overwrite: 1 })
+					.then(function (result) {
+						frappe.show_alert({
+							message: "Wrote " + result.menus + " menus. Edit them, then reload.",
+							indicator: "green",
+						});
+						dialog.hide();
+						loadShellNav(1);
+					})
+					.catch(function () {
+						draft.disabled = false;
+					});
+			});
+		});
+		actions.appendChild(draft);
+
+		var presets = make("div", { class: "knb-presets" });
+		body.appendChild(
+			make("p", {
+				class: "knb-note knb-note-tight",
+				text: "Or start from a trade preset. It writes the same records, already grouped the way that business talks.",
+			})
+		);
+		body.appendChild(presets);
+
+		frappe.xcall("kaiten_erp_ui_themes.api.list_presets").then(function (list) {
+			(list || []).forEach(function (preset) {
+				var btn = make("button", {
+					class: "btn btn-default btn-sm",
+					type: "button",
+					text: "Use " + preset.label + " preset (" + preset.menus + " menus)",
+				});
+				btn.addEventListener("click", function () {
+					frappe.confirm(
+						"Replace the current bar with the " + preset.label + " preset? Any editing you have done is lost. Links this site does not have are skipped.",
+						function () {
+							btn.disabled = true;
+							frappe
+								.xcall("kaiten_erp_ui_themes.api.install_preset", { name: preset.name, overwrite: 1 })
+								.then(function (result) {
+									frappe.show_alert({
+										message: "Installed " + result.menus + " menus" + (result.skipped ? " (" + result.skipped + " links this site does not have were skipped)" : "") + ".",
+										indicator: "green",
+									});
+									dialog.hide();
+									loadShellNav(1);
+								})
+								.catch(function () {
+									btn.disabled = false;
+								});
+						}
+					);
+				});
+				presets.appendChild(btn);
+			});
+		});
+
+		var edit = make("button", { class: "btn btn-default btn-sm", type: "button", text: "Open the menu list" });
+		edit.addEventListener("click", function () {
+			dialog.hide();
+			frappe.set_route("List", "Kaiten Nav Menu");
+		});
+		actions.appendChild(edit);
+
+		if (configured) {
+			// Drift is the one real cost of a hand-built bar, so it is one click
+			// away rather than something to remember to look for.
+			var check = make("button", { class: "btn btn-default btn-sm", type: "button", text: "Check for new links" });
+			check.addEventListener("click", function () {
+				check.disabled = true;
+				frappe
+					.xcall("kaiten_erp_ui_themes.api.nav_drift")
+					.then(function (result) {
+						check.disabled = false;
+						var missing = result.missing || [];
+						if (!missing.length) {
+							frappe.show_alert({ message: "Nothing missing. The menu covers the whole site.", indicator: "green" });
+							return;
+						}
+						frappe.msgprint({
+							title: "Not on your bar yet",
+							message:
+								"<p>" +
+								missing.length +
+								" link(s) exist on this site but are not in your menu:</p><ul>" +
+								missing
+									.slice(0, 40)
+									.map(function (row) {
+										return "<li><b>" + frappe.utils.escape_html(row.label || row.to) + "</b> \u2014 " + frappe.utils.escape_html(row.workspace || "") + "</li>";
+									})
+									.join("") +
+								"</ul>" +
+								(missing.length > 40 ? "<p>\u2026and " + (missing.length - 40) + " more.</p>" : ""),
+						});
+					})
+					.catch(function () {
+						check.disabled = false;
+					});
+			});
+			actions.appendChild(check);
+		}
+
+		body.appendChild(actions);
+		dialog.fields_dict.body.$wrapper.append(body);
+		dialog.show();
+	}
+
+	/* ---------------------------------------------------------------------
+	   Rate ticker
+	   ---------------------------------------------------------------------
+	   A strip under the bar carrying the day's metal rates. It is optional in
+	   the strictest sense: the feed is empty on any site without a rate
+	   sheet, and an empty feed draws nothing and reserves no height, so this
+	   costs a non-jewellery desk one cached call and no pixels.
+	   ------------------------------------------------------------------ */
+
+	// Rates move during the day but not by the second.
+	var RATE_POLL_MS = 5 * 60 * 1000;
+
+	function rateGlyphKind(label) {
+		var text = String(label || "").toLowerCase();
+		if (text.indexOf("gold") > -1) return "gold";
+		if (text.indexOf("silver") > -1) return "silver";
+		if (text.indexOf("platinum") > -1) return "platinum";
+		return "neutral";
+	}
+
+	function rateMoney(value) {
+		// The global format_currency returns plain text. frappe.format with a
+		// Currency fieldtype wraps the number in a right-aligned div, which would
+		// land in the strip as markup.
+		//
+		// Whole rupees only: a rate board is read at a glance, and eleven metals
+		// each carrying ".00" costs a lot of strip for no information.
+		try {
+			return window.format_currency(value, frappe.boot.sysdefaults.currency, 0);
+		} catch (e) {
+			return String(Math.round(Number(value) || 0));
+		}
+	}
+
+	function rateTick(item) {
+		var change = Number(item.change) || 0;
+		var dir = change > 0 ? "up" : change < 0 ? "down" : "flat";
+		var arrow = change > 0 ? "\u25B2" : change < 0 ? "\u25BC" : "\u2014";
+
+		var nodes = [
+			make("span", { class: "krate-dot krate-" + rateGlyphKind(item.label) }),
+			make("span", { class: "krate-metal", text: item.label || "" }),
+			make("span", { class: "krate-value", text: rateMoney(item.rate) }),
+		];
+
+		// A flat row says so with a dash and no number: "+₹0" reads as a
+		// measurement when it actually means nothing moved.
+		nodes.push(
+			make("span", { class: "krate-change krate-" + dir }, [
+				make("span", { class: "krate-arrow", text: arrow }),
+				change ? make("span", { text: rateMoney(Math.abs(change)) }) : null,
+			].filter(Boolean))
+		);
+
+		return make("span", { class: "krate-tick" }, nodes);
+	}
+
+	function renderRates(payload) {
+		if (!el.rateTrack) return;
+
+		var items = (payload && payload.items) || [];
+		el.rateTrack.textContent = "";
+
+		if (!items.length) {
+			root.classList.remove("kaiten-rate-on");
+			return;
+		}
+
+		items.forEach(function (item) {
+			el.rateTrack.appendChild(rateTick(item));
+		});
+
+		if (payload.rate_date) {
+			el.rateBar.setAttribute("title", "Rates as of " + payload.rate_date);
+		}
+
+		root.classList.add("kaiten-rate-on");
+	}
+
+	function loadRates(refresh) {
+		if (!window.frappe || !frappe.xcall) return;
+
+		frappe
+			.xcall("kaiten_erp_ui_themes.api.get_rate_ticker", refresh ? { refresh: 1 } : {})
+			.then(renderRates)
+			.catch(function () {
+				// A missing feed is the normal case, not a fault worth logging.
+				root.classList.remove("kaiten-rate-on");
+			});
+	}
+
+	function buildRateBar() {
+		el.rateTrack = make("div", { class: "krate-track" });
+		el.rateBar = make("div", { class: "krate", role: "status", "aria-live": "polite" }, [
+			make("span", { class: "krate-live" }, [
+				make("span", { class: "krate-pulse" }),
+				make("span", { text: "Live" }),
+			]),
+			make("div", { class: "krate-viewport" }, [el.rateTrack]),
+		]);
+
+		if (el.rateTimer) clearInterval(el.rateTimer);
+		el.rateTimer = setInterval(function () {
+			loadRates(1);
+		}, RATE_POLL_MS);
+
+		return el.rateBar;
+	}
+
+	function buildModuleNav(anchor) {
+		// The company is what a user recognises the desk by; the product name
+		// sits under it, and drops out entirely when there is no company to name.
+		var brandText = brandName();
+		var company = companyName();
+		var title = company || brandText;
+		var subtitle = company && company !== brandText ? brandText : "";
+
+		var brand = make("button", { class: "knav-brand", type: "button", title: "Navigation, theme and appearance" }, [
+			make("span", { class: "knav-brand-mark", text: title.charAt(0).toUpperCase() || "K" }),
+			make("span", { class: "knav-brand-text" }, [
+				make("span", { class: "knav-brand-name", text: title }),
+				make("span", { class: "knav-brand-sub", text: subtitle }),
+			]),
+		]);
+		brand.addEventListener("click", function (event) {
+			event.stopPropagation();
+			openSettings(brand);
+		});
+
+		el.navMenus = make("nav", { class: "knav-menus", "aria-label": "Modules" });
+
+		el.search = make("input", {
+			class: "knav-search",
+			type: "search",
+			placeholder: "Search",
+			"aria-label": "Search the desk",
+		});
+		el.search.addEventListener("input", function () {
+			renderSearch(el.search.value);
+		});
+		el.search.addEventListener("focus", function () {
+			if (el.search.value.trim()) renderSearch(el.search.value);
+		});
+
+		var searchWrap = make("div", { class: "knav-search-wrap" }, [
+			iconNode("search", "knav-search-icon"),
+			el.search,
+			make("span", { class: "knav-kbd", text: "/" }),
+		]);
+
+		// Pinned and Recent are the command bar's own two lists, opened in the
+		// same panel, so registering them here is all this shell has to do.
+		el.tabNodes = {};
+		var pinnedBtn = navTabBtn("pinned", "Pinned", "star");
+		var recentBtn = navTabBtn("recent", "Recent", "history");
+
+		el.pinBtn = make("button", { class: "aur-icon-btn knav-pin", type: "button", title: "Pin this page", text: "\u2605" });
+		el.pinBtn.addEventListener("click", function (event) {
+			event.stopPropagation();
+			var desc = currentDesc();
+			if (desc) togglePin(desc, el.pinBtn);
+		});
+
+		var themeBtn = make("button", { class: "aur-icon-btn", type: "button" });
+		el.paintThemeBtn = function () {
+			var meta = appearanceMeta(currentAppearance());
+			themeBtn.textContent = meta.glyph;
+			themeBtn.setAttribute("title", meta.label + " \u2014 click for " + appearanceMeta(meta.next).label.toLowerCase());
+		};
+		themeBtn.addEventListener("click", function (event) {
+			event.stopPropagation();
+			setAppearance(nextAppearance());
+		});
+		el.paintThemeBtn();
+
+		/* Deliberately fewer controls than the command bar carries. Every button
+		   here is width the module menus do not get, and the palette and
+		   fullscreen both duplicate something already reachable — the brand
+		   opens the same settings panel, and the desk has its own fullscreen. */
+		el.navBar = make("div", { class: "knav" }, [
+			make("div", { class: "knav-inner" }, [
+				brand,
+				el.navMenus,
+				make("div", { class: "knav-right" }, [
+					searchWrap,
+					pinnedBtn,
+					recentBtn,
+					el.pinBtn,
+					themeBtn,
+					makeNotifBtn(),
+					makeUserBtn(),
+				].filter(Boolean)),
+			]),
+			buildRateBar(),
+		]);
+
+		// positionMega and the scrim both measure "the bar", whichever shell
+		// drew it, so this one answers to the same name.
+		el.bar = el.navBar;
+		mountBar(anchor);
+		root.classList.add("kaiten-nav-on");
+
+		buildSide();
+		renderNavMenus();
+		renderSide();
+		loadRates(0);
+	}
+
+	function loadShellNav(refresh) {
+		if (!window.frappe || !frappe.xcall) return;
+
+		frappe
+			.xcall("kaiten_erp_ui_themes.api.get_shell_nav", refresh ? { refresh: 1 } : {})
+			.then(function (payload) {
+				buildNavModel(payload);
+				renderNavMenus();
+				syncNavToRoute();
+				renderSide();
+			})
+			.catch(function (error) {
+				console.warn("Kaiten: could not load the module menu", error);
+			});
+	}
+
+	/* ---------------------------------------------------------------------
+	   Mounting a shell
+	   ---------------------------------------------------------------------
+	   The mega panel and the document-level listeners are built once. Only the
+	   bar and the sidebar belong to a shell, so only those are torn down when
+	   the choice changes — no reload, and no duplicated handlers.
+	   ------------------------------------------------------------------ */
+
+	function mountShell(anchor) {
+		if (!el.mega) buildMega();
+
+		if (currentShell() === "module") buildModuleNav(anchor);
+		else buildBar(anchor);
+
+		setCounts();
+		syncPinButton();
+	}
+
+	function unmountShell() {
+		closeNavDrop();
+		closePop();
+		closeMega();
+
+		if (el.bar && el.bar.parentNode) el.bar.parentNode.removeChild(el.bar);
+		if (el.side && el.side.parentNode) el.side.parentNode.removeChild(el.side);
+
+		var pushed = document.getElementById("body");
+		if (pushed) pushed.classList.remove("kside-pushed");
+
+		// The ticker polls on a timer of its own, which would otherwise outlive
+		// the bar it belongs to and keep calling after a switch to command.
+		if (el.rateTimer) clearInterval(el.rateTimer);
+		el.rateTimer = null;
+		el.rateBar = null;
+		el.rateTrack = null;
+
+		el.bar = null;
+		el.navBar = null;
+		el.navMenus = null;
+		el.navBtns = null;
+		el.side = null;
+		el.sideBody = null;
+		el.sideTitle = null;
+		el.sideIcon = null;
+		el.pinBtn = null;
+		el.search = null;
+		el.paintThemeBtn = null;
+		el.tabNodes = {};
+
+		root.classList.remove("kaiten-bar-on", "kaiten-nav-on", "kaiten-side-on", "kaiten-side-collapsed", "kaiten-rate-on");
+	}
+
+	function remountShell() {
+		if (!el.anchor) return;
+		unmountShell();
+		mountShell(el.anchor);
+		if (currentShell() === "module") loadShellNav(0);
+	}
+
+	function bindNavDismiss() {
+		document.addEventListener("click", function (event) {
+			if (!nav.drop) return;
+			if (nav.drop.contains(event.target)) return;
+			if (el.navMenus && el.navMenus.contains(event.target)) return;
+			closeNavDrop();
+		});
 	}
 
 	/* ---------------------------------------------------------------------
@@ -3993,6 +5641,12 @@
 	}
 
 	function adoptPrefs(data, rev) {
+		// The bar was already built from whatever this browser knew before the
+		// server answered. If the answer names a different shell, the attribute
+		// alone is not enough — the wrong bar is already on screen and has to be
+		// swapped for the one the user actually chose elsewhere.
+		var had = currentShell();
+
 		// Writing through the normal helpers would schedule a push straight back,
 		// so the flag keeps this one-way.
 		SYNC.applying = true;
@@ -4015,6 +5669,14 @@
 
 		applyPrefs();
 		applyLayout();
+
+		// Remounting rebuilds the bar and refreshes the counts and pin state with
+		// it, so the rest of this only applies when the shell stayed put.
+		if (currentShell() !== had) {
+			remountShell();
+			return;
+		}
+
 		setCounts();
 		syncPinButton();
 		if (megaOpen()) renderGroups(state.activeTab || "workspaces");
@@ -4061,7 +5723,10 @@
 		var anchor = document.querySelector(".main-section") || document.querySelector("header.navbar");
 		if (!anchor || !window.frappe || !frappe.xcall) return false;
 
-		buildBar(anchor);
+		el.anchor = anchor;
+		mountShell(anchor);
+		bindChromeResize();
+		bindNavDismiss();
 		watchSidebar();
 		bindKeys();
 		bindRipple();
@@ -4074,6 +5739,7 @@
 		pullPrefs();
 		backfillTitles();
 		loadMenu(0);
+		if (currentShell() === "module") loadShellNav(0);
 		return true;
 	}
 

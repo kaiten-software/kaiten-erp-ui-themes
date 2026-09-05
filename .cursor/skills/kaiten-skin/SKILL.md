@@ -27,9 +27,42 @@ no `!important`.
 | Colour tone | `data-aur-accent="<tone>"`, or `custom:<id>` with the stops set inline |
 | Light/dark | `data-theme-mode` + `data-theme`, set the way Frappe's own switcher does |
 | Density | `data-aur-density="cozy" \| "compact"`, one setting for every skin |
+| Shell | `data-kaiten-shell="command" \| "module"` — which chrome is drawn |
+| Page style | `data-kaiten-pages="standard" \| "custom"` — whether forms and lists are restyled |
 
 `.aurora-on` is a legacy class name kept because 369 rules depend on it. Read it
 as "a Kaiten skin is active". Do not rename it.
+
+## A shell is not a skin
+
+The last two rows above are separate axes, and confusing them with the skin is
+the mistake this section exists to prevent.
+
+- A **skin** repaints what is on screen. Scoped `.aurora-on[data-kaiten-skin=…]`.
+- A **shell** decides what is on screen — which bar, which sidebar. Scoped
+  `[data-kaiten-shell=…]`, in its own file, never in a skin file.
+- A **page style** restyles the desk's own forms and lists. Scoped
+  `[data-kaiten-pages=…]`.
+
+All five axes are independent: every shell works under every skin, in both
+appearances, at both densities, with either page style. If you find yourself
+writing shell CSS inside a skin file, or reading the skin in JS to decide what
+to build, the axes have been crossed.
+
+Two consequences worth stating, because both have already caused bugs:
+
+- Tokens consumed by more than one axis cannot be scoped to one of them. The
+  panel surfaces in `kaiten-shell-module.css` are declared on `html`, not on
+  `html[data-kaiten-shell="module"]`, because the custom page style reads them
+  too and is available in either shell.
+- A shell may read `--aur-accent` so it follows the user's colour, but it must
+  carry a plain fallback: the Default skin ships no stylesheet, so that variable
+  does not exist there.
+
+Shells live in `kaiten.js` alongside the command bar and share its helpers —
+pins, recents, search, notifications, the account menu and the settings panel
+are implemented once and mounted by whichever shell is active. Adding a feature
+to one shell only is a bug, not a design.
 
 ## Workflow
 
@@ -234,6 +267,8 @@ user sees the old file and reports the work as broken.
   specificity instead.
 - Never gate behaviour on the skin in JS. Skins are presentation only; every
   feature works identically in all of them.
+- Never put shell or page-style rules in a skin file, and never scope a token to
+  one axis when another axis reads it. See "A shell is not a skin" above.
 - Keep the `aur-` class prefix. Renaming breaks the JS that queries it.
 - `color-mix()` is used throughout for accent tinting. Pair it with a plain hex
   fallback on the preceding line, matching the existing style.

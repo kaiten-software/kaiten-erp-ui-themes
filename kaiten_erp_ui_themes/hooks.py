@@ -8,13 +8,18 @@ required_apps = ["frappe"]
 
 # Bump on every asset change: these are plain files, so nothing else busts the
 # browser cache for them.
-ASSET_VERSION = "9"
+ASSET_VERSION = "32"
 
 # kaiten.css is the base layer; every skin after it is token overrides scoped
 # to its own data-kaiten-skin, so order matters and skins always come last.
+#
+# The shell stylesheet is not a skin: it is scoped on data-kaiten-shell and
+# draws chrome the base layer knows nothing about, so it sits after the skins
+# and applies under all of them.
 app_include_css = [
 	f"/assets/kaiten_erp_ui_themes/css/kaiten.css?v={ASSET_VERSION}",
 	f"/assets/kaiten_erp_ui_themes/css/kaiten-lumen.css?v={ASSET_VERSION}",
+	f"/assets/kaiten_erp_ui_themes/css/kaiten-shell-module.css?v={ASSET_VERSION}",
 ]
 app_include_js = f"/assets/kaiten_erp_ui_themes/js/kaiten.js?v={ASSET_VERSION}"
 

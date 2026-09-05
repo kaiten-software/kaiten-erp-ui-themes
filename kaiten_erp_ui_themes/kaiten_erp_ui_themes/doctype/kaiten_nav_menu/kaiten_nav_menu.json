@@ -1,0 +1,134 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:title",
+ "creation": "2026-09-05 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "icon",
+  "sequence",
+  "column_break_head",
+  "enabled",
+  "overview_section",
+  "overview_link_type",
+  "overview_link_to",
+  "items_section",
+  "items",
+  "roles_section",
+  "roles"
+ ],
+ "fields": [
+  {
+   "description": "Shown on the bar. Business wording beats module wording here: \"Purchase\" reads better than \"Buying\".",
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "description": "Lucide icon name. Left empty, one is guessed from the title.",
+   "fieldname": "icon",
+   "fieldtype": "Data",
+   "label": "Icon"
+  },
+  {
+   "default": "0",
+   "description": "Left to right order on the bar. Ties fall back to title.",
+   "fieldname": "sequence",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Sequence"
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  },
+  {
+   "description": "Where the menu name itself goes, and what the sidebar header opens.",
+   "fieldname": "overview_section",
+   "fieldtype": "Section Break",
+   "label": "Overview Target"
+  },
+  {
+   "default": "Workspace",
+   "fieldname": "overview_link_type",
+   "fieldtype": "Select",
+   "label": "Overview Link Type",
+   "options": "\nWorkspace\nPage\nDashboard\nDocType\nReport"
+  },
+  {
+   "depends_on": "overview_link_type",
+   "fieldname": "overview_link_to",
+   "fieldtype": "Dynamic Link",
+   "label": "Overview Link To",
+   "options": "overview_link_type"
+  },
+  {
+   "fieldname": "items_section",
+   "fieldtype": "Section Break",
+   "label": "Contents"
+  },
+  {
+   "description": "A Card Break row starts a group; the Link rows after it fill that group. Drag rows to reorder.",
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Kaiten Nav Item"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "roles_section",
+   "fieldtype": "Section Break",
+   "label": "Visible To"
+  },
+  {
+   "description": "Leave empty to show this menu to everyone. Naming roles limits it to those roles. Either way, a user still only ever sees the links they have permission to open.",
+   "fieldname": "roles",
+   "fieldtype": "Table MultiSelect",
+   "label": "Roles",
+   "options": "Has Role"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-05 13:10:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kaiten ERP UI Themes",
+ "name": "Kaiten Nav Menu",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "All"
+  }
+ ],
+ "quick_entry": 0,
+ "sort_field": "sequence",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,1091 @@
+/* =========================================================================
+   Kaiten — module-nav shell
+   -------------------------------------------------------------------------
+   The chrome for data-kaiten-shell="module": a dark module bar across the
+   top and a context sidebar scoped to whichever module is open.
+
+   A shell is not a skin. Skins repaint what is on screen and are scoped
+   .aurora-on[data-kaiten-skin="…"]; this file is scoped on the shell
+   attribute instead, so it applies under every skin and under both
+   appearances. Nothing here may depend on a skin being active, which is why
+   the panels carry their own surface tokens rather than reading --aur-surface:
+   the Default skin ships no stylesheet at all, and a white card on a dark
+   desk is the bug that follows from assuming otherwise.
+
+   The one thing borrowed from the skin layer is --aur-accent, so the bar
+   picks up whatever colour the user chose. With no skin active it falls back
+   to the warm tone this arrangement is usually seen in.
+
+   Sections
+     1. Tokens
+     2. Top bar
+     3. Module menus + dropdown
+     4. Context sidebar
+     5. Stock chrome this shell replaces
+     6. Custom page style (data-kaiten-pages="custom")
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   1. Tokens
+   ---------------------------------------------------------------------- */
+
+/* The surfaces and the accent are shared by this shell's panels and by the
+   custom page style, and the page style is available in either shell — so
+   they cannot be scoped to one of them. Scoping them to the module shell is
+   what put white cards on a dark desk the moment the shell was switched back
+   while the custom page style stayed on. */
+html {
+	--knav-accent: #e0a24a;
+
+	--knav-panel: #ffffff;
+	--knav-panel-2: #f7f8fb;
+	--knav-panel-line: #e6e9f0;
+	--knav-panel-ink: #111827;
+	--knav-panel-ink-soft: #64748b;
+	--knav-panel-shadow: 0 26px 60px -26px rgba(15, 23, 42, 0.42);
+}
+
+/* A skin's accent wins when there is one, so this matches the rest. */
+html.aurora-on {
+	--knav-accent: var(--aur-accent, #e0a24a);
+}
+
+html[data-theme="dark"] {
+	--knav-panel: #171b29;
+	--knav-panel-2: #1e2333;
+	--knav-panel-line: rgba(255, 255, 255, 0.1);
+	--knav-panel-ink: #e6ebf4;
+	--knav-panel-ink-soft: #94a3b8;
+	--knav-panel-shadow: 0 26px 60px -26px rgba(0, 0, 0, 0.7);
+}
+
+/* The bar and the rail exist only in this shell, so their own metrics do. */
+html[data-kaiten-shell="module"] {
+	--knav-h: 46px;
+
+	/* The ticker is optional chrome: it only exists on a site that has rates
+	   to show. Everything below the bar clears --kchrome-h rather than
+	   --knav-h, so the strip appearing pushes the page down instead of
+	   covering the first row of it. */
+	--krate-h: 0px;
+
+	/* The trailing pixel is the bar's own bottom border, which sits outside its
+	   height and would otherwise cover the first row of the page. */
+	--kchrome-h: calc(var(--knav-h) + var(--krate-h) + 1px);
+
+	/* The bar is dark in both appearances: it is chrome, not page. */
+	--knav-bg: #101a2b;
+	--knav-bg-2: #17233b;
+	--knav-ink: #a3b0c4;
+	--knav-ink-strong: #f8fafc;
+	--knav-line: rgba(255, 255, 255, 0.09);
+	--knav-fill: rgba(255, 255, 255, 0.07);
+	--knav-fill-2: rgba(255, 255, 255, 0.14);
+
+	--kside-w: 258px;
+	--kside-w-min: 54px;
+}
+
+/* -------------------------------------------------------------------------
+   2. Top bar
+   ---------------------------------------------------------------------- */
+
+/* The bar spans the whole window, not just the content column. The desk lays
+   body out as a flex row of sidebar + main section, and the bar is mounted
+   inside the main section, so left in flow it would start where the sidebar
+   ends and shift sideways every time the rail opened. Taken out of flow it
+   spans everything, and the row below it is cleared by padding on body. */
+.knav {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 45;
+	background: linear-gradient(180deg, var(--knav-bg-2), var(--knav-bg));
+	border-bottom: 1px solid var(--knav-line);
+	box-shadow: 0 10px 30px -26px rgba(2, 6, 23, 0.9);
+}
+
+html[data-kaiten-shell="module"].kaiten-rate-on {
+	--krate-h: 24px;
+}
+
+/* The room a fixed bar needs has to be made on the layout container, not on
+   body: the desk pins body's own padding to zero with !important, so a rule
+   there is silently dropped and the page head ends up under the bar. */
+html[data-kaiten-shell="module"] .main-section {
+	padding-top: var(--kchrome-h);
+}
+
+.knav-inner {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	height: var(--knav-h);
+	padding: 0 12px;
+}
+
+/* --- rate ticker --- */
+
+/* Collapsed until the feed reports something, so a desk with no rate sheet
+   never shows an empty strip. */
+.krate {
+	display: none;
+	align-items: center;
+	gap: 10px;
+	height: var(--krate-h);
+	padding: 0 12px;
+	border-top: 1px solid var(--knav-line);
+	background: rgba(0, 0, 0, 0.22);
+	font-size: 11px;
+	line-height: 1;
+	white-space: nowrap;
+}
+
+html.kaiten-rate-on .krate {
+	display: flex;
+}
+
+.krate-live {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	flex: 0 0 auto;
+	color: var(--knav-ink);
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	font-size: 9px;
+}
+
+.krate-pulse {
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: #34d399;
+	box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7);
+	animation: krate-pulse 2.4s ease-out infinite;
+}
+
+@keyframes krate-pulse {
+	70% {
+		box-shadow: 0 0 0 6px rgba(52, 211, 153, 0);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+	}
+}
+
+/* The rates scroll rather than wrap: the strip is one line tall by design,
+   and a shop shows more purities than fit at most window widths. */
+.krate-viewport {
+	flex: 1 1 auto;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scrollbar-width: none;
+}
+
+.krate-viewport::-webkit-scrollbar {
+	display: none;
+}
+
+.krate-track {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+}
+
+.krate-tick {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	flex: 0 0 auto;
+}
+
+.krate-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 2px;
+	transform: rotate(45deg);
+}
+
+.krate-gold {
+	background: linear-gradient(135deg, #fbbf24, #b45309);
+}
+
+.krate-silver {
+	background: linear-gradient(135deg, #e2e8f0, #94a3b8);
+}
+
+.krate-platinum {
+	background: linear-gradient(135deg, #e0f2fe, #7dd3fc);
+}
+
+.krate-neutral {
+	background: linear-gradient(135deg, #cbd5e1, #64748b);
+}
+
+.krate-metal {
+	color: var(--knav-ink);
+}
+
+.krate-value {
+	color: var(--knav-ink-strong);
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.krate-change {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	font-variant-numeric: tabular-nums;
+}
+
+.krate-arrow {
+	font-size: 8px;
+}
+
+.krate-up {
+	color: #4ade80;
+}
+
+.krate-down {
+	color: #f87171;
+}
+
+.krate-flat {
+	color: var(--knav-ink);
+}
+
+/* --- brand --- */
+
+.knav-brand {
+	display: inline-flex;
+	align-items: center;
+	gap: 9px;
+	flex: 0 0 auto;
+	max-width: 208px;
+	padding: 4px 8px 4px 4px;
+	border: 0;
+	border-radius: 10px;
+	background: transparent;
+	cursor: pointer;
+	transition: background 0.18s ease;
+}
+
+.knav-brand:hover {
+	background: var(--knav-fill);
+}
+
+.knav-brand:focus-visible {
+	outline: 2px solid var(--knav-accent);
+	outline-offset: 2px;
+}
+
+.knav-brand-mark {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 26px;
+	height: 26px;
+	border-radius: 8px;
+	background: linear-gradient(140deg, var(--knav-accent), color-mix(in oklab, var(--knav-accent) 45%, #ffffff));
+	color: #0b1120;
+	font-size: 13px;
+	font-weight: 800;
+}
+
+.knav-brand-text {
+	display: grid;
+	min-width: 0;
+	text-align: left;
+}
+
+.knav-brand-name {
+	color: var(--knav-accent);
+	font-size: 12.5px;
+	font-weight: 700;
+	line-height: 1.15;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.knav-brand-sub {
+	color: var(--knav-ink);
+	font-size: 10px;
+	line-height: 1.25;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.knav-brand-sub:empty {
+	display: none;
+}
+
+/* --- right cluster --- */
+
+.knav-right {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex: 0 0 auto;
+	margin-left: auto;
+}
+
+.knav-search-wrap {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 28px;
+	padding: 0 8px;
+	border: 1px solid transparent;
+	border-radius: 8px;
+	background: var(--knav-fill);
+	transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.knav-search-wrap:focus-within {
+	background: var(--knav-fill-2);
+	border-color: color-mix(in oklab, var(--knav-accent) 55%, transparent);
+}
+
+.knav-search-icon {
+	flex: none;
+	width: 14px;
+	height: 14px;
+	color: var(--knav-ink);
+}
+
+.knav-search {
+	width: 130px;
+	border: 0;
+	background: transparent;
+	outline: none;
+	color: var(--knav-ink-strong);
+	font-size: 12.5px;
+}
+
+.knav-search::placeholder {
+	color: var(--knav-ink);
+}
+
+.knav-kbd {
+	padding: 1px 5px;
+	border-radius: 5px;
+	background: var(--knav-fill-2);
+	color: var(--knav-ink);
+	font-size: 10px;
+	font-weight: 700;
+}
+
+/* Pinned and Recent open the same panel the command bar opens. Their names
+   live in the tooltip: every pixel spent on them is a module menu that folds
+   into More instead, and the glyph plus its count already says which is which.
+   The label returns once the window is wide enough to afford it. */
+.knav-tab-label {
+	display: none;
+}
+
+@media (min-width: 1600px) {
+	.knav-tab-label {
+		display: inline;
+	}
+}
+
+.knav-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	height: 28px;
+	padding: 0 8px;
+	border: 0;
+	border-radius: 8px;
+	background: var(--knav-fill);
+	color: var(--knav-ink);
+	font-size: 12px;
+	font-weight: 600;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background 0.16s ease, color 0.16s ease;
+}
+
+.knav-tab:hover,
+.knav-tab.aur-open {
+	background: var(--knav-fill-2);
+	color: var(--knav-ink-strong);
+}
+
+.knav-tab-glyph {
+	flex: none;
+	width: 14px;
+	height: 14px;
+}
+
+.knav-tab .aur-tab-count {
+	padding: 0 5px;
+	border-radius: 999px;
+	background: var(--knav-fill-2);
+	color: var(--knav-ink-strong);
+	font-size: 10px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+/* The bar is dark, so the shared icon buttons are re-tinted for it. */
+.knav .aur-icon-btn,
+.knav .aur-user-btn {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 0;
+	border-radius: 8px;
+	background: var(--knav-fill);
+	color: var(--knav-ink);
+	font-size: 13px;
+	line-height: 1;
+	cursor: pointer;
+	transition: background 0.16s ease, color 0.16s ease;
+}
+
+.knav .aur-icon-btn:hover,
+.knav .aur-user-btn:hover {
+	background: var(--knav-fill-2);
+	color: var(--knav-ink-strong);
+}
+
+.knav .aur-icon-btn:focus-visible,
+.knav .aur-user-btn:focus-visible {
+	outline: 2px solid var(--knav-accent);
+	outline-offset: 2px;
+}
+
+.knav .aur-icon-btn.aur-pinned {
+	color: var(--knav-accent);
+	background: color-mix(in oklab, var(--knav-accent) 22%, transparent);
+}
+
+.knav .aur-user-btn {
+	overflow: hidden;
+	border-radius: 999px;
+}
+
+.knav .aur-user-initials {
+	font-size: 11px;
+	font-weight: 700;
+	color: var(--knav-ink-strong);
+}
+
+.knav .aur-notif-btn svg,
+.knav .aur-icon-btn svg {
+	width: 15px;
+	height: 15px;
+}
+
+/* -------------------------------------------------------------------------
+   3. Module menus + dropdown
+   ---------------------------------------------------------------------- */
+
+.knav-menus {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.knav-menu {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	flex: 0 0 auto;
+	height: 30px;
+	padding: 0 9px;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--knav-ink);
+	font-size: 12.5px;
+	font-weight: 600;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: color 0.16s ease, background 0.16s ease;
+}
+
+.knav-menu:hover {
+	background: var(--knav-fill);
+	color: var(--knav-ink-strong);
+}
+
+.knav-menu.is-open {
+	background: var(--knav-fill-2);
+	color: var(--knav-ink-strong);
+}
+
+.knav-menu.is-active {
+	color: var(--knav-accent);
+}
+
+/* The rule the eye reads as "you are here", the way a desktop menu bar does. */
+.knav-menu.is-active::after {
+	content: "";
+	position: absolute;
+	left: 9px;
+	right: 9px;
+	bottom: -1px;
+	height: 2px;
+	border-radius: 2px 2px 0 0;
+	background: var(--knav-accent);
+}
+
+.knav-menu:focus-visible {
+	outline: 2px solid var(--knav-accent);
+	outline-offset: 1px;
+}
+
+.knav-menu-glyph {
+	flex: none;
+	width: 14px;
+	height: 14px;
+}
+
+.knav-drop {
+	position: fixed;
+	z-index: 1300;
+	width: max-content;
+	max-width: min(1060px, calc(100vw - 20px));
+	padding: 12px;
+	border: 1px solid var(--knav-panel-line);
+	border-radius: 14px;
+	background: var(--knav-panel);
+	box-shadow: var(--knav-panel-shadow);
+	overflow: auto;
+	overscroll-behavior: contain;
+	animation: knav-drop-in 0.16s ease both;
+}
+
+@keyframes knav-drop-in {
+	from {
+		opacity: 0;
+		transform: translateY(-5px);
+	}
+}
+
+/* Lane count comes from JS, because the panel is sized to its contents and
+   auto-fill has no width to divide up in that case. */
+.knav-drop-cols {
+	display: grid;
+	grid-template-columns: repeat(var(--knav-cols, 3), 196px);
+	gap: 2px 16px;
+	align-items: start;
+}
+
+.knav-col {
+	min-width: 0;
+}
+
+.knav-col-title {
+	margin: 6px 8px 3px;
+	color: var(--knav-panel-ink-soft);
+	font-size: 10.5px;
+	font-weight: 800;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.knav-sub {
+	margin: 8px 8px 2px;
+	color: var(--knav-panel-ink-soft);
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+}
+
+.knav-link {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 5px 8px;
+	border-radius: 8px;
+	color: var(--knav-panel-ink);
+	font-size: 12.5px;
+	text-decoration: none;
+}
+
+.knav-link:hover,
+.knav-link:focus-visible {
+	background: color-mix(in oklab, var(--knav-accent) 13%, transparent);
+	color: var(--knav-panel-ink);
+	text-decoration: none;
+	outline: none;
+}
+
+.knav-link-glyph {
+	flex: none;
+	width: 15px;
+	height: 15px;
+	color: var(--knav-accent);
+}
+
+.knav-link-label {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.knav-star {
+	flex: none;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--knav-panel-ink-soft);
+	font-size: 11px;
+	line-height: 1;
+	cursor: pointer;
+	opacity: 0;
+	transition: opacity 0.14s ease, color 0.14s ease;
+}
+
+.knav-link:hover .knav-star,
+.knav-star:focus-visible {
+	opacity: 1;
+}
+
+.knav-star.is-on {
+	opacity: 1;
+	color: var(--knav-accent);
+}
+
+/* -------------------------------------------------------------------------
+   4. Context sidebar
+   ----------------------------------------------------------------------
+   Placed in the flex row the desk's own sidebar occupies, so its width is
+   held in flow and the page beside it needs no offset. If that row is not
+   found the panel floats instead, and then it does.
+   ---------------------------------------------------------------------- */
+
+.kside {
+	position: sticky;
+	top: var(--kchrome-h);
+	align-self: flex-start;
+	display: flex;
+	flex-direction: column;
+	flex: 0 0 auto;
+	gap: 2px;
+	width: var(--kside-w);
+	height: calc(100dvh - var(--kchrome-h));
+	padding: 8px;
+	background: var(--knav-panel);
+	border-right: 1px solid var(--knav-panel-line);
+	transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.kside.kside-floating {
+	position: fixed;
+	left: 0;
+	z-index: 40;
+	box-shadow: 8px 0 30px -26px rgba(15, 23, 42, 0.8);
+}
+
+html.kaiten-side-on .kside-floating ~ #body,
+html.kaiten-side-on #body.kside-pushed {
+	margin-left: var(--kside-w);
+	transition: margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html.kaiten-side-on.kaiten-side-collapsed #body.kside-pushed {
+	margin-left: var(--kside-w-min);
+}
+
+/* Nothing to scope the rail to: no module claimed the page. */
+html[data-kaiten-shell="module"]:not(.kaiten-side-on) .kside {
+	display: none;
+}
+
+.kside-top {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex: none;
+	padding: 0 0 6px;
+}
+
+.kside-head {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: 6px 8px;
+	border: 0;
+	border-radius: 9px;
+	background: transparent;
+	color: var(--knav-panel-ink);
+	font-size: 12.5px;
+	font-weight: 700;
+	text-align: left;
+	cursor: pointer;
+	transition: background 0.16s ease;
+}
+
+.kside-head:hover {
+	background: color-mix(in oklab, var(--knav-accent) 11%, transparent);
+}
+
+.kside-head-glyph {
+	display: inline-flex;
+	flex: none;
+	width: 16px;
+	height: 16px;
+	color: var(--knav-accent);
+}
+
+.kside-head-glyph svg {
+	width: 16px;
+	height: 16px;
+}
+
+.kside-title {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.kside-collapse {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 24px;
+	height: 24px;
+	border: 1px solid var(--knav-panel-line);
+	border-radius: 7px;
+	background: var(--knav-panel-2);
+	color: var(--knav-panel-ink-soft);
+	font-size: 13px;
+	line-height: 1;
+	cursor: pointer;
+	transition: background 0.16s ease, color 0.16s ease, transform 0.2s ease;
+}
+
+.kside-collapse:hover {
+	background: color-mix(in oklab, var(--knav-accent) 16%, var(--knav-panel-2));
+	color: var(--knav-panel-ink);
+}
+
+.kside-body {
+	display: grid;
+	align-content: start;
+	gap: 1px;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	overscroll-behavior: contain;
+}
+
+/* --- area pills --- */
+
+.kside-label {
+	padding: 8px 8px 4px;
+	color: var(--knav-panel-ink-soft);
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+}
+
+.kside-pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 0 6px 8px;
+}
+
+.kside-pill {
+	max-width: 100%;
+	padding: 4px 9px;
+	border: 0;
+	border-radius: 999px;
+	background: color-mix(in oklab, var(--knav-panel-ink) 8%, transparent);
+	color: var(--knav-panel-ink-soft);
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1.35;
+	text-align: left;
+	cursor: pointer;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	transition: background 0.16s ease, color 0.16s ease;
+}
+
+.kside-pill:hover {
+	background: color-mix(in oklab, var(--knav-accent) 16%, transparent);
+	color: var(--knav-panel-ink);
+}
+
+.kside-pill.is-on {
+	background: var(--knav-accent);
+	color: #1b1205;
+}
+
+/* The chosen area, named once above its pages. */
+.kside-area {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 8px;
+	border-top: 1px solid var(--knav-panel-line);
+	color: var(--knav-panel-ink);
+	font-size: 11.5px;
+	font-weight: 700;
+}
+
+.kside-sub {
+	padding: 8px 8px 2px;
+	color: var(--knav-panel-ink-soft);
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+}
+
+.kside-items {
+	display: grid;
+	gap: 1px;
+}
+
+.kside-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 5px 8px;
+	border-radius: 7px;
+	color: var(--knav-panel-ink);
+	font-size: 12.5px;
+	text-decoration: none;
+}
+
+.kside-item:hover,
+.kside-item:focus-visible {
+	background: color-mix(in oklab, var(--knav-accent) 13%, transparent);
+	color: var(--knav-panel-ink);
+	text-decoration: none;
+	outline: none;
+}
+
+.kside-item-glyph {
+	flex: none;
+	width: 14px;
+	height: 14px;
+	opacity: 0.65;
+}
+
+.kside-item-label {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.kside-item.is-active {
+	background: color-mix(in oklab, var(--knav-accent) 20%, transparent);
+	color: color-mix(in oklab, var(--knav-accent) 62%, var(--knav-panel-ink));
+	font-weight: 700;
+}
+
+.kside-item.is-active .kside-item-glyph {
+	opacity: 1;
+	color: var(--knav-accent);
+}
+
+/* --- collapsed --- */
+
+.kside.is-collapsed {
+	width: var(--kside-w-min);
+}
+
+.kside.is-collapsed .kside-collapse {
+	transform: rotate(180deg);
+}
+
+/* Collapsed, the rail keeps only the page icons of the area in hand. The pills
+   and headings are all words, and there is no width here for words. */
+.kside.is-collapsed .kside-title,
+.kside.is-collapsed .kside-label,
+.kside.is-collapsed .kside-pills,
+.kside.is-collapsed .kside-area,
+.kside.is-collapsed .kside-sub,
+.kside.is-collapsed .kside-item-label {
+	display: none;
+}
+
+.kside.is-collapsed .kside-top {
+	flex-direction: column;
+	gap: 6px;
+}
+
+.kside.is-collapsed .kside-head,
+.kside.is-collapsed .kside-item {
+	justify-content: center;
+	padding: 6px 0;
+}
+
+/* -------------------------------------------------------------------------
+   5. Nav builder
+   ----------------------------------------------------------------------
+   Lives in a stock dialog, so it borrows the desk's own type and buttons and
+   only needs a layout. Not scoped to the shell: the bar can be configured
+   from either shell, and the dialog is chrome the desk owns.
+   ---------------------------------------------------------------------- */
+
+.knb-note {
+	margin: 0 0 12px;
+	color: var(--text-muted, #6b7280);
+	font-size: 13px;
+	line-height: 1.55;
+}
+
+.knb-note-tight {
+	margin-top: 14px;
+	margin-bottom: 8px;
+}
+
+.knb-presets {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 14px;
+}
+
+.knb-stats {
+	display: grid;
+	gap: 1px;
+	margin-bottom: 14px;
+	border: 1px solid var(--border-color, #e5e7eb);
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.knb-line {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 7px 11px;
+	background: var(--fg-color, #fff);
+	font-size: 12.5px;
+}
+
+.knb-line-label {
+	color: var(--text-muted, #6b7280);
+}
+
+.knb-line-value {
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+
+.knb-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+/* -------------------------------------------------------------------------
+   6. Stock chrome this shell replaces
+   ---------------------------------------------------------------------- */
+
+html[data-kaiten-shell="module"] .body-sidebar-container,
+html[data-kaiten-shell="module"] .dock {
+	display: none !important;
+}
+
+/* -------------------------------------------------------------------------
+   7. Custom page style
+   ----------------------------------------------------------------------
+   A third axis, independent of both skin and shell: whether the desk's own
+   forms and lists are left as Frappe draws them or given the boxed, denser
+   treatment. "standard" adds nothing at all, which is what makes it a safe
+   default and an honest escape hatch when a client dislikes the rest.
+
+   Spacing is expressed through Frappe's own variables so the compact density
+   setting still governs, per the theme's house rule.
+   ---------------------------------------------------------------------- */
+
+html[data-kaiten-pages="custom"] .form-section {
+	margin-bottom: 10px;
+	padding: 12px 14px;
+	border: 1px solid var(--knav-panel-line, #e6e9f0);
+	border-radius: 12px;
+	background: var(--knav-panel, #fff);
+}
+
+html[data-kaiten-pages="custom"] .form-section .section-head {
+	margin-bottom: 8px;
+	color: var(--knav-panel-ink-soft, #64748b);
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+}
+
+html[data-kaiten-pages="custom"] .frappe-control .control-label {
+	margin-bottom: 3px;
+	color: var(--knav-panel-ink-soft, #64748b);
+	font-size: 11px;
+	font-weight: 700;
+}
+
+/* Fields read as fields even when empty, which is the whole complaint about
+   the stock form: an unfilled input is invisible until it is clicked. */
+html[data-kaiten-pages="custom"] .frappe-control input[type="text"],
+html[data-kaiten-pages="custom"] .frappe-control input[type="number"],
+html[data-kaiten-pages="custom"] .frappe-control input[type="date"],
+html[data-kaiten-pages="custom"] .frappe-control input[type="email"],
+html[data-kaiten-pages="custom"] .frappe-control input[type="password"],
+html[data-kaiten-pages="custom"] .frappe-control select,
+html[data-kaiten-pages="custom"] .frappe-control textarea {
+	border: 1px solid var(--knav-panel-line, #e6e9f0);
+	border-radius: 8px;
+	background: var(--knav-panel-2, #f7f8fb);
+}
+
+html[data-kaiten-pages="custom"] .frappe-control input:focus,
+html[data-kaiten-pages="custom"] .frappe-control select:focus,
+html[data-kaiten-pages="custom"] .frappe-control textarea:focus {
+	border-color: color-mix(in oklab, var(--knav-accent, #e0a24a) 62%, transparent);
+	background: var(--knav-panel, #fff);
+	box-shadow: 0 0 0 3px color-mix(in oklab, var(--knav-accent, #e0a24a) 16%, transparent);
+}
+
+html[data-kaiten-pages="custom"] .list-row-head,
+html[data-kaiten-pages="custom"] .list-row {
+	border-radius: 0;
+}
+
+html[data-kaiten-pages="custom"] .list-row-head {
+	color: var(--knav-panel-ink-soft, #64748b);
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}

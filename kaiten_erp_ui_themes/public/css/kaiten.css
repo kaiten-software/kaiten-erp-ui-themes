@@ -813,6 +813,105 @@
 	transform: scale(0.92);
 }
 
+.aur-user-btn {
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	border-radius: 50%;
+	border: 1px solid var(--aur-line);
+	background: var(--aur-surface);
+	color: var(--aur-ink);
+	cursor: pointer;
+	flex: none;
+	transition: transform var(--aur-fast) var(--aur-ease-back), box-shadow var(--aur-fast) var(--aur-ease);
+}
+
+.aur-user-btn:hover,
+.aur-user-btn.aur-user-open {
+	transform: translateY(-2px);
+	box-shadow: var(--aur-glow);
+}
+
+.aur-user-btn:active {
+	transform: scale(0.94);
+}
+
+.aur-user-btn .aur-user-face,
+.aur-user-btn .avatar,
+.aur-user-btn .avatar-frame {
+	width: 30px;
+	height: 30px;
+	margin: 0;
+}
+
+.aur-user-btn .aur-user-initials {
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+}
+
+/* Stock account dropdown must sit above the Kaiten bar (z-index 1202). */
+.frappe-menu.context-menu {
+	z-index: 1400;
+}
+
+/* Hide the stock Frappe header (KAITEN SOFTWARE + Ctrl+K + SK). The Kaiten bar replaces it. */
+html.kaiten-bar-on header.navbar {
+	display: none !important;
+}
+
+.aur-notif-btn {
+	position: relative;
+}
+
+.aur-notif-btn .notification-count {
+	position: absolute;
+	top: 2px;
+	right: 2px;
+	width: 8px;
+	height: 8px;
+	padding: 0;
+	border-radius: 50%;
+	border: 1px solid var(--aur-surface, #fff);
+	background: #2563eb;
+	font-size: 0;
+	color: transparent;
+	overflow: hidden;
+	line-height: 0;
+}
+
+.aur-notif-btn .notification-count.hidden {
+	display: none;
+}
+
+/* Floated off hidden navbar/sidebar so the stock list can actually paint. */
+body > .dropdown-notifications.kaiten-notif-float {
+	position: static !important;
+	inset: auto !important;
+	pointer-events: auto !important;
+	z-index: 1450;
+}
+
+body > .dropdown-notifications.kaiten-notif-float.hidden {
+	display: none !important;
+}
+
+html.kaiten-bar-on .kaiten-notif-float:not(.hidden) .notifications-list,
+html.kaiten-bar-on .dropdown-notifications:not(.hidden) .notifications-list {
+	position: fixed !important;
+	height: min(70vh, 560px);
+	max-height: calc(100vh - 64px);
+	min-height: 280px;
+	width: 360px;
+	z-index: 1450;
+	border-radius: 12px;
+	box-shadow: 0 18px 40px -16px rgba(15, 23, 42, 0.35);
+}
+
 /* -------------------------------------------------------------------------
    6. Mega panel
    ---------------------------------------------------------------------- */

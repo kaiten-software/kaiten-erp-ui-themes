@@ -362,6 +362,7 @@
 
 .aurora-on[data-kaiten-skin="lumen"] .aur-tab,
 .aurora-on[data-kaiten-skin="lumen"] .aur-icon-btn,
+.aurora-on[data-kaiten-skin="lumen"] .aur-user-btn,
 .aurora-on[data-kaiten-skin="lumen"] .aur-search-wrap {
 	border-radius: 999px;
 }
