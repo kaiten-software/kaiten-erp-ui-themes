@@ -1,8 +1,8 @@
 /* =========================================================================
    Kaiten — module-nav shell
    -------------------------------------------------------------------------
-   The chrome for data-kaiten-shell="module": a dark module bar across the
-   top and a context sidebar scoped to whichever module is open.
+   The chrome for data-kaiten-shell="module": a module bar across the top
+   and a context sidebar scoped to whichever module is open.
 
    A shell is not a skin. Skins repaint what is on screen and are scoped
    .aurora-on[data-kaiten-skin="…"]; this file is scoped on the shell
@@ -12,9 +12,9 @@
    the Default skin ships no stylesheet at all, and a white card on a dark
    desk is the bug that follows from assuming otherwise.
 
-   The one thing borrowed from the skin layer is --aur-accent, so the bar
-   picks up whatever colour the user chose. With no skin active it falls back
-   to the warm tone this arrangement is usually seen in.
+   The bar follows the desk: --aur-accent for colour, data-theme for the
+   light or dark chrome. With no accent set it falls back to the warm tone
+   this arrangement is usually seen in.
 
    Sections
      1. Tokens
@@ -35,7 +35,7 @@
    what put white cards on a dark desk the moment the shell was switched back
    while the custom page style stayed on. */
 html {
-	--knav-accent: #e0a24a;
+	--knav-accent: var(--aur-accent, #e0a24a);
 
 	--knav-panel: #ffffff;
 	--knav-panel-2: #f7f8fb;
@@ -43,11 +43,6 @@ html {
 	--knav-panel-ink: #111827;
 	--knav-panel-ink-soft: #64748b;
 	--knav-panel-shadow: 0 26px 60px -26px rgba(15, 23, 42, 0.42);
-}
-
-/* A skin's accent wins when there is one, so this matches the rest. */
-html.aurora-on {
-	--knav-accent: var(--aur-accent, #e0a24a);
 }
 
 html[data-theme="dark"] {
@@ -73,7 +68,27 @@ html[data-kaiten-shell="module"] {
 	   height and would otherwise cover the first row of the page. */
 	--kchrome-h: calc(var(--knav-h) + var(--krate-h) + 1px);
 
-	/* The bar is dark in both appearances: it is chrome, not page. */
+	/* Frappe sticks the page head and form tabs to --navbar-height. If that
+	   stays the stock 48px, they park under the module bar and the form
+	   scrolls through the title. */
+	--navbar-height: var(--kchrome-h);
+
+	/* Light chrome matches the Light desk. Dark tokens sit on data-theme. */
+	--knav-bg: #ffffff;
+	--knav-bg-2: #f7f8fb;
+	--knav-ink: #64748b;
+	--knav-ink-strong: #0f172a;
+	--knav-line: #e6e9f0;
+	--knav-fill: rgba(15, 23, 42, 0.05);
+	--knav-fill-2: rgba(15, 23, 42, 0.09);
+	--knav-shadow: rgba(15, 23, 42, 0.18);
+	--krate-bg: color-mix(in oklab, var(--knav-ink) 7%, var(--knav-bg));
+
+	--kside-w: 258px;
+	--kside-w-min: 54px;
+}
+
+html[data-kaiten-shell="module"][data-theme="dark"] {
 	--knav-bg: #101a2b;
 	--knav-bg-2: #17233b;
 	--knav-ink: #a3b0c4;
@@ -81,9 +96,19 @@ html[data-kaiten-shell="module"] {
 	--knav-line: rgba(255, 255, 255, 0.09);
 	--knav-fill: rgba(255, 255, 255, 0.07);
 	--knav-fill-2: rgba(255, 255, 255, 0.14);
+	--knav-shadow: rgba(2, 6, 23, 0.9);
+	--krate-bg: rgba(0, 0, 0, 0.22);
+}
 
-	--kside-w: 258px;
-	--kside-w-min: 54px;
+/* A chosen colour tints the chrome so Blush and Ocean are not the same bar. */
+html.aurora-on[data-kaiten-shell="module"] {
+	--knav-bg: color-mix(in oklab, var(--aur-accent, #e0a24a) 7%, #ffffff);
+	--knav-bg-2: color-mix(in oklab, var(--aur-accent, #e0a24a) 11%, #f7f8fb);
+}
+
+html.aurora-on[data-kaiten-shell="module"][data-theme="dark"] {
+	--knav-bg: color-mix(in oklab, var(--aur-accent, #e0a24a) 14%, #101a2b);
+	--knav-bg-2: color-mix(in oklab, var(--aur-accent, #e0a24a) 18%, #17233b);
 }
 
 /* -------------------------------------------------------------------------
@@ -103,7 +128,7 @@ html[data-kaiten-shell="module"] {
 	z-index: 45;
 	background: linear-gradient(180deg, var(--knav-bg-2), var(--knav-bg));
 	border-bottom: 1px solid var(--knav-line);
-	box-shadow: 0 10px 30px -26px rgba(2, 6, 23, 0.9);
+	box-shadow: 0 10px 30px -26px var(--knav-shadow);
 }
 
 html[data-kaiten-shell="module"].kaiten-rate-on {
@@ -136,7 +161,7 @@ html[data-kaiten-shell="module"] .main-section {
 	height: var(--krate-h);
 	padding: 0 12px;
 	border-top: 1px solid var(--knav-line);
-	background: rgba(0, 0, 0, 0.22);
+	background: var(--krate-bg);
 	font-size: 11px;
 	line-height: 1;
 	white-space: nowrap;
@@ -899,10 +924,29 @@ html[data-kaiten-shell="module"]:not(.kaiten-side-on) .kside {
 }
 
 .kside-item-label {
+	flex: 1 1 auto;
 	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.kside-item .knav-star,
+.kside-head-star {
+	margin-left: auto;
+}
+
+.kside-item:hover .knav-star,
+.kside-top:hover .kside-head-star,
+.kside-item .knav-star:focus-visible,
+.kside-head-star:focus-visible {
+	opacity: 1;
+}
+
+.kside-pin-slot {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
 }
 
 .kside-item.is-active {
@@ -933,7 +977,9 @@ html[data-kaiten-shell="module"]:not(.kaiten-side-on) .kside {
 .kside.is-collapsed .kside-pills,
 .kside.is-collapsed .kside-area,
 .kside.is-collapsed .kside-sub,
-.kside.is-collapsed .kside-item-label {
+.kside.is-collapsed .kside-item-label,
+.kside.is-collapsed .knav-star,
+.kside.is-collapsed .kside-pin-slot {
 	display: none;
 }
 
@@ -1039,6 +1085,16 @@ html[data-kaiten-pages="custom"] .form-section {
 	background: var(--knav-panel, #fff);
 }
 
+html[data-kaiten-pages="custom"][data-aur-density="cozy"] .form-section {
+	margin-bottom: 8px;
+	padding: 8px 12px;
+}
+
+html[data-kaiten-pages="custom"][data-aur-density="compact"] .form-section {
+	margin-bottom: 5px;
+	padding: 6px 10px;
+}
+
 html[data-kaiten-pages="custom"] .form-section .section-head {
 	margin-bottom: 8px;
 	color: var(--knav-panel-ink-soft, #64748b);
@@ -1046,6 +1102,14 @@ html[data-kaiten-pages="custom"] .form-section .section-head {
 	font-weight: 800;
 	letter-spacing: 0.07em;
 	text-transform: uppercase;
+}
+
+html[data-kaiten-pages="custom"][data-aur-density="cozy"] .form-section .section-head {
+	margin-bottom: 5px;
+}
+
+html[data-kaiten-pages="custom"][data-aur-density="compact"] .form-section .section-head {
+	margin-bottom: 3px;
 }
 
 html[data-kaiten-pages="custom"] .frappe-control .control-label {

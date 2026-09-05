@@ -226,9 +226,17 @@
 }
 
 .aurora-on[data-kaiten-skin="lumen"] .widget:hover,
-.aurora-on[data-kaiten-skin="lumen"] .frappe-card:hover,
-.aurora-on[data-kaiten-skin="lumen"] .form-section:hover {
+.aurora-on[data-kaiten-skin="lumen"] .frappe-card:hover {
 	transform: translateY(-2px);
+	border-color: var(--aur-line);
+	box-shadow: var(--aur-shadow-lg);
+}
+
+/* A transform on the section makes Frappe's pencil editor (position: fixed)
+   a child of the card. It then opens as a sliver inside the table instead of
+   a desk modal — the list looks like it vanished. Lift stays on widgets. */
+.aurora-on[data-kaiten-skin="lumen"] .form-section:hover {
+	transform: none;
 	border-color: var(--aur-line);
 	box-shadow: var(--aur-shadow-lg);
 }
@@ -265,10 +273,12 @@
 	color: var(--aur-ink);
 }
 
-.aurora-on[data-kaiten-skin="lumen"] .page-head {
+.aurora-on[data-kaiten-skin="lumen"] .page-head,
+.aurora-on[data-kaiten-skin="lumen"] .form-tabs-list {
 	border-bottom: 0;
 	backdrop-filter: none;
 	-webkit-backdrop-filter: none;
+	background: var(--aur-sheet);
 }
 
 /* -------------------------------------------------------------------------

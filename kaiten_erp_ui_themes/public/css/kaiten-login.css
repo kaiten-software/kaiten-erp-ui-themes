@@ -782,6 +782,12 @@ body:has(.aur-lg-bg) {
 	.aur-lg-sep:last-of-type {
 		display: none;
 	}
+
+	.aur-lg-on .page-card input,
+	.aur-lg-on .page-card button[type="submit"] {
+		min-height: 44px;
+		font-size: 16px;
+	}
 }
 
 @media (max-height: 700px) {

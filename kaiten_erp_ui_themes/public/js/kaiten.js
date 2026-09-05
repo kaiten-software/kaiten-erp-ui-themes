@@ -21,6 +21,7 @@
 		skinAccent: "kaiten_ui_skin_accent",
 		palettes: "kaiten_ui_palettes",
 		density: "kaiten_ui_density",
+		densityRev: "kaiten_ui_density_rev",
 		pins: "kaiten_ui_pins",
 		pinGroups: "kaiten_ui_pin_groups",
 		recent: "kaiten_ui_recent",
@@ -56,15 +57,37 @@
 			id: "command",
 			label: "Command bar",
 			note: "Tabs, mega menu, jump to anything",
-			swatch: "linear-gradient(180deg,#ffffff 0 38%,#eef1f6 38% 100%)",
 		},
 		{
 			id: "module",
 			label: "Module nav",
 			note: "ERP menus on top, sidebar per module",
-			swatch: "linear-gradient(180deg,#1e293b 0 34%,#ffffff 34% 100%)",
 		},
 	];
+
+	/* A colour wash cannot tell these two apart. The card has to show the
+	   skeleton: command is a strip and tabs; module is a bar and a rail. */
+	function shellPreview(id) {
+		if (id === "module") {
+			return make("span", { class: "aur-shell-preview aur-shell-preview-module" }, [
+				make("span", { class: "aur-shell-bar" }),
+				make("span", { class: "aur-shell-body" }, [
+					make("span", { class: "aur-shell-rail" }),
+					make("span", { class: "aur-shell-page" }),
+				]),
+			]);
+		}
+
+		return make("span", { class: "aur-shell-preview aur-shell-preview-command" }, [
+			make("span", { class: "aur-shell-bar" }),
+			make("span", { class: "aur-shell-tabs" }, [
+				make("span", { class: "aur-shell-tab" }),
+				make("span", { class: "aur-shell-tab" }),
+				make("span", { class: "aur-shell-tab" }),
+			]),
+			make("span", { class: "aur-shell-page" }),
+		]);
+	}
 
 	/* Whether the desk's own field and list styling is left as Frappe draws it,
 	   or replaced with the denser boxed treatment. Independent of both the skin
@@ -144,6 +167,15 @@
 		{ id: "light", label: "Light", glyph: "\u2600", next: "dark" },
 		{ id: "dark", label: "Dark", glyph: "\u263D", next: "automatic" },
 		{ id: "automatic", label: "System", glyph: "\u25D1", next: "light" },
+	];
+
+	/* Normal is stock Frappe air. Cozy trims a little. Compact is the tight
+	   field stack the jewellery desk asks for. v1 used "cozy" for stock, so
+	   that stored value is rewritten to normal once. */
+	var DENSITIES = [
+		{ id: "normal", label: "Normal" },
+		{ id: "cozy", label: "Cozy" },
+		{ id: "compact", label: "Compact" },
 	];
 
 	// A tone the user mixed themselves is stored as one of these and referenced
@@ -349,6 +381,18 @@
 		adopt("aurora_ui_recent", KEY.recent);
 		adopt("aurora_ui_layout", KEY.layout);
 		adopt("aurora:accent", KEY.accent);
+	}
+
+	function adoptDensityV3() {
+		try {
+			if (localStorage.getItem(KEY.densityRev) === "3") return false;
+			var stored = localStorage.getItem(KEY.density);
+			if (stored === "cozy") localStorage.setItem(KEY.density, "normal");
+			localStorage.setItem(KEY.densityRev, "3");
+			return stored === "cozy";
+		} catch (e) {
+			return false;
+		}
 	}
 
 	/* ---------------------------------------------------------------------
@@ -838,6 +882,7 @@
 		write(KEY.pins, list.slice(Math.max(0, list.length - PIN_LIMIT)));
 		setCounts();
 		syncPinButton();
+		paintPinStars();
 
 		// Offer the shelves, but only ever as an offer: ignoring the popover
 		// leaves the pin where it already is, in the default group.
@@ -1455,6 +1500,7 @@
 						);
 						setCounts();
 						syncPinButton();
+						paintPinStars();
 						renderGroups("pinned");
 					},
 				};
@@ -2939,8 +2985,6 @@
 		var editor = make("div", { class: "aur-mixer" });
 		var skins = make("div", { class: "aur-skins" });
 
-		// Density rides on the skin layer, and Default deliberately has none: it
-		// is stock Frappe with only the bar added, spacing included.
 		var density = make("div", { class: "aur-seg" });
 		var densityLabel = make("div", { class: "aur-pop-label", text: "Density" });
 		var densityRow = make("div", { class: "aur-pop-row" }, [density]);
@@ -2983,7 +3027,6 @@
 
 		var renderSkins = function () {
 			var active = currentSkin();
-			densityLabel.hidden = densityRow.hidden = active === "default";
 			skins.innerHTML = "";
 
 			SKINS.forEach(function (skin) {
@@ -3026,10 +3069,7 @@
 		renderSkins();
 		renderTones();
 
-		[
-			{ id: "cozy", label: "Cozy" },
-			{ id: "compact", label: "Compact" },
-		].forEach(function (option) {
+		DENSITIES.forEach(function (option) {
 			var button = make("button", { class: currentDensity() === option.id ? "aur-on" : "", type: "button", text: option.label });
 			button.addEventListener("click", function () {
 				setDensity(option.id);
@@ -3043,13 +3083,13 @@
 
 		/* Swapping the shell replaces the bar this popover is anchored to, so
 		   there is nothing left to follow and the panel closes with the change. */
-		var shells = make("div", { class: "aur-skins" });
+		var shells = make("div", { class: "aur-shells" });
 		SHELLS.forEach(function (shell) {
 			var card = make(
 				"button",
-				{ class: "aur-skin" + (currentShell() === shell.id ? " aur-on" : ""), type: "button", title: shell.note },
+				{ class: "aur-skin aur-shell" + (currentShell() === shell.id ? " aur-on" : ""), type: "button", title: shell.note },
 				[
-					make("span", { class: "aur-skin-swatch", style: "background:" + shell.swatch }),
+					shellPreview(shell.id),
 					make("span", { class: "aur-skin-name", text: shell.label }),
 					make("span", { class: "aur-skin-note", text: shell.note }),
 				]
@@ -3132,6 +3172,19 @@
 		   on, adjusted and compared without reopening anything. */
 		el.popPlace = function () {
 			var box = anchor.getBoundingClientRect();
+			if (isNarrow()) {
+				el.pop.classList.add("is-sheet");
+				el.pop.style.top = Math.max(Math.round(box.bottom) + 8, chromeBottom() + 8) + "px";
+				el.pop.style.left = "8px";
+				el.pop.style.right = "8px";
+				el.pop.style.width = "auto";
+				el.pop.style.maxHeight = Math.max(220, window.innerHeight - chromeBottom() - 24) + "px";
+				return;
+			}
+			el.pop.classList.remove("is-sheet");
+			el.pop.style.right = "";
+			el.pop.style.width = "";
+			el.pop.style.maxHeight = "";
 			var width = el.pop.offsetWidth || 300;
 			el.pop.style.top = Math.round(box.bottom + 8) + "px";
 			el.pop.style.left = Math.round(clamp(box.right - width, 10, window.innerWidth - width - 10)) + "px";
@@ -3413,7 +3466,7 @@
 		// The shortcut for light and dark: it moves straight to the next
 		// appearance instead of opening Frappe's three-card dialog. The panel
 		// offers the same three as a direct choice.
-		var themeBtn = make("button", { class: "aur-icon-btn", type: "button" });
+		var themeBtn = make("button", { class: "aur-icon-btn aur-appearance", type: "button" });
 		el.paintThemeBtn = function () {
 			var meta = appearanceMeta(currentAppearance());
 			themeBtn.textContent = meta.glyph;
@@ -3427,7 +3480,7 @@
 		});
 		el.paintThemeBtn();
 
-		var fullBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Toggle fullscreen", text: "\u26F6" });
+		var fullBtn = make("button", { class: "aur-icon-btn aur-fullscreen", type: "button", title: "Toggle fullscreen", text: "\u26F6" });
 		fullBtn.addEventListener("click", toggleFullscreen);
 
 		var notifBtn = makeNotifBtn();
@@ -3583,6 +3636,7 @@
 
 	function bindChromeResize() {
 		window.addEventListener("resize", function () {
+			applySideCollapsed();
 			fitNavMenus();
 			placeNavDrop();
 			// A popover that knows how to place itself is repositioned; the rest
@@ -3715,7 +3769,12 @@
 	}
 
 	function currentDensity() {
-		return localStorage.getItem(KEY.density) || "cozy";
+		var stored = localStorage.getItem(KEY.density);
+		if (stored === "comfortable") return "normal";
+		for (var i = 0; i < DENSITIES.length; i++) {
+			if (DENSITIES[i].id === stored) return stored;
+		}
+		return "cozy";
 	}
 
 	function knownId(list, id) {
@@ -3818,6 +3877,7 @@
 	}
 
 	function setDensity(id) {
+		if (id !== "normal" && id !== "cozy" && id !== "compact") return;
 		localStorage.setItem(KEY.density, id);
 		applyPrefs();
 		schedulePush();
@@ -4388,7 +4448,18 @@
 		drop: null,
 		dropFor: "",
 		dropBtn: null,
+		// Phone drawer is session-only. The desktop collapse flag is a
+		// preference; folding the rail on a 390px screen is not.
+		drawerOpen: false,
 	};
+
+	function isNarrow() {
+		return window.matchMedia("(max-width: 767px)").matches;
+	}
+
+	function applyNarrow() {
+		root.classList.toggle("kaiten-narrow", isNarrow());
+	}
 
 	var NAV_KEY_PREFIX = { Report: "rep:", Page: "page:", Dashboard: "dash:", Workspace: "ws:" };
 	var NAV_ID_PREFIX = { Report: "report:", Page: "page:", Dashboard: "dashboard:", Workspace: "ws:" };
@@ -4589,38 +4660,76 @@
 		nav.dropFor = "";
 	}
 
+	/* Anything that hangs below the chrome needs one answer for where the chrome
+	   ends, and on a phone that is a two-row bar with a rate ticker under it —
+	   not the height of whichever button was clicked. */
+	function chromeBottom() {
+		var bottom = 0;
+		[el.navBar, el.bar, el.rateBar].forEach(function (node) {
+			if (!node || !node.getBoundingClientRect) return;
+			var box = node.getBoundingClientRect();
+			if (box.height && box.bottom > bottom) bottom = box.bottom;
+		});
+		return Math.round(bottom);
+	}
+
 	function placeNavDrop() {
 		if (!nav.drop || !nav.dropBtn || !el.navBar) return;
 
 		var bar = el.navBar.getBoundingClientRect();
+
+		if (isNarrow()) {
+			var sheetTop = Math.max(Math.round(bar.bottom), chromeBottom());
+			nav.drop.classList.add("is-sheet");
+			nav.drop.style.top = sheetTop + "px";
+			nav.drop.style.left = "0px";
+			nav.drop.style.right = "0px";
+			nav.drop.style.width = "100%";
+			nav.drop.style.maxWidth = "100%";
+			nav.drop.style.maxHeight = Math.max(200, window.innerHeight - sheetTop) + "px";
+			return;
+		}
+
+		nav.drop.classList.remove("is-sheet");
 		var box = nav.dropBtn.getBoundingClientRect();
 		var width = nav.drop.offsetWidth || 520;
-
+		nav.drop.style.right = "";
+		nav.drop.style.width = "";
+		nav.drop.style.maxWidth = "";
 		nav.drop.style.top = Math.round(bar.bottom + 6) + "px";
 		nav.drop.style.left = Math.round(clamp(box.left - 12, 10, Math.max(10, window.innerWidth - width - 10))) + "px";
 		nav.drop.style.maxHeight = Math.max(220, window.innerHeight - bar.bottom - 24) + "px";
 	}
 
-	function navLink(item) {
-		var node = make("a", { class: "knav-link", href: hrefFor(item), title: item.label }, [
-			iconNode(item.icon, "knav-link-glyph"),
-			make("span", { class: "knav-link-label", text: item.label }),
-		]);
-
+	function pinStar(item, extraClass) {
 		var star = make("button", {
-			class: "knav-star" + (isPinned(item.id) ? " is-on" : ""),
+			class: "knav-star" + (extraClass ? " " + extraClass : "") + (isPinned(item.id) ? " is-on" : ""),
 			type: "button",
 			title: "Pin this entry",
 			"aria-label": "Pin " + item.label,
+			"data-pin-id": item.id,
 			text: "\u2605",
 		});
 		star.addEventListener("click", function (event) {
 			event.preventDefault();
 			event.stopPropagation();
 			togglePin(item, star);
-			star.classList.toggle("is-on", isPinned(item.id));
 		});
-		node.appendChild(star);
+		return star;
+	}
+
+	function paintPinStars() {
+		Array.prototype.forEach.call(document.querySelectorAll("[data-pin-id]"), function (star) {
+			star.classList.toggle("is-on", isPinned(star.getAttribute("data-pin-id")));
+		});
+	}
+
+	function navLink(item) {
+		var node = make("a", { class: "knav-link", href: hrefFor(item), title: item.label }, [
+			iconNode(item.icon, "knav-link-glyph"),
+			make("span", { class: "knav-link-label", text: item.label }),
+			pinStar(item),
+		]);
 
 		node.addEventListener("click", function (event) {
 			// Modified clicks stay the browser's, so an entry opens in a new tab
@@ -4636,6 +4745,7 @@
 
 	function openNavDrop(menu, btn) {
 		closeNavDrop();
+		closeMobileDrawer();
 		if (!menu.columns.length) return;
 
 		var cols = make("div", { class: "knav-drop-cols" });
@@ -4695,6 +4805,7 @@
 		// Once one menu is open, sweeping the bar swaps what is underneath, the
 		// way a desktop menu bar does. Nothing opens on hover from closed.
 		btn.addEventListener("mouseenter", function () {
+			if (isNarrow()) return;
 			if (nav.drop && nav.dropFor !== name) open();
 		});
 
@@ -4774,6 +4885,15 @@
 		});
 		if (more) more.hidden = false;
 
+		/* On a phone the strip is a row of its own and scrolls sideways, so
+		   every module stays reachable by swiping and there is nothing for an
+		   overflow menu to hold. */
+		if (isNarrow()) {
+			nav.overflow = [];
+			if (more) more.hidden = true;
+			return;
+		}
+
 		var available = el.navMenus.clientWidth;
 		if (!available) return;
 
@@ -4822,26 +4942,58 @@
 	}
 
 	function applySideCollapsed() {
+		applyNarrow();
+
+		if (isNarrow()) {
+			var open = !!nav.drawerOpen && root.classList.contains("kaiten-side-on");
+			if (el.side) el.side.classList.toggle("is-collapsed", !open);
+			root.classList.toggle("kaiten-side-collapsed", !open);
+			root.classList.toggle("kaiten-drawer-open", open);
+			if (el.sideScrim) el.sideScrim.hidden = !open;
+			if (el.sideToggle) {
+				el.sideToggle.hidden = !root.classList.contains("kaiten-side-on");
+				el.sideToggle.setAttribute("aria-expanded", open ? "true" : "false");
+			}
+			return;
+		}
+
+		root.classList.remove("kaiten-drawer-open");
+		if (el.sideScrim) el.sideScrim.hidden = true;
+		if (el.sideToggle) el.sideToggle.hidden = true;
+
 		var on = sideCollapsed();
 		if (el.side) el.side.classList.toggle("is-collapsed", on);
 		root.classList.toggle("kaiten-side-collapsed", on);
 	}
 
 	function setSideCollapsed(on) {
+		if (isNarrow()) {
+			nav.drawerOpen = !on;
+			applySideCollapsed();
+			return;
+		}
 		localStorage.setItem(KEY.navSide, on ? "1" : "0");
 		applySideCollapsed();
 		schedulePush();
+	}
+
+	function closeMobileDrawer() {
+		if (!isNarrow() || !nav.drawerOpen) return;
+		nav.drawerOpen = false;
+		applySideCollapsed();
 	}
 
 	function sideLink(item, active) {
 		var node = make("a", { class: "kside-item" + (active ? " is-active" : ""), href: hrefFor(item), title: item.label }, [
 			iconNode(item.icon, "kside-item-glyph"),
 			make("span", { class: "kside-item-label", text: item.label }),
+			pinStar(item),
 		]);
 
 		node.addEventListener("click", function (event) {
 			if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
 			event.preventDefault();
+			closeMobileDrawer();
 			runItem(item);
 		});
 
@@ -4870,11 +5022,23 @@
 			setSideCollapsed(!sideCollapsed());
 		});
 
+		el.sidePin = make("span", { class: "kside-pin-slot" });
 		el.sideBody = make("div", { class: "kside-body" });
 		el.side = make("aside", { class: "kside", "aria-label": "Module navigation" }, [
-			make("div", { class: "kside-top" }, [head, collapse]),
+			make("div", { class: "kside-top" }, [head, el.sidePin, collapse]),
 			el.sideBody,
 		]);
+
+		el.sideScrim = make("button", {
+			class: "kside-scrim",
+			type: "button",
+			hidden: "hidden",
+			"aria-label": "Close module menu",
+		});
+		el.sideScrim.addEventListener("click", function () {
+			closeMobileDrawer();
+		});
+		document.body.appendChild(el.sideScrim);
 
 		mountSide();
 		applySideCollapsed();
@@ -4914,6 +5078,9 @@
 			el.sideBody.innerHTML = "";
 			el.sideTitle.textContent = "";
 			el.sideIcon.textContent = "";
+			if (el.sidePin) el.sidePin.innerHTML = "";
+			nav.drawerOpen = false;
+			applySideCollapsed();
 			return;
 		}
 
@@ -4922,6 +5089,10 @@
 		el.sideTitle.textContent = menu.label + " overview";
 		el.sideIcon.textContent = "";
 		el.sideIcon.appendChild(iconNode(menu.icon, ""));
+		if (el.sidePin) {
+			el.sidePin.innerHTML = "";
+			if (menu.overview) el.sidePin.appendChild(pinStar(menu.overview, "kside-head-star"));
+		}
 
 		var here = routeTargetKey();
 		el.sideBody.innerHTML = "";
@@ -4994,6 +5165,7 @@
 		});
 
 		paintNavActive();
+		applySideCollapsed();
 	}
 
 	/* Called on every route change, in both shells: the command bar ignores it
@@ -5005,6 +5177,7 @@
 		if (name) nav.active = name;
 
 		closeNavDrop();
+		closeMobileDrawer();
 
 		// The bar holds a place for whichever module is active, so which of the
 		// others fit has to be settled again every time that changes — otherwise
@@ -5356,6 +5529,20 @@
 
 		el.navMenus = make("nav", { class: "knav-menus", "aria-label": "Modules" });
 
+		el.sideToggle = make("button", {
+			class: "knav-side-toggle",
+			type: "button",
+			hidden: "hidden",
+			title: "Open module menu",
+			"aria-label": "Open module menu",
+			"aria-expanded": "false",
+			text: "\u2630",
+		});
+		el.sideToggle.addEventListener("click", function (event) {
+			event.stopPropagation();
+			setSideCollapsed(nav.drawerOpen);
+		});
+
 		el.search = make("input", {
 			class: "knav-search",
 			type: "search",
@@ -5388,7 +5575,7 @@
 			if (desc) togglePin(desc, el.pinBtn);
 		});
 
-		var themeBtn = make("button", { class: "aur-icon-btn", type: "button" });
+		var themeBtn = make("button", { class: "aur-icon-btn knav-appearance", type: "button" });
 		el.paintThemeBtn = function () {
 			var meta = appearanceMeta(currentAppearance());
 			themeBtn.textContent = meta.glyph;
@@ -5406,6 +5593,7 @@
 		   opens the same settings panel, and the desk has its own fullscreen. */
 		el.navBar = make("div", { class: "knav" }, [
 			make("div", { class: "knav-inner" }, [
+				el.sideToggle,
 				brand,
 				el.navMenus,
 				make("div", { class: "knav-right" }, [
@@ -5474,6 +5662,7 @@
 
 		if (el.bar && el.bar.parentNode) el.bar.parentNode.removeChild(el.bar);
 		if (el.side && el.side.parentNode) el.side.parentNode.removeChild(el.side);
+		if (el.sideScrim && el.sideScrim.parentNode) el.sideScrim.parentNode.removeChild(el.sideScrim);
 
 		var pushed = document.getElementById("body");
 		if (pushed) pushed.classList.remove("kside-pushed");
@@ -5490,6 +5679,8 @@
 		el.navMenus = null;
 		el.navBtns = null;
 		el.side = null;
+		el.sideScrim = null;
+		el.sideToggle = null;
 		el.sideBody = null;
 		el.sideTitle = null;
 		el.sideIcon = null;
@@ -5498,7 +5689,7 @@
 		el.paintThemeBtn = null;
 		el.tabNodes = {};
 
-		root.classList.remove("kaiten-bar-on", "kaiten-nav-on", "kaiten-side-on", "kaiten-side-collapsed", "kaiten-rate-on");
+		root.classList.remove("kaiten-bar-on", "kaiten-nav-on", "kaiten-side-on", "kaiten-side-collapsed", "kaiten-rate-on", "kaiten-narrow", "kaiten-drawer-open");
 	}
 
 	function remountShell() {
@@ -5690,7 +5881,14 @@
 				if (value && typeof value === "object" && !Array.isArray(value)) write(KEY[name], value);
 			});
 			SYNC_FLAGS.forEach(function (name) {
-				if (typeof data[name] === "string" && data[name] !== "") localStorage.setItem(KEY[name], data[name]);
+				if (typeof data[name] !== "string" || data[name] === "") return;
+				var value = data[name];
+				// v1 stored stock spacing as "cozy". After the rewrite that id
+				// means the mid setting, so a stale server copy must not undo it.
+				if (name === "density" && value === "cozy" && localStorage.getItem(KEY.densityRev) === "3" && localStorage.getItem(KEY.density) === "normal") {
+					value = "normal";
+				}
+				localStorage.setItem(KEY[name], value);
 			});
 			localStorage.setItem(KEY.rev, String(rev));
 			SYNC.rev = rev;
@@ -5775,6 +5973,11 @@
 	}
 
 	adoptLegacy();
+	if (adoptDensityV3()) {
+		try {
+			localStorage.setItem(KEY.rev, String((Number(localStorage.getItem(KEY.rev)) || 0) + 1));
+		} catch (e) {}
+	}
 	applyPrefs();
 
 	var attempts = 0;
