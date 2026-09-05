@@ -2427,11 +2427,39 @@
 		var row = cursorRow();
 		if (!row) return;
 
-		if (newTab && row.href) {
-			window.open(row.href, "_blank");
-			return;
+		if (newTab) {
+			var href = row.getAttribute("href");
+			if (href) {
+				openInNewTab(href);
+				return;
+			}
 		}
 		row.click();
+	}
+
+	/* Prefer window.open so we keep a handle and can move the user to the new
+	   tab. noopener would null that handle, so opener is cleared by hand instead.
+	   An in-DOM link is the fallback when the browser blocks the popup. */
+	function openInNewTab(href) {
+		var abs = new URL(href, window.location.origin).href;
+		var win = window.open(abs, "_blank");
+		if (win) {
+			try {
+				win.opener = null;
+			} catch (e) {}
+			try {
+				win.focus();
+			} catch (e) {}
+			return;
+		}
+
+		var a = document.createElement("a");
+		a.href = abs;
+		a.target = "_blank";
+		a.rel = "noopener noreferrer";
+		document.body.appendChild(a);
+		a.click();
+		a.remove();
 	}
 
 	/* ---------------------------------------------------------------------
@@ -2810,11 +2838,14 @@
 				return;
 			}
 
-			if (event.key === "Enter") {
+			if (event.key === "Enter" || event.code === "Enter" || event.key === "NumpadEnter") {
 				event.preventDefault();
+				// Stop other desk handlers from eating Cmd/Ctrl+Enter (which is
+				// otherwise a common "submit" chord) before we open the new tab.
+				if (event.metaKey || event.ctrlKey) event.stopPropagation();
 				openCursor(event.metaKey || event.ctrlKey);
 			}
-		});
+		}, true);
 
 		// Alt+Tab out of the window leaves no keyup behind.
 		window.addEventListener("blur", function () {
