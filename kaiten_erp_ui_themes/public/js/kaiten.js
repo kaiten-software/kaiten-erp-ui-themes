@@ -998,6 +998,62 @@
 		// knowable yet. Look again once it has had time to load.
 		setTimeout(refineRecent, 700);
 		setTimeout(refineRecent, 2200);
+		setTimeout(settleFormChrome, 80);
+		setTimeout(settleFormChrome, 400);
+	}
+
+	/* Frappe's tab click does scrollIntoView against --navbar-height. With a
+	   two-row bar that number is short, so the new pane lands under the title
+	   and the first fields read as fragments floating in the tab strip. */
+	function settleFormChrome() {
+		var scroller = document.querySelector(".main-section");
+		if (!scroller) return;
+
+		measureChrome();
+
+		var pane = document.querySelector(".tab-pane.active") || document.querySelector(".form-page");
+		if (!pane) return;
+
+		var first = null;
+		var sections = pane.querySelectorAll(".form-section");
+		for (var i = 0; i < sections.length; i++) {
+			var section = sections[i];
+			if (section.classList.contains("hide-control") || section.classList.contains("empty-section")) continue;
+			if (!section.offsetHeight) continue;
+			first = section;
+			break;
+		}
+		if (!first) return;
+
+		var cover = chromeBottom();
+		var head = null;
+		var heads = document.querySelectorAll(".page-head");
+		for (var h = 0; h < heads.length; h++) {
+			if (heads[h].offsetHeight) {
+				head = heads[h];
+				break;
+			}
+		}
+		if (head) cover = Math.max(cover, head.getBoundingClientRect().bottom);
+
+		var tabs = document.querySelector(".form-tabs-list");
+		if (tabs && tabs.offsetHeight) cover = Math.max(cover, tabs.getBoundingClientRect().bottom);
+
+		var gap = Math.round(cover + 8 - first.getBoundingClientRect().top);
+		if (gap > 1) scroller.scrollTop += gap;
+	}
+
+	function bindFormTabs() {
+		document.addEventListener(
+			"click",
+			function (event) {
+				var tab = event.target && event.target.closest && event.target.closest(".form-tabs .nav-link");
+				if (!tab) return;
+				setTimeout(settleFormChrome, 30);
+				setTimeout(settleFormChrome, 200);
+			},
+			true
+		);
 	}
 
 	function formRef(item) {
@@ -3634,8 +3690,51 @@
 		document.documentElement.classList.add("kaiten-bar-on");
 	}
 
+	/* Everything the desk sticks below the page head — the form tab strip, a
+	   list's heading row, the form rail — is positioned off a token that only
+	   matches the head on a stock desk. The stylesheet works off the real
+	   height instead, and this is where that height comes from. A head can wrap
+	   onto a second row when the window narrows or a document grows another
+	   action, so it is measured rather than assumed. */
+	function measureChrome() {
+		var root = document.documentElement;
+
+		// The desk keeps one .page-head per visited route and hides all but the
+		// current one, so the first match is not necessarily the live one.
+		var head = null;
+		var heads = document.querySelectorAll(".page-head");
+		for (var i = 0; i < heads.length; i++) {
+			if (heads[i].offsetHeight) {
+				head = heads[i];
+				break;
+			}
+		}
+
+		setPx(root, "--kpage-head-h", head && head.offsetHeight);
+
+		var tabs = document.querySelector(".form-tabs-list");
+		setPx(root, "--kform-tabs-h", tabs && tabs.offsetHeight);
+	}
+
+	/* Writing an unchanged value still costs a style recalculation, and this
+	   runs on a timer. */
+	function setPx(node, name, value) {
+		var next = value ? Math.round(value) + "px" : "";
+		if (node.style.getPropertyValue(name) === next) return;
+		if (next) node.style.setProperty(name, next);
+		else node.style.removeProperty(name);
+	}
+
+	function trackChrome() {
+		measureChrome();
+		// Routes, saves and permission banners all resize the head without any
+		// event worth listening for, so it is re-read on a slow tick.
+		setInterval(measureChrome, 600);
+	}
+
 	function bindChromeResize() {
 		window.addEventListener("resize", function () {
+			measureChrome();
 			applySideCollapsed();
 			fitNavMenus();
 			placeNavDrop();
@@ -5954,6 +6053,8 @@
 
 		el.anchor = anchor;
 		mountShell(anchor);
+		trackChrome();
+		bindFormTabs();
 		bindChromeResize();
 		bindNavDismiss();
 		watchSidebar();

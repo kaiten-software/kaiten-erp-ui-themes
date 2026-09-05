@@ -641,6 +641,11 @@ html[data-aur-density="compact"][data-aur-density="compact"] .aur-tab {
 
 html.kaiten-bar-on:not([data-kaiten-shell="module"]) {
 	--navbar-height: var(--aur-bar-h);
+
+	/* How much of the window the chrome eats, for anything sized against
+	   100vh. The bar is sticky rather than fixed here, so it is exactly the
+	   bar. */
+	--kchrome-h: var(--aur-bar-h);
 }
 
 .aur-bar {
@@ -1931,6 +1936,61 @@ a.aur-item:focus {
 	-webkit-backdrop-filter: none;
 	border-bottom: 1px solid var(--aur-line);
 	z-index: 15;
+}
+
+/* --- sticky offsets under the page head ---------------------------------
+   The desk scroller is padded to clear our fixed bar, so a sticky offset is
+   already measured from below the chrome. Frappe parks the tab strip and the
+   list heading row on --navbar-height, which only lines up with the page head
+   on a stock desk where the two happen to be the same size. With a taller bar
+   the strip lands a band below the head, and the form scrolls through that gap
+   — the heading and the first fields printed over each other.
+
+   --kpage-head-h is the head's measured height, published by kaiten.js so a
+   head that wraps onto two rows on a phone still gets an exact answer. The
+   var falls back to the token for the frame before the first measurement. */
+.form-tabs-list.form-tabs-sticky-up,
+.form-tabs-list.form-tabs-sticky-down,
+.form-tabs-list.form-tabs-sticky-down.show-navbar {
+	/* The pixel back hides the strip's own top border under the head's bottom
+	   one, so the two do not read as a double rule. */
+	top: calc(var(--kpage-head-h, var(--page-head-height)) - 1px);
+}
+
+/* Stock sticks the column headings at the scroller top, which is behind the
+   page head: scrolling a list loses its headings altogether. */
+.frappe-list .list-row-container:first-child {
+	top: calc(var(--kpage-head-h, var(--page-head-height)) - 1px);
+}
+
+/* Sized against the window in stock, and the window includes our chrome, so
+   the rail ran past the bottom of the screen and its last links could not be
+   reached. */
+body[data-route^="Form"] .layout-side-section {
+	top: var(--kpage-head-h, var(--page-head-height));
+	height: calc(100vh - var(--kchrome-h, 0px) - var(--kpage-head-h, var(--page-head-height)));
+}
+
+/* Clicking a tab scrolls its panel into view. Stock measures the margin from
+   the navbar. Our bar is fixed on top of that, so the same number parks the
+   first fields under the title — Address & Contact then reads as a pile of
+   labels with the values missing. Clear the chrome, the head and the strip. */
+.form-tab-content,
+.tab-pane.active {
+	scroll-margin-top: calc(
+		var(--kchrome-h, 0px) + var(--kpage-head-h, var(--page-head-height)) + var(--kform-tabs-h, 38px) + 8px
+	);
+}
+
+.layout-main-section {
+	scroll-margin-top: calc(var(--kchrome-h, 0px) + var(--kpage-head-h, var(--page-head-height)) + 8px);
+}
+
+/* A column that only holds hidden fields still takes its Bootstrap share, so
+   a three-up section with one unused lane looks like the remaining fields
+   floated into random corners. */
+.form-column:not(:has(.frappe-control:not(.hide-control))) {
+	display: none;
 }
 
 .aurora-on .page-title .title-text,
@@ -3918,6 +3978,57 @@ a.aur-item:focus {
 .aurora-on .form-section:has(.grid-row-open),
 .aurora-on .form-section.aur-reveal:has(.grid-row-open) {
 	transform: none !important;
+}
+
+/* The editor is a dialog in everything but name, and stock gives it a card
+   colour and nothing else. On a light veil that is white on white: the table
+   looks like it vanished rather than like something opened over it. */
+.aurora-on .grid-row-open .form-in-grid {
+	border: 1px solid var(--aur-line);
+	box-shadow: var(--aur-shadow-lg);
+}
+
+/* Stock veils the page in --bg-color, which under these skins is as light as
+   the dialog on top of it. */
+.aurora-on #freeze.grid-form {
+	background: color-mix(in oklab, var(--aur-ink) 78%, transparent);
+}
+
+/* Stock caps the field area at 80vh and then stacks a heading and a shortcut
+   bar around it, so on a short window the editor runs off the bottom edge and
+   takes its Insert and Delete buttons with it. Capping the whole panel and
+   letting the fields take the slack keeps both ends reachable. Desk CSS
+   restates display and overflow on the open row, so those two have to win. */
+.grid-row-open .form-in-grid {
+	display: flex !important;
+	flex-direction: column;
+	max-height: 90vh;
+	overflow: hidden !important;
+}
+
+.grid-row-open .form-in-grid .grid-form-heading {
+	flex: 0 0 auto;
+}
+
+/* The shortcut bar lives inside the body, not beside it, so the body has to
+   be the column that keeps the bar on screen while the fields scroll. */
+.grid-row-open .form-in-grid .grid-form-body {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+	max-height: none !important;
+	overflow: hidden;
+}
+
+.grid-row-open .form-in-grid .grid-form-body .form-area {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+}
+
+.grid-row-open .form-in-grid .grid-footer-toolbar {
+	flex: 0 0 auto;
 }
 
 .aurora-on .form-grid-container,

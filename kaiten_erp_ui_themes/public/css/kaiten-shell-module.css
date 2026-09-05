@@ -68,9 +68,10 @@ html[data-kaiten-shell="module"] {
 	   height and would otherwise cover the first row of the page. */
 	--kchrome-h: calc(var(--knav-h) + var(--krate-h) + 1px);
 
-	/* Frappe sticks the page head and form tabs to --navbar-height. If that
-	   stays the stock 48px, they park under the module bar and the form
-	   scrolls through the title. */
+	/* Anything the desk measures against the navbar — the dock logo band, the
+	   panes it sizes with 100vh — has to answer to this bar instead. Sticky
+	   offsets are not among them: those are handled off --kpage-head-h in
+	   kaiten.css, because the scroller is already padded past the bar. */
 	--navbar-height: var(--kchrome-h);
 
 	/* Light chrome matches the Light desk. Dark tokens sit on data-theme. */
@@ -964,6 +965,12 @@ html[data-kaiten-shell="module"]:not(.kaiten-side-on) .kside {
 
 .kside.is-collapsed {
 	width: var(--kside-w-min);
+	overflow: hidden;
+}
+
+.kside.is-collapsed .kside-item.is-active {
+	margin-inline: 6px;
+	padding-inline: 0;
 }
 
 .kside.is-collapsed .kside-collapse {

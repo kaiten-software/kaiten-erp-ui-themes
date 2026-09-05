@@ -292,11 +292,17 @@
 .aurora-on[data-kaiten-skin="lumen"] .sort-selector .btn,
 .aurora-on[data-kaiten-skin="lumen"] .list-count,
 .aurora-on[data-kaiten-skin="lumen"] .indicator-pill,
-.aurora-on[data-kaiten-skin="lumen"] .form-tabs .nav-link,
-.aurora-on[data-kaiten-skin="lumen"] .form-tabs-list .nav-link,
 .aurora-on[data-kaiten-skin="lumen"] .document-link .count,
 .aurora-on[data-kaiten-skin="lumen"] .badge-link .count {
 	border-radius: 999px;
+}
+
+/* A form tab is marked by an underline on its own bottom edge, so it is the one
+   control that must not be a pill: on a 999px radius the line bends into an arc
+   that reads as a stray circle drawn around the label. */
+.aurora-on[data-kaiten-skin="lumen"] .form-tabs .nav-link,
+.aurora-on[data-kaiten-skin="lumen"] .form-tabs-list .nav-link {
+	border-radius: var(--radius-sm);
 }
 
 .aurora-on[data-kaiten-skin="lumen"] .btn-primary,
