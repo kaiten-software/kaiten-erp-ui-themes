@@ -28,6 +28,7 @@
 		layout: "kaiten_ui_layout",
 		shell: "kaiten_ui_shell",
 		pages: "kaiten_ui_pages",
+		navView: "kaiten_ui_nav_view",
 		navSide: "kaiten_ui_nav_side",
 		rev: "kaiten_ui_rev",
 	};
@@ -35,7 +36,7 @@
 	// Everything worth carrying between machines. Anything not listed here stays
 	// local to the browser it was set in.
 	var SYNC_KEYS = ["pins", "pinGroups", "recent", "palettes"];
-	var SYNC_FLAGS = ["accent", "density", "enabled", "layout", "navSide", "pages", "shell", "skin"];
+	var SYNC_FLAGS = ["accent", "density", "enabled", "layout", "navSide", "navView", "pages", "shell", "skin"];
 	// Keyed objects rather than lists: which tone each skin was last left on.
 	var SYNC_MAPS = ["skinAccent"];
 
@@ -63,6 +64,16 @@
 			label: "Module nav",
 			note: "ERP menus on top, sidebar per module",
 		},
+	];
+
+	/* How the Module nav opens a top module. "dropdown" is the compact menu that
+	   drops under the clicked module. "grid" is the launcher the command bar
+	   uses — every module listed down the left, the chosen module's entries laid
+	   out as an icon grid on the right — so the same module content can be shown
+	   either way. Only the Module nav reads this; the command bar has its own. */
+	var NAV_VIEWS = [
+		{ id: "dropdown", label: "Dropdown", note: "Menu drops under the module" },
+		{ id: "grid", label: "Workspace grid", note: "Modules left, entries as a grid" },
 	];
 
 	/* A colour wash cannot tell these two apart. The card has to show the
@@ -132,6 +143,18 @@
 		{ id: "blush", label: "Blush", swatch: "linear-gradient(135deg,#f43f5e,#fb7185,#fecdd3)" },
 	];
 
+	/* Atlas is the flat, classic-ERP look: one solid accent per tone rather than
+	   a gradient, so the swatch is a single colour. The stylesheet paints the
+	   bar and rail in that accent's darkest step and keeps everything else
+	   near-neutral, which is why the tones only need to name a hue. */
+	var ATLAS_TONES = [
+		{ id: "navy", label: "Navy", swatch: "#1e293b" },
+		{ id: "teal", label: "Teal", swatch: "#0f766e" },
+		{ id: "indigo", label: "Indigo", swatch: "#3730a3" },
+		{ id: "slate", label: "Slate", swatch: "#334155" },
+		{ id: "plum", label: "Plum", swatch: "#6d28d9" },
+	];
+
 	/* A skin is a look, and nothing more: one stylesheet of token overrides
 	   layered on kaiten.css, picked with data-kaiten-skin. It is independent of
 	   the light/dark appearance, which stays Frappe's. "default" carries no
@@ -158,6 +181,13 @@
 			note: "Soft light, gradient wash, pill controls",
 			swatch: "linear-gradient(135deg,#ede9fe 0%,#c4b5fd 38%,#fbcfe8 68%,#fde68a 100%)",
 			tones: LUMEN_TONES,
+		},
+		{
+			id: "atlas",
+			label: "Atlas",
+			note: "Flat ERP bar, plain surfaces, square corners",
+			swatch: "linear-gradient(135deg,#334155 0%,#334155 55%,#1e293b 100%)",
+			tones: ATLAS_TONES,
 		},
 	];
 
@@ -1333,7 +1363,47 @@
 		}
 		if (tabId === "recent")
 			return [{ key: "__recent", label: "Recently visited", icon: "history", hue: 200, items: read(KEY.recent, []) }];
+		if (tabId === "shellnav") return shellNavGroups();
 		return state.tabs[tabId] || [];
+	}
+
+	/* The Module nav's own content, reshaped into the exact group/item model the
+	   mega menu draws: every configured module becomes a group down the rail,
+	   its entries the grid on the right. Because it is the same model, the tiles,
+	   the "New" chip, the keyboard and the filter all come for free — the grid
+	   view is the command menu wearing the module content. */
+	function shellNavItem(item) {
+		var copy = Object.assign({}, item);
+		copy.search = (item.label + " " + (item.sub || "")).toLowerCase();
+
+		// A list entry earns the same New chip it has in the command menu, so
+		// the two are indistinguishable. The doctype is the tail of the id.
+		if (!copy.extra && typeof copy.id === "string" && copy.id.indexOf("list:") === 0) {
+			var doctype = copy.id.slice("list:".length);
+			if (canCreate(doctype)) copy.extra = { label: "New", act: "new", doctype: doctype };
+		}
+		return copy;
+	}
+
+	function shellNavGroups() {
+		return (nav.menus || []).map(function (menu) {
+			var items = [];
+			if (menu.overview) items.push(shellNavItem(menu.overview));
+			menu.columns.forEach(function (column) {
+				eachKind(column.items, areaIsMixed(column.items), function (bucket, rows) {
+					rows.forEach(function (row) {
+						items.push(shellNavItem(row));
+					});
+				});
+			});
+			return {
+				key: menu.name,
+				label: menu.label,
+				icon: menu.icon,
+				hue: menu.hue,
+				items: items,
+			};
+		});
 	}
 
 	/* ---------------------------------------------------------------------
@@ -3158,6 +3228,27 @@
 			shells.appendChild(card);
 		});
 
+		/* The Module nav can present a module either way, so this segment lets
+		   the two be swapped without leaving the panel. It only means something
+		   for that shell, so it is shown only while that shell is chosen. */
+		var navViewSeg = make("div", { class: "aur-seg" });
+		NAV_VIEWS.forEach(function (option) {
+			var button = make("button", {
+				class: currentNavView() === option.id ? "aur-on" : "",
+				type: "button",
+				title: option.note,
+				text: option.label,
+			});
+			button.addEventListener("click", function () {
+				setNavView(option.id);
+				Array.prototype.forEach.call(navViewSeg.children, function (node) {
+					node.classList.remove("aur-on");
+				});
+				button.classList.add("aur-on");
+			});
+			navViewSeg.appendChild(button);
+		});
+
 		var pageSeg = make("div", { class: "aur-seg" });
 		PAGE_STYLES.forEach(function (option) {
 			var button = make("button", {
@@ -3204,8 +3295,10 @@
 		el.pop = make("div", { class: "aur-pop" }, [
 			make("div", { class: "aur-pop-label", text: "Appearance" }),
 			make("div", { class: "aur-pop-row" }, [appearanceSeg()]),
-			make("div", { class: "aur-pop-label", text: "Navigation" }),
+			make("div", { class: "aur-pop-label", text: "Layout" }),
 			make("div", { class: "aur-pop-row" }, [shells]),
+			currentShell() === "module" ? make("div", { class: "aur-pop-label", text: "Module menu" }) : null,
+			currentShell() === "module" ? make("div", { class: "aur-pop-row" }, [navViewSeg]) : null,
 			make("div", { class: "aur-pop-label", text: "Theme" }),
 			make("div", { class: "aur-pop-row" }, [skins]),
 			toneLabel,
@@ -3893,6 +3986,21 @@
 		return knownId(PAGE_STYLES, stored) ? stored : "standard";
 	}
 
+	function currentNavView() {
+		var stored = localStorage.getItem(KEY.navView);
+		return knownId(NAV_VIEWS, stored) ? stored : "dropdown";
+	}
+
+	function setNavView(id) {
+		if (!knownId(NAV_VIEWS, id) || id === currentNavView()) return;
+		localStorage.setItem(KEY.navView, id);
+		applyPrefs();
+		schedulePush();
+		// An open menu was drawn in the old presentation, so drop it; the next
+		// click rebuilds it in the chosen one.
+		closeNavDrop();
+	}
+
 	function setShell(id) {
 		if (!knownId(SHELLS, id) || id === currentShell()) return;
 		localStorage.setItem(KEY.shell, id);
@@ -3954,6 +4062,7 @@
 		root.setAttribute("data-aur-accent", accent);
 		root.setAttribute("data-aur-density", currentDensity());
 		root.setAttribute("data-kaiten-shell", currentShell());
+		root.setAttribute("data-kaiten-nav-view", currentNavView());
 		root.setAttribute("data-kaiten-pages", currentPages());
 		paintCustom(accent.indexOf(CUSTOM_PREFIX) === 0 ? paletteById(accent) : null);
 	}
@@ -4790,6 +4899,7 @@
 		}
 
 		nav.drop.classList.remove("is-sheet");
+
 		var box = nav.dropBtn.getBoundingClientRect();
 		var width = nav.drop.offsetWidth || 520;
 		nav.drop.style.right = "";
@@ -4881,6 +4991,32 @@
 		placeNavDrop();
 	}
 
+	/* ---------------------------------------------------------------------
+	   The workspace-grid presentation
+
+	   The grid view is the command bar's mega menu, shown from the module bar
+	   with the module content as its data (the "shellnav" source in groupsFor).
+	   Reusing that panel is what makes the tiles, the "New" chip, the filter
+	   and the whole keyboard match the command menu exactly, rather than a
+	   look-alike built beside it.
+	   ------------------------------------------------------------------ */
+
+	function moduleMegaOpen() {
+		return megaOpen() && state.activeTab === "shellnav";
+	}
+
+	function openModuleMega(menu, btn) {
+		closeNavDrop();
+		closeMobileDrawer();
+		if (!nav.menus.length) return;
+
+		// openTab renders the rail from groupsFor("shellnav"), opens the panel
+		// under whichever bar is mounted and selects the first group; the
+		// clicked module is then brought to the front.
+		openTab("shellnav");
+		if (menu && menuByName(menu.name)) selectGroup("shellnav", menu.name);
+	}
+
 	/* The menu behind a button is looked up when it is opened rather than closed
 	   over, because the overflow button's contents depend on how many of the
 	   others currently fit. */
@@ -4892,11 +5028,23 @@
 
 		var open = function () {
 			var menu = getMenu();
-			if (menu) openNavDrop(menu, btn);
+			if (!menu) return;
+			if (currentNavView() === "grid") openModuleMega(menu, btn);
+			else openNavDrop(menu, btn);
 		};
 
 		btn.addEventListener("click", function (event) {
 			event.stopPropagation();
+
+			// In the grid the mega already lists every module down its rail, so a
+			// top button re-focuses its module rather than opening a second
+			// panel — and clicking the module already shown closes it.
+			if (currentNavView() === "grid" && moduleMegaOpen()) {
+				var menu = getMenu();
+				if (menu && state.activeKey === menu.name) return closeMega();
+				if (menu) return selectGroup("shellnav", menu.name);
+			}
+
 			if (nav.dropFor === name) closeNavDrop();
 			else open();
 		});
@@ -4905,6 +5053,11 @@
 		// way a desktop menu bar does. Nothing opens on hover from closed.
 		btn.addEventListener("mouseenter", function () {
 			if (isNarrow()) return;
+			if (currentNavView() === "grid" && moduleMegaOpen()) {
+				var menu = getMenu();
+				if (menu && state.activeKey !== menu.name) selectGroup("shellnav", menu.name);
+				return;
+			}
 			if (nav.drop && nav.dropFor !== name) open();
 		});
 
@@ -5083,11 +5236,18 @@
 	}
 
 	function sideLink(item, active) {
-		var node = make("a", { class: "kside-item" + (active ? " is-active" : ""), href: hrefFor(item), title: item.label }, [
-			iconNode(item.icon, "kside-item-glyph"),
-			make("span", { class: "kside-item-label", text: item.label }),
-			pinStar(item),
-		]);
+		// The same coloured tile the grid cards carry, so the rail and the
+		// launcher read as one system. The hue rides on the row as --h, exactly
+		// as it does on a mega item.
+		var node = make(
+			"a",
+			{ class: "kside-item" + (active ? " is-active" : ""), href: hrefFor(item), title: item.label, "--h": String(item.hue) },
+			[
+				make("span", { class: "kside-item-icon" }, [iconNode(item.icon, "kside-item-glyph")]),
+				make("span", { class: "kside-item-label", text: item.label }),
+				pinStar(item),
+			]
+		);
 
 		node.addEventListener("click", function (event) {
 			if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
@@ -5100,10 +5260,11 @@
 	}
 
 	function buildSide() {
-		el.sideIcon = make("span", { class: "kside-head-glyph" });
+		el.sideIcon = make("span", { class: "kside-head-icon" });
 		el.sideTitle = make("span", { class: "kside-title" });
 
 		var head = make("button", { class: "kside-head", type: "button", title: "Open this module" }, [el.sideIcon, el.sideTitle]);
+		el.sideHead = head;
 		head.addEventListener("click", function () {
 			var menu = menuByName(activeMenuName());
 			if (menu && menu.overview) runItem(menu.overview);
@@ -5186,8 +5347,9 @@
 		// Named for the workspace it opens, which also keeps it distinct from the
 		// group below that Frappe often gives the same name as the module.
 		el.sideTitle.textContent = menu.label + " overview";
+		if (el.sideHead) el.sideHead.style.setProperty("--h", String(menu.hue != null ? menu.hue : hue(menu.label)));
 		el.sideIcon.textContent = "";
-		el.sideIcon.appendChild(iconNode(menu.icon, ""));
+		el.sideIcon.appendChild(iconNode(menu.icon, "kside-head-glyph"));
 		if (el.sidePin) {
 			el.sidePin.innerHTML = "";
 			if (menu.overview) el.sidePin.appendChild(pinStar(menu.overview, "kside-head-star"));
@@ -5229,6 +5391,7 @@
 					type: "button",
 					title: column.title + " \u2014 " + column.items.length + " page(s)",
 					text: column.title,
+					"--h": String(hue(column.title)),
 				});
 				pill.addEventListener("click", function () {
 					nav.area[menu.name] = { index: index, route: routeTargetKey() };

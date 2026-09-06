@@ -112,6 +112,40 @@ html.aurora-on[data-kaiten-shell="module"][data-theme="dark"] {
 	--knav-bg-2: color-mix(in oklab, var(--aur-accent, #e0a24a) 18%, #17233b);
 }
 
+/* Atlas is the one skin that makes the bar a solid dark band — the classic
+   ERP module strip. It reads --atlas-bar* from kaiten-atlas.css, so the tone
+   picker recolours the band. The extra .aurora-on keeps this above the light
+   tint rule directly above, which also matches this shell. The rail below the
+   bar stays on the light --knav-panel tokens, so only the top band goes dark. */
+html.aurora-on[data-kaiten-skin="atlas"][data-kaiten-shell="module"] {
+	--knav-bg: var(--atlas-bar, #1e293b);
+	--knav-bg-2: var(--atlas-bar-2, #172032);
+	--knav-ink: var(--atlas-bar-ink, rgba(255, 255, 255, 0.72));
+	--knav-ink-strong: var(--atlas-bar-ink-strong, #ffffff);
+	--knav-line: var(--atlas-bar-line, rgba(255, 255, 255, 0.1));
+	--knav-fill: var(--atlas-bar-fill, rgba(255, 255, 255, 0.08));
+	--knav-fill-2: var(--atlas-bar-fill-2, rgba(255, 255, 255, 0.14));
+	--knav-shadow: rgba(2, 6, 23, 0.55);
+	--krate-bg: rgba(0, 0, 0, 0.18);
+}
+
+/* On the dark band the navy accent would vanish, so the bar's own "you are
+   here" marks switch to the bright ink. The rail keeps --knav-accent (navy),
+   which is why only bar-scoped elements are retargeted here. */
+html.aurora-on[data-kaiten-skin="atlas"][data-kaiten-shell="module"] .knav-brand-name,
+html.aurora-on[data-kaiten-skin="atlas"][data-kaiten-shell="module"] .knav-menu.is-active {
+	color: var(--atlas-bar-ink-strong, #fff);
+}
+
+html.aurora-on[data-kaiten-skin="atlas"][data-kaiten-shell="module"] .knav-menu.is-active::after {
+	background: var(--atlas-bar-ink-strong, #fff);
+}
+
+html.aurora-on[data-kaiten-skin="atlas"][data-kaiten-shell="module"] .knav-brand-badge {
+	background: var(--atlas-bar-fill-2, rgba(255, 255, 255, 0.14));
+	color: var(--atlas-bar-ink-strong, #fff);
+}
+
 /* -------------------------------------------------------------------------
    2. Top bar
    ---------------------------------------------------------------------- */
@@ -774,17 +808,28 @@ html[data-kaiten-shell="module"]:not(.kaiten-side-on) .kside {
 	background: color-mix(in oklab, var(--knav-accent) 11%, transparent);
 }
 
-.kside-head-glyph {
-	display: inline-flex;
+.kside-head-icon {
 	flex: none;
-	width: 16px;
-	height: 16px;
-	color: var(--knav-accent);
+	display: grid;
+	place-items: center;
+	width: 26px;
+	height: 26px;
+	border-radius: 8px;
+	color: #fff;
+	background: linear-gradient(140deg, hsl(var(--h, 245) 85% 62%), hsl(calc(var(--h, 245) + 38) 85% 58%));
+	box-shadow: 0 4px 10px -6px hsl(var(--h, 245) 85% 50% / 0.85);
+	transition: transform var(--aur-mid, 0.22s) var(--aur-ease-back, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
 
-.kside-head-glyph svg {
-	width: 16px;
-	height: 16px;
+.kside-head:hover .kside-head-icon {
+	transform: rotate(-6deg) scale(1.07);
+}
+
+.kside-head-glyph,
+.kside-head-icon svg {
+	width: 15px;
+	height: 15px;
+	color: #fff;
 }
 
 .kside-title {
@@ -846,11 +891,11 @@ html[data-kaiten-shell="module"]:not(.kaiten-side-on) .kside {
 
 .kside-pill {
 	max-width: 100%;
-	padding: 4px 9px;
-	border: 0;
+	padding: 4px 10px;
+	border: 1px solid color-mix(in oklab, hsl(var(--h, 245) 70% 54%) 22%, transparent);
 	border-radius: 999px;
-	background: color-mix(in oklab, var(--knav-panel-ink) 8%, transparent);
-	color: var(--knav-panel-ink-soft);
+	background: color-mix(in oklab, hsl(var(--h, 245) 80% 58%) 16%, var(--knav-panel-2));
+	color: hsl(var(--h, 245) 42% 32%);
 	font-size: 11px;
 	font-weight: 600;
 	line-height: 1.35;
@@ -859,17 +904,32 @@ html[data-kaiten-shell="module"]:not(.kaiten-side-on) .kside {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	transition: background 0.16s ease, color 0.16s ease;
+	transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
 }
 
 .kside-pill:hover {
-	background: color-mix(in oklab, var(--knav-accent) 16%, transparent);
-	color: var(--knav-panel-ink);
+	background: color-mix(in oklab, hsl(var(--h, 245) 80% 58%) 28%, var(--knav-panel-2));
+	color: hsl(var(--h, 245) 48% 28%);
+	transform: translateY(-1px);
 }
 
 .kside-pill.is-on {
-	background: var(--knav-accent);
-	color: #1b1205;
+	background: linear-gradient(140deg, hsl(var(--h, 245) 85% 62%), hsl(calc(var(--h, 245) + 38) 85% 58%));
+	border-color: transparent;
+	color: #fff;
+	box-shadow: 0 6px 14px -8px hsl(var(--h, 245) 85% 50% / 0.85);
+}
+
+html[data-theme="dark"] .kside-pill {
+	color: hsl(var(--h, 245) 70% 82%);
+}
+
+html[data-theme="dark"] .kside-pill:hover {
+	color: hsl(var(--h, 245) 78% 88%);
+}
+
+html[data-theme="dark"] .kside-pill.is-on {
+	color: #fff;
 }
 
 /* The chosen area, named once above its pages. */
@@ -901,9 +961,9 @@ html[data-kaiten-shell="module"]:not(.kaiten-side-on) .kside {
 .kside-item {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 10px;
 	padding: 5px 8px;
-	border-radius: 7px;
+	border-radius: 9px;
 	color: var(--knav-panel-ink);
 	font-size: 12.5px;
 	text-decoration: none;
@@ -917,11 +977,30 @@ html[data-kaiten-shell="module"]:not(.kaiten-side-on) .kside {
 	outline: none;
 }
 
+/* The coloured tile from the mega grid, so a sidebar entry and a launcher card
+   are the same object in two places. The hue comes off the row's own --h. */
+.kside-item-icon {
+	flex: none;
+	display: grid;
+	place-items: center;
+	width: 26px;
+	height: 26px;
+	border-radius: 8px;
+	color: #fff;
+	background: linear-gradient(140deg, hsl(var(--h, 245) 85% 62%), hsl(calc(var(--h, 245) + 38) 85% 58%));
+	box-shadow: 0 4px 10px -6px hsl(var(--h, 245) 85% 50% / 0.85);
+	transition: transform var(--aur-mid, 0.22s) var(--aur-ease-back, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+.kside-item:hover .kside-item-icon {
+	transform: rotate(-6deg) scale(1.07);
+}
+
 .kside-item-glyph {
 	flex: none;
-	width: 14px;
-	height: 14px;
-	opacity: 0.65;
+	width: 15px;
+	height: 15px;
+	color: #fff;
 }
 
 .kside-item-label {
@@ -956,9 +1035,8 @@ html[data-kaiten-shell="module"]:not(.kaiten-side-on) .kside {
 	font-weight: 700;
 }
 
-.kside-item.is-active .kside-item-glyph {
-	opacity: 1;
-	color: var(--knav-accent);
+.kside-item.is-active .kside-item-icon {
+	box-shadow: 0 0 0 2px var(--knav-panel), 0 0 0 4px color-mix(in oklab, var(--knav-accent) 45%, transparent);
 }
 
 /* --- collapsed --- */

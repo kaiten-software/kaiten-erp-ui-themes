@@ -1957,10 +1957,14 @@ a.aur-item:focus {
 	top: calc(var(--kpage-head-h, var(--page-head-height)) - 1px);
 }
 
-/* Stock sticks the column headings at the scroller top, which is behind the
-   page head: scrolling a list loses its headings altogether. */
+/* The list's own scroller (.result-container) already begins below the page
+   head, so the heading — being the first thing in it — sits flush at its top.
+   The old offset measured from the page head instead, and because the heading
+   is always at the scroller's top edge that offset pinned it permanently a
+   headfull down, leaving the first row to ride up over it. Zero is the only
+   value that keeps it flush at rest and stuck to the scroller top on scroll. */
 .frappe-list .list-row-container:first-child {
-	top: calc(var(--kpage-head-h, var(--page-head-height)) - 1px);
+	top: 0;
 }
 
 /* Sized against the window in stock, and the window includes our chrome, so
