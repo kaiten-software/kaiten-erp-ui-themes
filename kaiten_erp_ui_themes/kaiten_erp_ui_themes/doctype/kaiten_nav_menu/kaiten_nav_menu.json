@@ -10,6 +10,7 @@
   "title",
   "icon",
   "sequence",
+  "menu_config",
   "column_break_head",
   "enabled",
   "overview_section",
@@ -43,6 +44,15 @@
    "fieldtype": "Int",
    "in_list_view": 1,
    "label": "Sequence"
+  },
+  {
+   "description": "Which client/domain profile this menu belongs to. Empty means it always shows. When any Custom Menu Config is Active, only menus linked to an Active config (or left empty) are shown.",
+   "fieldname": "menu_config",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Menu Config",
+   "options": "Custom Menu Config"
   },
   {
    "fieldname": "column_break_head",
