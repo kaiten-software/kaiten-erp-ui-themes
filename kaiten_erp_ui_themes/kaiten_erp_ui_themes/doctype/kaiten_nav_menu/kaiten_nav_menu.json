@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:title",
+ "autoname": "hash",
  "creation": "2026-09-05 00:00:00.000000",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -23,13 +23,12 @@
  ],
  "fields": [
   {
-   "description": "Shown on the bar. Business wording beats module wording here: \"Purchase\" reads better than \"Buying\".",
+   "description": "Shown on the bar. Business wording beats module wording here: \"Purchase\" reads better than \"Buying\". The same title may be reused across different Menu Configs.",
    "fieldname": "title",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Title",
-   "reqd": 1,
-   "unique": 1
+   "reqd": 1
   },
   {
    "description": "Lucide icon name. Left empty, one is guessed from the title.",
@@ -46,7 +45,7 @@
    "label": "Sequence"
   },
   {
-   "description": "Which client/domain profile this menu belongs to. Empty means it always shows. When any Custom Menu Config is Active, only menus linked to an Active config (or left empty) are shown.",
+   "description": "Which content profile this menu belongs to. Empty = global: shows under Module nav and inside every profile. Linked to an Active config: shows in that profile and under Module nav. Linked to an Inactive config: hidden everywhere.",
    "fieldname": "menu_config",
    "fieldtype": "Link",
    "in_list_view": 1,

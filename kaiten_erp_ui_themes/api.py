@@ -464,6 +464,10 @@ def _workspace_links(names: list, readable: set) -> dict:
 
 NAV_DOCTYPE = "Kaiten Nav Menu"
 
+# A content profile: a client/domain (Jewellery, Solar…) whose menus should show
+# together. A menu points at one of these; leaving it empty means "always show".
+CONFIG_DOCTYPE = "Custom Menu Config"
+
 # The doctype names sections the way a person would; the client groups them by
 # the same three kinds the automatic menu produces. Kept explicit in both
 # directions so neither side drifts into a spelling the other drops on the floor.
@@ -499,6 +503,25 @@ def _nav_is_configured() -> bool:
 	except Exception:
 		# The doctype is not on this site yet, which simply means "not configured".
 		return False
+
+
+def _active_menu_configs() -> set:
+	"""Names of every Custom Menu Config marked Active.
+
+	This is the "content" switch. An empty result means no profile is turned on,
+	so the caller shows every enabled menu — the original behaviour. Older sites
+	without the doctype are treated the same as "none active".
+	"""
+	try:
+		rows = frappe.get_all(
+			CONFIG_DOCTYPE,
+			filters={"status": "Active"},
+			pluck="name",
+			ignore_permissions=True,
+		)
+	except Exception:
+		return set()
+	return set(rows)
 
 
 def _report_meta(names: set) -> dict:
@@ -599,18 +622,35 @@ def _config_usable(row: dict, readable: set, reports: dict, pages: set, dashboar
 	return False
 
 
-def _config_menus(readable: set) -> list:
+def _config_menus(readable: set, profile: str | None = None, all_menus: bool = False) -> list:
 	"""Menus assembled from Kaiten Nav Menu records."""
 	menus = frappe.get_all(
 		NAV_DOCTYPE,
 		filters={"enabled": 1},
-		fields=["name", "title", "icon", "sequence", "overview_link_type", "overview_link_to"],
+		fields=["name", "title", "icon", "sequence", "overview_link_type", "overview_link_to", "menu_config"],
 		order_by="sequence asc, title asc",
 		limit_page_length=0,
 		ignore_permissions=True,
 	)
 	if not menus:
 		return []
+
+	# Content profiles decide *what* shows, by how a menu's menu_config is tagged:
+	#   * Module nav (standard) -> only the untagged menus, the plain base bar.
+	#   * an Active profile -> only the menus tagged to that profile (focused).
+	#   * a menu tagged to an Inactive config -> hidden everywhere.
+	# Each profile is thus its own self-contained set, not the base plus extras.
+	# ``all_menus`` skips this split for callers that need the whole configured
+	# set, like drift detection.
+	if not all_menus:
+		profile = (profile or "").strip()
+		active = _active_menu_configs()
+		if profile and profile in active:
+			menus = [menu for menu in menus if menu.menu_config == profile]
+		else:
+			menus = [menu for menu in menus if not menu.menu_config]
+		if not menus:
+			return []
 
 	names = [menu.name for menu in menus]
 
@@ -740,12 +780,45 @@ def _config_menus(readable: set) -> list:
 
 
 @frappe.whitelist()
-def get_shell_nav(refresh: int | str = 0) -> dict:
-	"""Top-level menus for the module-nav shell, each with its own columns."""
+def get_menu_configs() -> list:
+	"""Active content profiles the user can switch the bar to.
+
+	The client shows these next to a built-in "Standard" so the bar can be
+	narrowed to one client/domain's menus without touching anyone else's.
+	"""
+	if frappe.session.user == "Guest":
+		return []
+	try:
+		rows = frappe.get_all(
+			CONFIG_DOCTYPE,
+			filters={"status": "Active"},
+			fields=["name", "domain_name"],
+			order_by="domain_name asc",
+			ignore_permissions=True,
+		)
+	except Exception:
+		return []
+	return [{"name": row.name, "label": row.domain_name or row.name} for row in rows]
+
+
+@frappe.whitelist()
+def get_shell_nav(refresh: int | str = 0, profile: str | None = None) -> dict:
+	"""Top-level menus for the module-nav shell, each with its own columns.
+
+	``profile`` is the chosen content profile: empty/"standard" shows every menu,
+	a Custom Menu Config name narrows the bar to that profile plus global menus.
+	"""
 	if frappe.session.user == "Guest":
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
-	cache_key = f"kaiten_erp_ui_themes_shell_nav::{frappe.session.user}"
+	profile = (profile or "").strip()
+	# An unknown or switched-off profile quietly falls back to Standard rather
+	# than leaving the bar blank.
+	if profile and profile not in _active_menu_configs():
+		profile = ""
+
+	slug = profile or "standard"
+	cache_key = f"kaiten_erp_ui_themes_shell_nav::{frappe.session.user}::{slug}"
 
 	if not frappe.utils.cint(refresh):
 		cached = frappe.cache().get_value(cache_key)
@@ -758,13 +831,14 @@ def get_shell_nav(refresh: int | str = 0) -> dict:
 	# result matters: a config written for a jewellery site and imported onto a
 	# plain ERPNext one would otherwise leave the bar blank.
 	if _nav_is_configured():
-		menus = _config_menus(readable)
+		menus = _config_menus(readable, profile)
 		if menus:
-			payload = {"user": frappe.session.user, "menus": menus, "source": "config"}
+			payload = {"user": frappe.session.user, "menus": menus, "source": "config", "profile": slug}
 			frappe.cache().set_value(cache_key, payload, expires_in_sec=CACHE_TTL)
 			return payload
 
 	payload = _auto_nav(readable)
+	payload["profile"] = slug
 	frappe.cache().set_value(cache_key, payload, expires_in_sec=CACHE_TTL)
 	return payload
 
@@ -891,7 +965,7 @@ def nav_drift() -> dict:
 	readable = _readable_doctypes()
 
 	held = set()
-	for menu in _config_menus(readable):
+	for menu in _config_menus(readable, all_menus=True):
 		for column in menu["columns"]:
 			for item in column["items"]:
 				if item.get("to"):

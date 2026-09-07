@@ -28,6 +28,7 @@
 		layout: "kaiten_ui_layout",
 		shell: "kaiten_ui_shell",
 		pages: "kaiten_ui_pages",
+		content: "kaiten_ui_content",
 		navView: "kaiten_ui_nav_view",
 		navSide: "kaiten_ui_nav_side",
 		rev: "kaiten_ui_rev",
@@ -36,7 +37,7 @@
 	// Everything worth carrying between machines. Anything not listed here stays
 	// local to the browser it was set in.
 	var SYNC_KEYS = ["pins", "pinGroups", "recent", "palettes"];
-	var SYNC_FLAGS = ["accent", "density", "enabled", "layout", "navSide", "navView", "pages", "shell", "skin"];
+	var SYNC_FLAGS = ["accent", "content", "density", "enabled", "layout", "navSide", "navView", "pages", "shell", "skin"];
 	// Keyed objects rather than lists: which tone each skin was last left on.
 	var SYNC_MAPS = ["skinAccent"];
 
@@ -3049,6 +3050,20 @@
 		}
 	}
 
+	function reopenSettings() {
+		// Switching shell rebuilds the bar and its settings button, which closes
+		// any open panel. When the switch came from inside the panel, open a fresh
+		// one on the new button so the choices never disappear mid-change.
+		//
+		// Deferred a tick so the click that triggered the switch finishes bubbling
+		// first: the old outside-click listener then sees the panel already gone
+		// and retires itself, rather than shutting the freshly opened one.
+		setTimeout(function () {
+			var anchor = document.querySelector(".knav-brand") || document.querySelector(".aur-brand");
+			if (anchor && !el.pop) openSettings(anchor);
+		}, 0);
+	}
+
 	/* Every popover closes when a click lands outside it, and contains() alone
 	   cannot tell where a click landed: a handler that redraws its own section —
 	   a theme card, a colour swatch — detaches the very node that was clicked
@@ -3207,65 +3222,34 @@
 			density.appendChild(button);
 		});
 
-		/* Swapping the shell replaces the bar this popover is anchored to, so
-		   there is nothing left to follow and the panel closes with the change. */
-		var shells = make("div", { class: "aur-shells" });
-		SHELLS.forEach(function (shell) {
-			var card = make(
-				"button",
-				{ class: "aur-skin aur-shell" + (currentShell() === shell.id ? " aur-on" : ""), type: "button", title: shell.note },
-				[
-					shellPreview(shell.id),
-					make("span", { class: "aur-skin-name", text: shell.label }),
-					make("span", { class: "aur-skin-note", text: shell.note }),
-				]
-			);
-			card.addEventListener("click", function () {
-				if (shell.id === currentShell()) return;
-				setShell(shell.id);
-				closePop();
-			});
-			shells.appendChild(card);
-		});
-
-		/* The Module nav can present a module either way, so this segment lets
-		   the two be swapped without leaving the panel. It only means something
-		   for that shell, so it is shown only while that shell is chosen. */
-		var navViewSeg = make("div", { class: "aur-seg" });
-		NAV_VIEWS.forEach(function (option) {
-			var button = make("button", {
-				class: currentNavView() === option.id ? "aur-on" : "",
-				type: "button",
-				title: option.note,
-				text: option.label,
-			});
-			button.addEventListener("click", function () {
-				setNavView(option.id);
-				Array.prototype.forEach.call(navViewSeg.children, function (node) {
-					node.classList.remove("aur-on");
+		/* The look of a module view: "Standard" opens a module as a dropdown,
+		   "Workspace grid" as the launcher. This is offered only for a custom
+		   content profile — the default bar and the command bar don't use it — so
+		   the label and row are hidden until such a profile is chosen. */
+		var lookSeg = make("div", { class: "aur-seg" });
+		function renderLookSeg() {
+			lookSeg.textContent = "";
+			NAV_VIEWS.forEach(function (option) {
+				var label = option.id === "dropdown" ? "Standard" : "Workspace grid";
+				var button = make("button", {
+					class: currentNavView() === option.id ? "aur-on" : "",
+					type: "button",
+					title: option.note,
+					text: label,
 				});
-				button.classList.add("aur-on");
-			});
-			navViewSeg.appendChild(button);
-		});
-
-		var pageSeg = make("div", { class: "aur-seg" });
-		PAGE_STYLES.forEach(function (option) {
-			var button = make("button", {
-				class: currentPages() === option.id ? "aur-on" : "",
-				type: "button",
-				title: option.note,
-				text: option.label,
-			});
-			button.addEventListener("click", function () {
-				setPages(option.id);
-				Array.prototype.forEach.call(pageSeg.children, function (node) {
-					node.classList.remove("aur-on");
+				button.addEventListener("click", function () {
+					setNavView(option.id);
+					Array.prototype.forEach.call(lookSeg.children, function (node) {
+						node.classList.remove("aur-on");
+					});
+					button.classList.add("aur-on");
 				});
-				button.classList.add("aur-on");
+				lookSeg.appendChild(button);
 			});
-			pageSeg.appendChild(button);
-		});
+		}
+		renderLookSeg();
+		var lookLabel = make("div", { class: "aur-pop-label", text: "Look" });
+		var lookRow = make("div", { class: "aur-pop-row" }, [lookSeg]);
 
 		var refresh = make("div", { class: "aur-seg" });
 		var refreshBtn = make("button", { type: "button", text: "Rebuild menu cache" });
@@ -3292,22 +3276,116 @@
 			customise.appendChild(customiseBtn);
 		}
 
+		// Content is *what* the bar shows, offered as cards the way the shells
+		// were: "Command bar", the default "Module nav" (every unconfigured menu),
+		// and one card per Active profile (that profile's menus only). Painted
+		// from the cached list first, then refreshed once the server answers.
+		var contentCards = make("div", { class: "aur-shells aur-content-cards" });
+
+		function currentContentCard() {
+			if (currentShell() === "command") return "command";
+			return currentContent();
+		}
+
+		function isCustomContent() {
+			return currentShell() === "module" && currentContent() !== "standard";
+		}
+
+		function updateLook() {
+			// The look (Standard vs Workspace grid) belongs to any Kaiten-menu
+			// content — Module nav and every custom profile alike — so it shows
+			// for the whole module shell and hides only for the command bar.
+			var show = currentShell() === "module";
+			lookLabel.style.display = show ? "" : "none";
+			lookRow.style.display = show ? "" : "none";
+			renderLookSeg();
+		}
+
+		function selectContentCard(id) {
+			if (id === currentContentCard()) return;
+			var wasOpen = Boolean(el.pop);
+			if (id === "command") {
+				setShell("command");
+				if (wasOpen) reopenSettings();
+				return;
+			}
+			// A module view: the default "standard" set or a named profile. The
+			// workspace grid is the default look for any module content.
+			localStorage.setItem(KEY.content, id);
+			localStorage.setItem(KEY.navView, "grid");
+			schedulePush();
+			if (currentShell() !== "module") {
+				setShell("module");
+				if (wasOpen) reopenSettings();
+				return;
+			}
+			applyPrefs();
+			loadShellNav(1);
+			renderContentCards();
+			updateLook();
+		}
+
+		function renderContentCards() {
+			contentCards.textContent = "";
+			var options = [
+				{ name: "command", label: "Command bar", note: "Tabs, mega menu, jump", shell: "command" },
+				{ name: "standard", label: "Module nav", note: "Default menus", shell: "module" },
+			];
+			contentConfigs.forEach(function (config) {
+				options.push({ name: config.name, label: config.label, note: "Custom profile", shell: "module" });
+			});
+			var current = currentContentCard();
+			options.forEach(function (option) {
+				var card = make(
+					"button",
+					{ class: "aur-skin aur-shell" + (option.name === current ? " aur-on" : ""), type: "button", title: option.note },
+					[
+						shellPreview(option.shell),
+						make("span", { class: "aur-skin-name", text: option.label }),
+						make("span", { class: "aur-skin-note", text: option.note }),
+					]
+				);
+				card.addEventListener("click", function () {
+					selectContentCard(option.name);
+				});
+				contentCards.appendChild(card);
+			});
+		}
+		renderContentCards();
+		updateLook();
+		loadMenuConfigs(function () {
+			if (el.pop) {
+				renderContentCards();
+				updateLook();
+			}
+		});
+
 		el.pop = make("div", { class: "aur-pop" }, [
 			make("div", { class: "aur-pop-label", text: "Appearance" }),
 			make("div", { class: "aur-pop-row" }, [appearanceSeg()]),
-			make("div", { class: "aur-pop-label", text: "Layout" }),
-			make("div", { class: "aur-pop-row" }, [shells]),
-			currentShell() === "module" ? make("div", { class: "aur-pop-label", text: "Module menu" }) : null,
-			currentShell() === "module" ? make("div", { class: "aur-pop-row" }, [navViewSeg]) : null,
+
+			// Content is *what* the bar shows: the command bar, the default module
+			// nav, or one of the Active custom profiles.
+			make("div", { class: "aur-pop-label", text: "Content" }),
+			make("div", { class: "aur-pop-row" }, [contentCards]),
+
+			// Theme is *how* it is painted: the colour skins carried from before.
 			make("div", { class: "aur-pop-label", text: "Theme" }),
 			make("div", { class: "aur-pop-row" }, [skins]),
 			toneLabel,
 			toneRow,
 			editor,
+
+			// Look sits directly below the theme and only for a custom profile —
+			// updateLook() hides it otherwise.
+			lookLabel,
+			lookRow,
+
 			densityLabel,
 			densityRow,
-			make("div", { class: "aur-pop-label", text: "Pages" }),
-			make("div", { class: "aur-pop-row" }, [pageSeg]),
+
+			// Editing and cache actions live at the foot, out of the way of the
+			// everyday content and theme choices above.
 			make("div", { class: "aur-pop-label", text: "Menu" }),
 			make("div", { class: "aur-pop-row" }, [refresh]),
 			customise ? make("div", { class: "aur-pop-row" }, [customise]) : null,
@@ -3333,10 +3411,15 @@
 			el.pop.classList.remove("is-sheet");
 			el.pop.style.right = "";
 			el.pop.style.width = "";
-			el.pop.style.maxHeight = "";
 			var width = el.pop.offsetWidth || 300;
-			el.pop.style.top = Math.round(box.bottom + 8) + "px";
+			var top = Math.round(box.bottom + 8);
+			el.pop.style.top = top + "px";
 			el.pop.style.left = Math.round(clamp(box.right - width, 10, window.innerWidth - width - 10)) + "px";
+			// The panel now carries content, look, theme and more, so on a short
+			// screen it would run off the bottom. Cap it to the space below the
+			// bar and let it scroll rather than hide its last rows.
+			el.pop.style.maxHeight = Math.max(220, window.innerHeight - top - 12) + "px";
+			el.pop.style.overflowY = "auto";
 		};
 		el.popPlace();
 
@@ -3745,10 +3828,10 @@
 
 		el.mega = make("div", { class: "aur-mega" }, [
 			make("div", { class: "aur-mega-search" }, [
+				layoutSeg,
 				iconNode("search", "aur-mega-search-icon"),
 				el.megaSearch,
 				el.megaClear,
-				layoutSeg,
 				megaClose,
 			]),
 			el.filterBar,
@@ -3991,6 +4074,28 @@
 		return knownId(NAV_VIEWS, stored) ? stored : "dropdown";
 	}
 
+	// The Active content profiles offered next to "Standard", filled in from the
+	// server. Kept here so the settings panel can paint the picker before the
+	// round trip returns and refresh it once it does.
+	var contentConfigs = [];
+
+	function currentContent() {
+		return localStorage.getItem(KEY.content) || "standard";
+	}
+
+	function loadMenuConfigs(done) {
+		if (!window.frappe || !frappe.xcall) return;
+		frappe
+			.xcall("kaiten_erp_ui_themes.api.get_menu_configs")
+			.then(function (rows) {
+				contentConfigs = Array.isArray(rows) ? rows : [];
+				if (typeof done === "function") done();
+			})
+			.catch(function () {
+				contentConfigs = [];
+			});
+	}
+
 	function setNavView(id) {
 		if (!knownId(NAV_VIEWS, id) || id === currentNavView()) return;
 		localStorage.setItem(KEY.navView, id);
@@ -3999,6 +4104,9 @@
 		// An open menu was drawn in the old presentation, so drop it; the next
 		// click rebuilds it in the chosen one.
 		closeNavDrop();
+		// The sidebar is laid out differently per look — flat list for Standard,
+		// area pills for the grid — so redraw it to match the new choice.
+		renderSide();
 	}
 
 	function setShell(id) {
@@ -5445,6 +5553,25 @@
 		var here = routeTargetKey();
 		el.sideBody.innerHTML = "";
 
+		// Standard look lays every area out in full, each under its own title —
+		// the classic ERP sidebar — instead of the grid's pills-and-one-area.
+		if (currentNavView() === "dropdown") {
+			menu.columns.forEach(function (column) {
+				el.sideBody.appendChild(make("div", { class: "kside-area", text: column.title }));
+				eachKind(column.items, areaIsMixed(column.items), function (bucket, rows, heading) {
+					if (heading) el.sideBody.appendChild(make("div", { class: "kside-sub", text: heading }));
+					var list = make("div", { class: "kside-items" });
+					rows.forEach(function (item) {
+						list.appendChild(sideLink(item, item.key === here));
+					});
+					el.sideBody.appendChild(list);
+				});
+			});
+			paintNavActive();
+			applySideCollapsed();
+			return;
+		}
+
 		// One area at a time. A module here can carry eight groups of nine links,
 		// and an accordion of all of them is a rail nobody reads to the bottom.
 		// The pills name every area in two or three rows; the list below shows
@@ -5973,8 +6100,11 @@
 	function loadShellNav(refresh) {
 		if (!window.frappe || !frappe.xcall) return;
 
+		var args = { profile: currentContent() };
+		if (refresh) args.refresh = 1;
+
 		frappe
-			.xcall("kaiten_erp_ui_themes.api.get_shell_nav", refresh ? { refresh: 1 } : {})
+			.xcall("kaiten_erp_ui_themes.api.get_shell_nav", args)
 			.then(function (payload) {
 				buildNavModel(payload);
 				renderNavMenus();

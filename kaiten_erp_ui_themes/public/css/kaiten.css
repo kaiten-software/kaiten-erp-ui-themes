@@ -3531,11 +3531,16 @@ body[data-route^="Form"] .layout-side-section {
 
 .aur-mixer.aur-open {
 	display: grid;
+	/* Without a bounded track the rows size to their content and spill past the
+	   panel's right edge; minmax(0,1fr) pins them to the mixer's own width so
+	   the swatches and the save row stay inside. */
+	grid-template-columns: minmax(0, 1fr);
 	animation: aur-pop var(--aur-fast) var(--aur-ease) both;
 }
 
 .aur-mixer-dots {
 	display: flex;
+	min-width: 0;
 	gap: 8px;
 }
 
@@ -3560,6 +3565,7 @@ body[data-route^="Form"] .layout-side-section {
 
 .aur-mixer-foot {
 	display: flex;
+	min-width: 0;
 	gap: 7px;
 }
 

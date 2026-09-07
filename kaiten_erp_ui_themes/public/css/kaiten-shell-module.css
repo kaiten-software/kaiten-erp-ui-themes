@@ -1039,6 +1039,39 @@ html[data-theme="dark"] .kside-pill.is-on {
 	box-shadow: 0 0 0 2px var(--knav-panel), 0 0 0 4px color-mix(in oklab, var(--knav-accent) 45%, transparent);
 }
 
+/* Standard look strips the workspace-grid colour off the rail. The coloured
+   gradient tiles and their hues belong to the grid; here the glyph rides plain
+   in the theme's own ink, so the sidebar reads like a stock desk list while
+   keeping its icons and area headings. */
+html[data-kaiten-nav-view="dropdown"] .kside-item-icon {
+	width: 22px;
+	height: 22px;
+	background: none;
+	box-shadow: none;
+	color: var(--knav-panel-ink-soft);
+}
+
+html[data-kaiten-nav-view="dropdown"] .kside-item-glyph {
+	width: 16px;
+	height: 16px;
+	color: inherit;
+}
+
+html[data-kaiten-nav-view="dropdown"] .kside-item:hover .kside-item-icon {
+	transform: none;
+	color: var(--knav-accent);
+}
+
+html[data-kaiten-nav-view="dropdown"] .kside-item.is-active {
+	color: color-mix(in oklab, var(--knav-accent) 62%, var(--knav-panel-ink));
+}
+
+html[data-kaiten-nav-view="dropdown"] .kside-item.is-active .kside-item-icon {
+	background: none;
+	box-shadow: none;
+	color: var(--knav-accent);
+}
+
 /* --- collapsed --- */
 
 .kside.is-collapsed {
