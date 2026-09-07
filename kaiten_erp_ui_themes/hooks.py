@@ -8,7 +8,7 @@ required_apps = ["frappe"]
 
 # Bump on every asset change: these are plain files, so nothing else busts the
 # browser cache for them.
-ASSET_VERSION = "68"
+ASSET_VERSION = "69"
 
 # kaiten.css is the base layer; every skin after it is token overrides scoped
 # to its own data-kaiten-skin, so order matters and skins always come last.

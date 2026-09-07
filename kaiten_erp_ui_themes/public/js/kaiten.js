@@ -4339,6 +4339,91 @@
 		window.location.assign("/desk");
 	}
 
+	/* kaiten_hrms boot always sets kaiten_desk when that app is installed.
+	   Theme stays optional — no Kaiten Home items without it. */
+	function kaitenHrmsPresent() {
+		try {
+			return Boolean(frappe.boot && frappe.boot.kaiten_desk);
+		} catch (e) {
+			return false;
+		}
+	}
+
+	function kaitenMenuPortals() {
+		try {
+			var boot = (frappe.boot && frappe.boot.kaiten_desk) || {};
+			return Array.isArray(boot.menu_portals) ? boot.menu_portals : [];
+		} catch (e) {
+			return [];
+		}
+	}
+
+	function goKaitenChooseArea() {
+		try {
+			if (typeof kaiten_desk !== "undefined") {
+				kaiten_desk.clearArea();
+				if (kaiten_desk.openKaitenHome) {
+					kaiten_desk.openKaitenHome();
+					return;
+				}
+			}
+		} catch (e) {}
+		window.location.assign("/desk/kaiten-home");
+	}
+
+	function goKaitenPortal(portal) {
+		try {
+			if (typeof kaiten_desk !== "undefined" && kaiten_desk.setDeskArea) {
+				kaiten_desk.setDeskArea(portal, false);
+				return;
+			}
+		} catch (e) {}
+		try {
+			sessionStorage.setItem("kaiten_home_portal:" + (frappe.session.user || ""), portal);
+		} catch (e2) {}
+		window.location.assign("/desk/kaiten-home");
+	}
+
+	function kaitenHomeMenuHead() {
+		var portals = kaitenMenuPortals();
+		var items = [
+			{
+				name: "kaiten-choose-area",
+				label: __("Home (choose area)"),
+				icon: "home",
+				onClick: runSafe(goKaitenChooseArea),
+			},
+			{
+				name: "kaiten-all-modules",
+				label: __("All Modules"),
+				icon: "grid",
+				onClick: runSafe(goStandardDesk),
+			},
+		];
+		if (portals.indexOf("jewellery") >= 0) {
+			items.push({
+				name: "kaiten-jewellery",
+				label: __("Kaiten Home — Jewellery"),
+				icon: "star",
+				onClick: runSafe(function () {
+					goKaitenPortal("jewellery");
+				}),
+			});
+		}
+		if (portals.indexOf("hr") >= 0) {
+			items.push({
+				name: "kaiten-hr",
+				label: __("Kaiten Home — HR"),
+				icon: "users",
+				onClick: runSafe(function () {
+					goKaitenPortal("hr");
+				}),
+			});
+		}
+		items.push({ is_divider: true });
+		return items;
+	}
+
 	function extraHas(extras, needle) {
 		return extras.some(function (item) {
 			var hay = String(item.item_label || item.label || "") + " " + String(item.action || "");
@@ -4388,7 +4473,9 @@
 		}
 
 		var head = [];
-		if (!extraHas(extras, "home") && !extraHas(extras, "desk")) {
+		if (kaitenHrmsPresent()) {
+			head = kaitenHomeMenuHead();
+		} else if (!extraHas(extras, "home") && !extraHas(extras, "desk")) {
 			head.push({
 				name: "home",
 				label: __("Home"),
