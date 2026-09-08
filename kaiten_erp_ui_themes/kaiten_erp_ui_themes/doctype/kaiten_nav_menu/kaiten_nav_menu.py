@@ -12,7 +12,6 @@ from frappe.model.document import Document
 
 class KaitenNavMenu(Document):
 	def validate(self) -> None:
-		self._require_group_before_links()
 		self._require_a_target()
 
 	def on_update(self) -> None:
@@ -26,22 +25,6 @@ class KaitenNavMenu(Document):
 		from kaiten_erp_ui_themes.api import clear_shell_nav_cache
 
 		clear_shell_nav_cache()
-
-	def _require_group_before_links(self) -> None:
-		"""Links before the first Card Break have no group to belong to.
-
-		Catching it here beats dropping those rows silently at render time and
-		leaving someone to wonder where their links went.
-		"""
-		seen_group = False
-		for row in self.items or []:
-			if row.type == "Card Break":
-				seen_group = True
-				continue
-			if not seen_group:
-				frappe.throw(
-					_("Row {0}: add a Card Break above this link to name the group it belongs to.").format(row.idx)
-				)
 
 	def _require_a_target(self) -> None:
 		for row in self.items or []:

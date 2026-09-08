@@ -31,10 +31,11 @@
    "reqd": 1
   },
   {
-   "description": "Lucide icon name. Left empty, one is guessed from the title.",
+   "description": "Pick an icon, or start typing to search. Left empty, one is guessed from the title.",
    "fieldname": "icon",
-   "fieldtype": "Data",
-   "label": "Icon"
+   "fieldtype": "Autocomplete",
+   "label": "Icon",
+   "options": "activity\narrow-left-right\naward\nbadge-check\nbanknote\nbarcode\nbell\nbook-open\nbookmark\nboxes\nbriefcase\nbuilding\nbuilding-2\ncalendar\ncalendar-days\nchart-column\nchart-line\nchart-pie\ncircle-dollar-sign\nclipboard-list\nclock\ncloud\ncoins\ncompass\ncontact\ncredit-card\ncrown\ndatabase\nearth\nfactory\nfile-spreadsheet\nfile-text\nfiles\nflag\nflame\nfolder\nfolder-kanban\ngauge\ngem\ngift\nglobe\ngrid-3x3\nhammer\nhand-coins\nhandshake\nheadset\nheart\nhistory\nlandmark\nlayers\nleaf\nlightbulb\nlist-checks\nlock\nmail\nmap-pin\nmessage-square\nmoon\npackage\npercent\nphone\nphone-call\npiggy-bank\nplug\nplus\nprinter\npuzzle\nreceipt\nreceipt-text\nrepeat\nrocket\nruler\nscroll-text\nsettings\nsettings-2\nshield\nshopping-cart\nsplit\nstar\nstore\nsun\ntag\ntags\ntarget\nticket\ntruck\nuser\nuser-check\nusers\nwallet\nwarehouse\nwebhook\nworkflow\nwrench\nzap"
   },
   {
    "default": "0",
@@ -136,8 +137,10 @@
   }
  ],
  "quick_entry": 0,
+ "show_title_field_in_link": 1,
  "sort_field": "sequence",
  "sort_order": "ASC",
  "states": [],
+ "title_field": "title",
  "track_changes": 1
 }

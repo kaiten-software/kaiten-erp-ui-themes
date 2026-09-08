@@ -1396,22 +1396,45 @@
 
 	function shellNavGroups() {
 		return (nav.menus || []).map(function (menu) {
+			// The flat list still backs search, the count and keyboard walking;
+			// the sections carry the same rows grouped by their Card Break area
+			// and then by Main/Reports/Setup, so the detail panel can print the
+			// headings a client set instead of one undifferentiated grid.
 			var items = [];
+
 			var landing = menuLanding(menu);
-			if (landing) items.push(shellNavItem(landing));
-			menu.columns.forEach(function (column) {
-				eachKind(column.items, areaIsMixed(column.items), function (bucket, rows) {
-					rows.forEach(function (row) {
-						items.push(shellNavItem(row));
+			var landingItem = landing ? shellNavItem(landing) : null;
+			if (landingItem) items.push(landingItem);
+
+			// Areas are only worth naming when there is more than one. A single
+			// untitled area is just "the module", so it stays a plain list —
+			// the standard behaviour for a menu whose author set no groups.
+			var showArea = (menu.columns || []).length > 1;
+
+			var sections = [];
+			(menu.columns || []).forEach(function (column) {
+				var mixed = areaIsMixed(column.items);
+				var subs = [];
+				eachKind(column.items, mixed, function (bucket, rows, heading) {
+					var built = rows.map(shellNavItem);
+					built.forEach(function (row) {
+						items.push(row);
 					});
+					subs.push({ heading: heading || "", rows: built });
 				});
+				if (!subs.length) return;
+				var title = showArea && column.title !== menu.label ? column.title : "";
+				sections.push({ title: title || "", subs: subs });
 			});
+
 			return {
 				key: menu.name,
 				label: menu.label,
 				icon: menu.icon,
 				hue: menu.hue,
 				items: items,
+				landing: landingItem,
+				sections: sections,
 			};
 		});
 	}
@@ -1565,6 +1588,41 @@
 			return;
 		}
 
+		// Module content arrives grouped: the landing tile first, then each
+		// Card Break area under its own heading, and Reports/Setup under theirs
+		// inside it. A search flattens back to one grid — the matches are the
+		// point then, not the shape they came from.
+		if (options.sections && options.sections.length) {
+			var seq = 0;
+
+			if (options.landing) {
+				var lead = make("div", { class: "aur-grid" });
+				lead.appendChild(renderItem(options.landing, seq++, options));
+				el.body.appendChild(lead);
+			}
+
+			options.sections.forEach(function (section) {
+				if (section.title) {
+					el.body.appendChild(make("div", { class: "aur-mega-area", text: section.title }));
+				}
+				section.subs.forEach(function (sub) {
+					if (sub.heading) {
+						el.body.appendChild(make("div", { class: "aur-mega-sub", text: sub.heading }));
+					}
+					var subGrid = make("div", { class: "aur-grid" });
+					sub.rows.forEach(function (row) {
+						subGrid.appendChild(renderItem(row, seq++, options));
+					});
+					el.body.appendChild(subGrid);
+				});
+			});
+
+			el.body.scrollTop = 0;
+			alignBody(items.length);
+			armCursor();
+			return;
+		}
+
 		var grid = make("div", { class: "aur-grid" });
 		items.slice(0, 300).forEach(function (item, i) {
 			grid.appendChild(renderItem(item, i, options));
@@ -1653,6 +1711,13 @@
 					},
 				};
 			}
+		}
+
+		// Module menus carry area/section structure. Show it at rest; a live
+		// filter falls back to the flat grid the matches read best in.
+		if (active.sections && active.sections.length && !String(state.megaQuery || "").trim()) {
+			options.sections = active.sections;
+			options.landing = active.landing;
 		}
 
 		renderItems(active.label, active.items, options);
@@ -3501,12 +3566,18 @@
 		var rect = anchor.getBoundingClientRect();
 		var below = window.innerHeight - rect.bottom - 12;
 		var above = rect.top - 12;
-		var flip = below < 190 && above > below;
+		// Flip up whenever the room below is cramped and there is more of it
+		// above. A higher threshold than the old 190 keeps a field low on the
+		// screen — a grid row near the page foot — from showing two clipped
+		// rows when the space above could hold the whole list.
+		var flip = below < 240 && above > below;
 
 		list.style.position = "fixed";
 		list.style.width = Math.round(rect.width) + "px";
 		list.style.minWidth = "0";
-		list.style.maxHeight = Math.round(clamp(flip ? above : below, 140, 360)) + "px";
+		// A taller floor than before so the list never collapses to a sliver
+		// that reads as "cut off"; it scrolls inside this height instead.
+		list.style.maxHeight = Math.round(clamp(flip ? above : below, 200, 420)) + "px";
 		list.style.bottom = "auto";
 
 		/* Fixed is not always relative to the viewport: a transformed ancestor
@@ -5300,10 +5371,15 @@
 			make("span", { class: "knav-menu-label", text: label }),
 		]);
 
+		// The overflow button always drops a list — the mega already lists every
+		// module in its rail, so routing __more through the mega would just select
+		// the first module rather than showing the overflow set.
+		var isOverflow = name === "__more";
+
 		var open = function () {
 			var menu = getMenu();
 			if (!menu) return;
-			if (currentNavView() === "grid") openModuleMega(menu, btn);
+			if (!isOverflow && currentNavView() === "grid") openModuleMega(menu, btn);
 			else openNavDrop(menu, btn);
 		};
 
@@ -5313,7 +5389,7 @@
 			// In the grid the mega already lists every module down its rail, so a
 			// top button re-focuses its module rather than opening a second
 			// panel — and clicking the module already shown closes it.
-			if (currentNavView() === "grid" && moduleMegaOpen()) {
+			if (!isOverflow && currentNavView() === "grid" && moduleMegaOpen()) {
 				var menu = getMenu();
 				if (menu && state.activeKey === menu.name) return closeMega();
 				if (menu) return selectGroup("shellnav", menu.name);
@@ -5327,7 +5403,7 @@
 		// way a desktop menu bar does. Nothing opens on hover from closed.
 		btn.addEventListener("mouseenter", function () {
 			if (isNarrow()) return;
-			if (currentNavView() === "grid" && moduleMegaOpen()) {
+			if (!isOverflow && currentNavView() === "grid" && moduleMegaOpen()) {
 				var menu = getMenu();
 				if (menu && state.activeKey !== menu.name) {
 					selectGroup("shellnav", menu.name);

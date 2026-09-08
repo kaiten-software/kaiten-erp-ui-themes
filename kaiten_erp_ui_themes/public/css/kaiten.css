@@ -1367,6 +1367,46 @@ html.kaiten-bar-on .dropdown-notifications:not(.hidden) .notifications-list {
 	gap: 8px;
 }
 
+/* An area heading in the detail panel — the Card Break title a client gave a
+   group, printed above its tiles so the panel reads as named areas rather than
+   one long grid. Sits a little heavier than the Reports/Setup subheading below
+   it, and carries the same trailing rule as the panel title. */
+.aur-mega-area {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 16px 0 8px;
+	font-size: 12px;
+	font-weight: 750;
+	letter-spacing: 0.02em;
+	color: var(--aur-ink);
+}
+
+.aur-mega-area::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: linear-gradient(90deg, var(--aur-line-strong), transparent);
+}
+
+/* The Reports / Setup subheading inside an area — quieter than the area name,
+   the same key the sidebar uses so the two shells read alike. */
+.aur-mega-sub {
+	margin: 10px 0 6px;
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	color: var(--aur-ink-soft);
+}
+
+/* The first heading of the panel should not push a blank band below the title
+   that already introduces the module. */
+.aur-mega-title + .aur-grid + .aur-mega-area,
+.aur-mega-title + .aur-mega-area {
+	margin-top: 4px;
+}
+
 /* -------------------------------------------------------------------------
    8b. Columns layout
    -------------------------------------------------------------------------
@@ -2007,6 +2047,24 @@ body[data-route^="Form"] .layout-side-section {
 
 .layout-main-section {
 	scroll-margin-top: calc(var(--kchrome-h, 0px) + var(--kpage-head-h, var(--page-head-height)) + 8px);
+}
+
+/* A new form autofocuses its first required field. Frappe scrolls that field
+   to the top of the content scroller, which sits under the sticky page head,
+   so the field lands hidden behind it and the page reads as a small upward
+   jump. Reserving the head's height at the top of the scroller parks the
+   focused field just below it instead. Scoped to the shell, since this head
+   offset only exists while our bar is on. */
+html.kaiten-bar-on .main-section,
+html.kaiten-bar-on .layout-main-section-wrapper {
+	scroll-padding-top: calc(var(--kpage-head-h, var(--page-head-height)) + 16px);
+}
+
+html.kaiten-bar-on .form-layout .frappe-control,
+html.kaiten-bar-on .form-layout .form-control,
+html.kaiten-bar-on .form-layout .form-section,
+html.kaiten-bar-on .form-layout .section-body {
+	scroll-margin-top: calc(var(--kpage-head-h, var(--page-head-height)) + 16px);
 }
 
 /* A column that only holds hidden fields still takes its Bootstrap share, so
