@@ -3510,7 +3510,12 @@
 	   list is re-anchored to the viewport, which no ancestor can clip.
 	   ------------------------------------------------------------------ */
 
-	var POPUP_SELECTOR = ".awesomplete > ul:not([hidden]), .datepicker.active, .autocomplete-results:not([hidden])";
+	var POPUP_SELECTOR = [
+		".awesomplete > ul:not([hidden])",
+		"ul.aur-unclipped:not([hidden])",
+		".datepicker.active",
+		".autocomplete-results:not([hidden])",
+	].join(", ");
 
 	function clippedBy(node) {
 		var parent = node.parentElement;
@@ -3523,7 +3528,7 @@
 	}
 
 	function anchorOf(list) {
-		var host = list.parentElement;
+		var host = list._aurHome || list.parentElement;
 		if (!host) return null;
 		return host.querySelector("input, textarea, .control-input") || host;
 	}
@@ -3533,73 +3538,98 @@
 	   painted a second list beside the palette, because the modal carries a
 	   transform mid-animation and the offset maths below reads it wrong. */
 	function isCommandPalette(list) {
-		var host = list.parentElement;
-		return Boolean(host && host.querySelector("#navbar-search"));
+		var host = list._aurHome || list.parentElement;
+		return Boolean(host && host.querySelector && host.querySelector("#navbar-search"));
+	}
+
+	function keepListFocus(event) {
+		event.preventDefault();
 	}
 
 	function reclip(list) {
 		if (!list.dataset.aurUnclipped) return;
+		list.removeEventListener("mousedown", keepListFocus, true);
+		var home = list._aurHome;
+		var next = list._aurNext;
+		if (home && home.isConnected) {
+			if (next && next.parentNode === home) home.insertBefore(list, next);
+			else home.appendChild(list);
+		}
 		delete list.dataset.aurUnclipped;
+		delete list._aurHome;
+		delete list._aurNext;
+		delete list._aurAnchor;
 		list.classList.remove("aur-unclipped");
-		["position", "width", "minWidth", "maxHeight", "left", "top", "bottom"].forEach(function (prop) {
+		["position", "width", "minWidth", "maxHeight", "left", "top", "bottom", "right", "zIndex", "overflowY"].forEach(function (prop) {
 			list.style[prop] = "";
 		});
 	}
 
 	function unclip(list) {
-		if (!list.offsetParent && getComputedStyle(list).display === "none") return;
+		if (list.hidden || getComputedStyle(list).display === "none") return;
 
 		if (isCommandPalette(list)) {
 			reclip(list);
 			return;
 		}
 
-		var anchor = anchorOf(list);
+		if (!list.querySelector("li, [role='option'], .datepicker--cell, .datepicker--content")) {
+			if (list.dataset.aurUnclipped) reclip(list);
+			return;
+		}
+
+		var anchor = list._aurAnchor || anchorOf(list);
 		if (!anchor) return;
 
 		if (!list.dataset.aurUnclipped) {
 			if (!clippedBy(list)) return;
+			// position:fixed still paints inside overflow:hidden/auto ancestors
+			// (the pencil .form-in-grid, a prompt .modal-body). The only way
+			// the list can use the viewport is to leave that tree.
+			list._aurHome = list.parentElement;
+			list._aurNext = list.nextSibling;
+			list._aurAnchor = anchor;
+			list.addEventListener("mousedown", keepListFocus, true);
+			if (!list._aurWheelStop) {
+				list._aurWheelStop = function (event) {
+					event.stopPropagation();
+				};
+				list.addEventListener("wheel", list._aurWheelStop, { passive: true });
+			}
+			document.body.appendChild(list);
 			list.dataset.aurUnclipped = "1";
 			list.classList.add("aur-unclipped");
 		}
 
 		var rect = anchor.getBoundingClientRect();
+		if (!rect.width && !rect.height) return;
+
 		var below = window.innerHeight - rect.bottom - 12;
 		var above = rect.top - 12;
-		// Flip up whenever the room below is cramped and there is more of it
-		// above. A higher threshold than the old 190 keeps a field low on the
-		// screen — a grid row near the page foot — from showing two clipped
-		// rows when the space above could hold the whole list.
 		var flip = below < 240 && above > below;
+		var room = flip ? above : below;
+		var maxH = Math.round(clamp(room, 200, Math.min(480, Math.round(window.innerHeight * 0.55))));
+		var width = Math.max(rect.width, 190);
 
 		list.style.position = "fixed";
-		list.style.width = Math.round(rect.width) + "px";
-		list.style.minWidth = "0";
-		// A taller floor than before so the list never collapses to a sliver
-		// that reads as "cut off"; it scrolls inside this height instead.
-		list.style.maxHeight = Math.round(clamp(flip ? above : below, 200, 420)) + "px";
+		list.style.zIndex = "1400";
+		list.style.width = Math.round(width) + "px";
+		list.style.minWidth = "190px";
+		list.style.maxHeight = maxH + "px";
+		list.style.overflowY = "auto";
 		list.style.bottom = "auto";
-
-		/* Fixed is not always relative to the viewport: a transformed ancestor
-		   (a dialog mid-animation, say) becomes the containing block instead.
-		   Parking the list at 0,0 and reading back where that landed gives the
-		   offset to work from, whatever the ancestor turns out to be. */
-		list.style.left = "0px";
-		list.style.top = "0px";
-		var origin = list.getBoundingClientRect();
-
-		var left = clamp(rect.left, 8, Math.max(8, window.innerWidth - rect.width - 8));
-		var top = flip ? rect.top - 6 - Math.min(above, 360) : rect.bottom + 6;
-
-		list.style.left = Math.round(left - origin.left) + "px";
-		list.style.top = Math.round(top - origin.top) + "px";
+		list.style.right = "auto";
+		list.style.left = Math.round(clamp(rect.left, 8, window.innerWidth - width - 8)) + "px";
+		list.style.top = flip
+			? Math.round(Math.max(8, rect.top - maxH - 6)) + "px"
+			: Math.round(rect.bottom + 6) + "px";
 	}
 
 	function watchPopups() {
 		var sweep = function () {
 			// A list that has closed keeps its fixed coordinates otherwise, and
 			// reappears in last-time's position before the next sweep moves it.
-			document.querySelectorAll(".awesomplete > ul[hidden].aur-unclipped, .autocomplete-results[hidden].aur-unclipped").forEach(reclip);
+			document.querySelectorAll("ul.aur-unclipped[hidden], .autocomplete-results[hidden].aur-unclipped, .datepicker.aur-unclipped:not(.active)").forEach(reclip);
 			document.querySelectorAll(POPUP_SELECTOR).forEach(unclip);
 		};
 
@@ -3609,9 +3639,25 @@
 		document.addEventListener("scroll", sweep, true);
 		window.addEventListener("resize", sweep);
 
-		// Awesomplete opens and closes by toggling hidden; the datepicker by class.
+		document.addEventListener(
+			"mousedown",
+			function (event) {
+				document.querySelectorAll(".aur-unclipped").forEach(function (list) {
+					if (list.contains(event.target)) return;
+					var anchor = list._aurAnchor;
+					if (anchor && (anchor === event.target || (anchor.contains && anchor.contains(event.target)))) return;
+					list.hidden = true;
+					reclip(list);
+				});
+			},
+			true
+		);
+
+		// childList: Awesomplete can empty the ul without toggling hidden,
+		// which left a tall blank box on the body after a field switch.
 		new MutationObserver(sweep).observe(document.body, {
 			subtree: true,
+			childList: true,
 			attributes: true,
 			attributeFilter: ["hidden", "class", "aria-expanded"],
 		});
@@ -3656,19 +3702,40 @@
 
 		var rect = select.getBoundingClientRect();
 		var width = Math.max(rect.width, 190);
-		pop.style.minWidth = Math.round(width) + "px";
-		pop.style.left = Math.round(clamp(rect.left, 8, window.innerWidth - width - 8)) + "px";
+		var below = window.innerHeight - rect.bottom - 12;
+		var above = rect.top - 12;
+		var flip = below < 200 && above > below;
+		var room = Math.max(120, flip ? above : below);
+		var maxH = Math.round(clamp(room, 120, 330));
 
-		var below = window.innerHeight - rect.bottom;
-		if (below < pop.offsetHeight + 16 && rect.top > below) {
-			pop.style.top = Math.round(Math.max(8, rect.top - pop.offsetHeight - 6)) + "px";
-		} else {
-			pop.style.top = Math.round(rect.bottom + 6) + "px";
-		}
+		pop.style.minWidth = Math.round(width) + "px";
+		pop.style.maxHeight = maxH + "px";
+		pop.style.left = Math.round(clamp(rect.left, 8, window.innerWidth - width - 8)) + "px";
+		pop.style.top = flip
+			? Math.round(Math.max(8, rect.top - maxH - 6)) + "px"
+			: Math.round(rect.bottom + 6) + "px";
+
+		// Wheel must stay on this list. If it reaches the dialog/page scroller,
+		// the capture scroll listener used to tear the pop down mid-gesture.
+		pop.addEventListener(
+			"wheel",
+			function (event) {
+				event.stopPropagation();
+			},
+			{ passive: true }
+		);
 
 		el.selectPop = pop;
 		var selected = pop.querySelector(".aur-selected");
 		if (selected) selected.scrollIntoView({ block: "nearest" });
+	}
+
+	function onPageScroll(event) {
+		if (!el.selectPop) return;
+		var target = event.target;
+		if (target === el.selectPop) return;
+		if (target && target.closest && target.closest(".aur-select-pop")) return;
+		closeSelect();
 	}
 
 	function skinSelects() {
@@ -3692,7 +3759,7 @@
 			true
 		);
 
-		document.addEventListener("scroll", closeSelect, true);
+		document.addEventListener("scroll", onPageScroll, true);
 		window.addEventListener("resize", closeSelect);
 	}
 

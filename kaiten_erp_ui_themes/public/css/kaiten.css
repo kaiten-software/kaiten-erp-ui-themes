@@ -2389,7 +2389,8 @@ html.kaiten-bar-on .form-layout .section-body {
 
 /* Suggestion lists must float above the cards they sit inside. */
 .aurora-on .awesomplete > ul,
-.aurora-on .autocomplete-results {
+.aurora-on .autocomplete-results,
+.aurora-on ul.aur-unclipped {
 	z-index: 1300;
 	border-radius: var(--aur-r);
 	border: 1px solid var(--aur-line);
@@ -2405,14 +2406,40 @@ html.kaiten-bar-on .form-layout .section-body {
 	background: transparent;
 }
 
-/* Re-anchored to the viewport by the script above, once a clipping ancestor
-   is found between the list and the page. */
+/* Moved to document.body so .form-in-grid / .modal overflow cannot crop it.
+   Once it leaves .awesomplete, the stock "ul > li" rules no longer apply. */
 .aurora-on .aur-unclipped {
-	z-index: 1350 !important;
+	z-index: 1400 !important;
+	overflow-x: hidden;
 	overflow-y: auto;
+	overscroll-behavior: contain;
 	background: var(--aur-surface);
-	backdrop-filter: blur(14px) saturate(150%);
-	-webkit-backdrop-filter: blur(14px) saturate(150%);
+	list-style: none;
+	margin: 0;
+	padding: 6px 6px 12px;
+	box-sizing: border-box;
+}
+
+.aurora-on ul.aur-unclipped > li,
+.aurora-on ul.aur-unclipped > [role="option"] {
+	cursor: pointer;
+	padding: 7px 10px;
+	border-radius: 9px;
+	color: var(--aur-ink);
+}
+
+.aurora-on ul.aur-unclipped > li:hover,
+.aurora-on ul.aur-unclipped > li[aria-selected="true"],
+.aurora-on ul.aur-unclipped > [role="option"]:hover,
+.aurora-on ul.aur-unclipped > [role="option"][aria-selected="true"] {
+	background: color-mix(in oklab, var(--aur-accent) 16%, var(--aur-surface));
+	color: var(--aur-ink);
+}
+
+.aurora-on ul.aur-unclipped > li p,
+.aurora-on ul.aur-unclipped > [role="option"] p {
+	margin: 0;
+	color: inherit;
 }
 
 /* -------------------------------------------------------------------------
@@ -3265,22 +3292,22 @@ html.kaiten-bar-on .form-layout .section-body {
 
 .aur-select-pop {
 	position: fixed;
-	z-index: 1300;
+	z-index: 1400;
 	min-width: 190px;
 	max-height: 330px;
+	overflow-x: hidden;
 	overflow-y: auto;
+	overscroll-behavior: contain;
 	padding: 6px;
 	border-radius: var(--aur-r);
 	border: 1px solid var(--aur-line);
-	background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 255, 0.96));
-	backdrop-filter: blur(18px) saturate(160%);
-	-webkit-backdrop-filter: blur(18px) saturate(160%);
+	background: var(--aur-surface);
 	box-shadow: var(--aur-shadow-lg);
 	animation: aur-mega-in 0.16s var(--aur-ease) both;
 }
 
 [data-theme="dark"] .aur-select-pop {
-	background: linear-gradient(180deg, rgba(26, 28, 42, 0.99), rgba(18, 20, 32, 0.97));
+	background: var(--aur-surface);
 }
 
 .aur-select-opt {
@@ -3293,20 +3320,24 @@ html.kaiten-bar-on .form-layout .section-body {
 	color: var(--aur-ink);
 	cursor: pointer;
 	white-space: nowrap;
-	transition: background var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease),
-		transform var(--aur-fast) var(--aur-ease);
+	transition: background var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease);
 }
 
 .aur-select-opt:hover,
 .aur-select-opt.aur-cursor {
-	background: var(--aur-grad-soft);
-	transform: translateX(2px);
+	background: color-mix(in oklab, var(--aur-accent) 16%, var(--aur-surface));
+	color: var(--aur-ink);
 }
 
 .aur-select-opt.aur-selected {
 	color: #fff;
-	background: var(--aur-grad-cool);
-	box-shadow: 0 8px 18px -12px rgba(79, 70, 229, 0.95);
+	background: var(--aur-accent);
+}
+
+.aur-select-opt.aur-selected:hover,
+.aur-select-opt.aur-selected.aur-cursor {
+	color: #fff;
+	background: color-mix(in oklab, var(--aur-accent) 86%, #000);
 }
 
 .aur-select-dot {
@@ -4203,6 +4234,26 @@ html.kaiten-bar-on .form-layout .section-body {
 	border-bottom: 1px solid var(--aur-line-strong);
 	font-weight: 650;
 	letter-spacing: 0.02em;
+}
+
+/* Default skin leaves Frappe's dark tokens in place. --gray-600 is a dark
+   fill there, but desk uses it as grid/list heading text, so titles vanish.
+   Recolor ink only — no Aurora surfaces or chrome. */
+html:not(.aurora-on)[data-theme="dark"] .grid-heading-row,
+html:not(.aurora-on)[data-theme="dark"] .grid-heading-row .grid-static-col,
+html:not(.aurora-on)[data-theme="dark"] .grid-heading-row .col,
+html:not(.aurora-on)[data-theme="dark"] .datatable .dt-cell--header .dt-cell__content,
+html:not(.aurora-on)[data-theme="dark"] .list-row-head,
+html:not(.aurora-on)[data-theme="dark"] .list-row-head .list-row-col,
+html:not(.aurora-on)[data-theme="dark"] .list-row-head .list-subject {
+	color: var(--text-color, #e5e5e5);
+}
+
+html:not(.aurora-on)[data-theme="dark"] .form-control::placeholder,
+html:not(.aurora-on)[data-theme="dark"] input::placeholder,
+html:not(.aurora-on)[data-theme="dark"] textarea::placeholder {
+	color: var(--text-muted, #a3a3a3);
+	opacity: 1;
 }
 
 .aurora-on .grid-empty {
