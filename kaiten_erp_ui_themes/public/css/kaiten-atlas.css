@@ -91,7 +91,8 @@
 	--aur-line: rgba(148, 163, 184, 0.16);
 	--aur-line-strong: rgba(148, 163, 184, 0.28);
 	--aur-ink: #e2e8f0;
-	--aur-ink-soft: #94a3b8;
+	--aur-ink-soft: #cbd5e1;
+	--placeholder-color: #94a3b8;
 
 	--atlas-bar: #0f1420;
 	--atlas-bar-2: #0b0f18;

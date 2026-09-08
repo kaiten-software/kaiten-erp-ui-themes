@@ -60,7 +60,8 @@
 	--aur-line: rgba(148, 163, 255, 0.16);
 	--aur-line-strong: rgba(148, 163, 255, 0.3);
 	--aur-ink: #e2e8f0;
-	--aur-ink-soft: #94a3b8;
+	--aur-ink-soft: #cbd5e1;
+	--placeholder-color: #94a3b8;
 
 	--aur-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
 	--aur-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), 0 14px 32px -22px rgba(0, 0, 0, 0.9);
@@ -3820,7 +3821,7 @@ html.kaiten-bar-on .form-layout .section-body {
 	letter-spacing: 0.02em;
 	text-transform: uppercase;
 	font-size: 0.72rem;
-	color: color-mix(in oklab, var(--aur-accent) 55%, var(--aur-ink));
+	color: var(--aur-ink);
 }
 
 .aurora-on .frappe-list .list-paging-area {
@@ -3858,6 +3859,23 @@ html.kaiten-bar-on .form-layout .section-body {
 .aurora-on .standard-filter-section .frappe-control input:focus {
 	border-color: transparent;
 	box-shadow: var(--aur-glow);
+}
+
+/* Desk compiles placeholders to --gray-500. That step is a dark surface in
+   v17 dark mode, and our accent tint makes it vanish on the same-coloured
+   field. Ink-soft remaps in both themes; do not retint --gray-500 itself or
+   Frappe surfaces that use it as a fill go missing. */
+.aurora-on .form-control::placeholder,
+.aurora-on .form-control::-webkit-input-placeholder,
+.aurora-on input::placeholder,
+.aurora-on textarea::placeholder,
+.aurora-on select::placeholder {
+	color: var(--aur-ink-soft);
+	opacity: 1;
+}
+
+.aurora-on .dropdown-header {
+	color: var(--aur-ink-soft);
 }
 
 /* -------------------------------------------------------------------------
@@ -3914,6 +3932,10 @@ html.kaiten-bar-on .form-layout .section-body {
 	gap: 8px;
 	padding-top: 10px;
 	color: color-mix(in oklab, hsl(var(--cyc-h, 245) 60% 45%) 70%, var(--aur-ink));
+}
+
+.aurora-on[data-theme="dark"] .form-section .section-head {
+	color: var(--aur-ink);
 }
 
 .aurora-on .form-section .section-head::before {
@@ -4167,11 +4189,24 @@ html.kaiten-bar-on .form-layout .section-body {
 	background-clip: padding-box;
 }
 
+/* Frappe paints heading cells with --gray-600. That token is a dark surface
+   in v17 dark mode, so the titles vanish on --aur-sheet. Ink remaps in both
+   themes, so the same rule stays readable in light and dark. */
+.aurora-on .grid-heading-row,
+.aurora-on .grid-heading-row .grid-static-col,
+.aurora-on .grid-heading-row .col {
+	color: var(--aur-ink);
+}
+
 .aurora-on .grid-heading-row {
 	background: var(--aur-sheet);
 	border-bottom: 1px solid var(--aur-line-strong);
 	font-weight: 650;
 	letter-spacing: 0.02em;
+}
+
+.aurora-on .grid-empty {
+	color: var(--aur-ink-soft);
 }
 
 /* The body cannot clip — link fields in its rows have to open past it — so a
@@ -4206,7 +4241,7 @@ html.kaiten-bar-on .form-layout .section-body {
 
 .aurora-on .datatable .dt-cell--header .dt-cell__content {
 	font-weight: 650;
-	color: color-mix(in oklab, var(--aur-accent) 55%, var(--aur-ink));
+	color: var(--aur-ink);
 }
 
 .aurora-on .datatable .dt-row:hover .dt-cell {
