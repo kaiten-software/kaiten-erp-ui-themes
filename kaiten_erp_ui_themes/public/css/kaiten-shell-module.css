@@ -56,7 +56,7 @@ html[data-theme="dark"] {
 
 /* The bar and the rail exist only in this shell, so their own metrics do. */
 html[data-kaiten-shell="module"] {
-	--knav-h: 46px;
+	--knav-h: var(--aur-bar-h, 48px);
 
 	/* The ticker is optional chrome: it only exists on a site that has rates
 	   to show. Everything below the bar clears --kchrome-h rather than
@@ -101,51 +101,6 @@ html[data-kaiten-shell="module"][data-theme="dark"] {
 	--krate-bg: rgba(0, 0, 0, 0.22);
 }
 
-/* A chosen colour tints the chrome so Blush and Ocean are not the same bar. */
-html.aurora-on[data-kaiten-shell="module"] {
-	--knav-bg: color-mix(in oklab, var(--aur-accent, #e0a24a) 7%, #ffffff);
-	--knav-bg-2: color-mix(in oklab, var(--aur-accent, #e0a24a) 11%, #f7f8fb);
-}
-
-html.aurora-on[data-kaiten-shell="module"][data-theme="dark"] {
-	--knav-bg: color-mix(in oklab, var(--aur-accent, #e0a24a) 14%, #101a2b);
-	--knav-bg-2: color-mix(in oklab, var(--aur-accent, #e0a24a) 18%, #17233b);
-}
-
-/* Atlas is the one skin that makes the bar a solid dark band — the classic
-   ERP module strip. It reads --atlas-bar* from kaiten-atlas.css, so the tone
-   picker recolours the band. The extra .aurora-on keeps this above the light
-   tint rule directly above, which also matches this shell. The rail below the
-   bar stays on the light --knav-panel tokens, so only the top band goes dark. */
-html.aurora-on[data-kaiten-skin="atlas"][data-kaiten-shell="module"] {
-	--knav-bg: var(--atlas-bar, #1e293b);
-	--knav-bg-2: var(--atlas-bar-2, #172032);
-	--knav-ink: var(--atlas-bar-ink, rgba(255, 255, 255, 0.72));
-	--knav-ink-strong: var(--atlas-bar-ink-strong, #ffffff);
-	--knav-line: var(--atlas-bar-line, rgba(255, 255, 255, 0.1));
-	--knav-fill: var(--atlas-bar-fill, rgba(255, 255, 255, 0.08));
-	--knav-fill-2: var(--atlas-bar-fill-2, rgba(255, 255, 255, 0.14));
-	--knav-shadow: rgba(2, 6, 23, 0.55);
-	--krate-bg: rgba(0, 0, 0, 0.18);
-}
-
-/* On the dark band the navy accent would vanish, so the bar's own "you are
-   here" marks switch to the bright ink. The rail keeps --knav-accent (navy),
-   which is why only bar-scoped elements are retargeted here. */
-html.aurora-on[data-kaiten-skin="atlas"][data-kaiten-shell="module"] .knav-brand-name,
-html.aurora-on[data-kaiten-skin="atlas"][data-kaiten-shell="module"] .knav-menu.is-active {
-	color: var(--atlas-bar-ink-strong, #fff);
-}
-
-html.aurora-on[data-kaiten-skin="atlas"][data-kaiten-shell="module"] .knav-menu.is-active::after {
-	background: var(--atlas-bar-ink-strong, #fff);
-}
-
-html.aurora-on[data-kaiten-skin="atlas"][data-kaiten-shell="module"] .knav-brand-badge {
-	background: var(--atlas-bar-fill-2, rgba(255, 255, 255, 0.14));
-	color: var(--atlas-bar-ink-strong, #fff);
-}
-
 /* -------------------------------------------------------------------------
    2. Top bar
    ---------------------------------------------------------------------- */
@@ -161,9 +116,7 @@ html.aurora-on[data-kaiten-skin="atlas"][data-kaiten-shell="module"] .knav-brand
 	left: 0;
 	right: 0;
 	z-index: 45;
-	background: linear-gradient(180deg, var(--knav-bg-2), var(--knav-bg));
-	border-bottom: 1px solid var(--knav-line);
-	box-shadow: 0 10px 30px -26px var(--knav-shadow);
+	/* Paint comes from .aur-bar so both shells share the same glass chrome. */
 }
 
 html[data-kaiten-shell="module"].kaiten-rate-on {
@@ -180,9 +133,9 @@ html[data-kaiten-shell="module"] .main-section {
 .knav-inner {
 	display: flex;
 	align-items: center;
-	gap: 10px;
+	gap: 6px;
 	height: var(--knav-h);
-	padding: 0 12px;
+	padding: 0 14px;
 }
 
 /* --- rate ticker --- */
@@ -390,7 +343,7 @@ html.kaiten-rate-on .krate {
 .knav-right {
 	display: flex;
 	align-items: center;
-	gap: 4px;
+	gap: 6px;
 	flex: 0 0 auto;
 	margin-left: auto;
 }
@@ -441,110 +394,16 @@ html.kaiten-rate-on .krate {
 	font-weight: 700;
 }
 
-/* Pinned and Recent open the same panel the command bar opens. Their names
-   live in the tooltip: every pixel spent on them is a module menu that folds
-   into More instead, and the glyph plus its count already says which is which.
-   The label returns once the window is wide enough to afford it. */
+/* Pinned / Recent share .aur-tab with the command bar. Labels stay visible
+   so the right cluster reads as the same family of items. */
 .knav-tab-label {
-	display: none;
-}
-
-@media (min-width: 1600px) {
-	.knav-tab-label {
-		display: inline;
-	}
-}
-
-.knav-tab {
-	display: inline-flex;
-	align-items: center;
-	gap: 5px;
-	height: 28px;
-	padding: 0 8px;
-	border: 0;
-	border-radius: 8px;
-	background: var(--knav-fill);
-	color: var(--knav-ink);
-	font-size: 12px;
-	font-weight: 600;
-	white-space: nowrap;
-	cursor: pointer;
-	transition: background 0.16s ease, color 0.16s ease;
-}
-
-.knav-tab:hover,
-.knav-tab.aur-open {
-	background: var(--knav-fill-2);
-	color: var(--knav-ink-strong);
+	display: inline;
 }
 
 .knav-tab-glyph {
 	flex: none;
 	width: 14px;
 	height: 14px;
-}
-
-.knav-tab .aur-tab-count {
-	padding: 0 5px;
-	border-radius: 999px;
-	background: var(--knav-fill-2);
-	color: var(--knav-ink-strong);
-	font-size: 10px;
-	font-weight: 700;
-	font-variant-numeric: tabular-nums;
-}
-
-/* The bar is dark, so the shared icon buttons are re-tinted for it. */
-.knav .aur-icon-btn,
-.knav .aur-user-btn {
-	display: grid;
-	place-items: center;
-	flex: none;
-	width: 28px;
-	height: 28px;
-	padding: 0;
-	border: 0;
-	border-radius: 8px;
-	background: var(--knav-fill);
-	color: var(--knav-ink);
-	font-size: 13px;
-	line-height: 1;
-	cursor: pointer;
-	transition: background 0.16s ease, color 0.16s ease;
-}
-
-.knav .aur-icon-btn:hover,
-.knav .aur-user-btn:hover {
-	background: var(--knav-fill-2);
-	color: var(--knav-ink-strong);
-}
-
-.knav .aur-icon-btn:focus-visible,
-.knav .aur-user-btn:focus-visible {
-	outline: 2px solid var(--knav-accent);
-	outline-offset: 2px;
-}
-
-.knav .aur-icon-btn.aur-pinned {
-	color: var(--knav-accent);
-	background: color-mix(in oklab, var(--knav-accent) 22%, transparent);
-}
-
-.knav .aur-user-btn {
-	overflow: hidden;
-	border-radius: 999px;
-}
-
-.knav .aur-user-initials {
-	font-size: 11px;
-	font-weight: 700;
-	color: var(--knav-ink-strong);
-}
-
-.knav .aur-notif-btn svg,
-.knav .aur-icon-btn svg {
-	width: 15px;
-	height: 15px;
 }
 
 /* -------------------------------------------------------------------------
@@ -560,54 +419,23 @@ html.kaiten-rate-on .krate {
 	overflow: hidden;
 }
 
+/* Visuals come from .aur-tab. This only keeps the "you are here" underline
+   when the mega/dropdown is closed, and stops flex shrink so fitNavMenus
+   can measure real widths. */
 .knav-menu {
 	position: relative;
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
 	flex: 0 0 auto;
-	height: 30px;
-	padding: 0 9px;
-	border: 0;
-	border-radius: 8px;
-	background: transparent;
-	color: var(--knav-ink);
-	font-size: 12.5px;
-	font-weight: 600;
-	white-space: nowrap;
-	cursor: pointer;
-	transition: color 0.16s ease, background 0.16s ease;
 }
 
-.knav-menu:hover {
-	background: var(--knav-fill);
-	color: var(--knav-ink-strong);
-}
-
-.knav-menu.is-open {
-	background: var(--knav-fill-2);
-	color: var(--knav-ink-strong);
-}
-
-.knav-menu.is-active {
-	color: var(--knav-accent);
-}
-
-/* The rule the eye reads as "you are here", the way a desktop menu bar does. */
-.knav-menu.is-active::after {
+.knav-menu.is-active:not(.aur-open)::after {
 	content: "";
 	position: absolute;
-	left: 9px;
-	right: 9px;
-	bottom: -1px;
+	left: 13px;
+	right: 13px;
+	bottom: 1px;
 	height: 2px;
 	border-radius: 2px 2px 0 0;
-	background: var(--knav-accent);
-}
-
-.knav-menu:focus-visible {
-	outline: 2px solid var(--knav-accent);
-	outline-offset: 1px;
+	background: var(--aur-ink);
 }
 
 .knav-menu-glyph {

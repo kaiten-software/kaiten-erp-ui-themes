@@ -215,8 +215,44 @@ def _tools(rows: list, readable: set) -> list:
 	return groups
 
 
-def resolve_brand() -> str:
-	"""Site-specific wordmark, or Kaiten when none is configured."""
+def _default_company() -> str:
+	try:
+		company = frappe.defaults.get_user_default("Company")
+		if company:
+			return str(company).strip()
+	except Exception:
+		pass
+	try:
+		company = (frappe.defaults.get_defaults() or {}).get("company")
+		if company:
+			return str(company).strip()
+	except Exception:
+		pass
+	return ""
+
+
+def _company_logo(company: str) -> str:
+	if not company:
+		return ""
+	try:
+		if not frappe.db.exists("DocType", "Company"):
+			return ""
+		logo = frappe.db.get_value("Company", company, "company_logo")
+		return str(logo or "").strip()
+	except Exception:
+		return ""
+
+
+def _app_logo() -> str:
+	try:
+		from frappe.core.doctype.navbar_settings.navbar_settings import get_app_logo
+
+		return str(get_app_logo() or "").strip()
+	except Exception:
+		return ""
+
+
+def _wordmark_fallback() -> str:
 	configured = frappe.conf.get("kaiten_brand")
 	if configured:
 		name = str(configured).strip()
@@ -233,9 +269,23 @@ def resolve_brand() -> str:
 	return "Kaiten"
 
 
+def resolve_company_brand() -> dict:
+	"""Desk pill: default Company name + its logo, then the app wordmark/logo."""
+	company = _default_company()
+	name = company or _wordmark_fallback()
+	logo = _company_logo(company) or _app_logo()
+	return {"name": name, "logo": logo, "company": company}
+
+
+def resolve_brand() -> str:
+	"""Site-specific wordmark: Company first, then App Name / Kaiten."""
+	return resolve_company_brand()["name"]
+
+
 @frappe.whitelist(allow_guest=True)
 def get_brand() -> dict:
-	return {"brand": resolve_brand()}
+	info = resolve_company_brand()
+	return {"brand": info["name"], "logo": info["logo"]}
 
 
 @frappe.whitelist()
@@ -622,6 +672,30 @@ def _config_usable(row: dict, readable: set, reports: dict, pages: set, dashboar
 	return False
 
 
+def _overview_payload(menu, columns, reports: dict, pages: set, dashboards: set, spaces: set) -> dict | None:
+	"""A real desk route, or nothing. Never the Nav Menu's own name."""
+	kind, target = menu.overview_link_type, menu.overview_link_to
+	if kind and target:
+		exists = True
+		if kind == "Page":
+			exists = target in pages
+		elif kind == "Dashboard":
+			exists = target in dashboards
+		elif kind == "Workspace":
+			exists = target in spaces
+		elif kind == "Report":
+			exists = target in reports
+		route = _config_route({"link_type": kind, "link_to": target}, reports) if exists else None
+		if route:
+			return {"type": kind, "to": target, "route": route}
+
+	for card in columns:
+		for item in card.get("items") or []:
+			if item.get("route"):
+				return {"type": item.get("type"), "to": item.get("to"), "route": item["route"]}
+	return None
+
+
 def _config_menus(readable: set, profile: str | None = None, all_menus: bool = False) -> list:
 	"""Menus assembled from Kaiten Nav Menu records."""
 	menus = frappe.get_all(
@@ -754,16 +828,6 @@ def _config_menus(readable: set, profile: str | None = None, all_menus: bool = F
 		if not columns:
 			continue
 
-		overview = None
-		if menu.overview_link_type and menu.overview_link_to:
-			overview = {
-				"type": menu.overview_link_type,
-				"to": menu.overview_link_to,
-				"route": _config_route(
-					{"link_type": menu.overview_link_type, "link_to": menu.overview_link_to}, reports
-				),
-			}
-
 		built.append(
 			{
 				"name": menu.name,
@@ -772,7 +836,7 @@ def _config_menus(readable: set, profile: str | None = None, all_menus: bool = F
 				"icon": menu.icon,
 				"children": [],
 				"columns": columns,
-				"overview": overview,
+				"overview": _overview_payload(menu, columns, reports, pages, dashboards, spaces),
 			}
 		)
 

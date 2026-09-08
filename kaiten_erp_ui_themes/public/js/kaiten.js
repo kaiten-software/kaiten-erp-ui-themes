@@ -547,10 +547,15 @@
 		var route = desc.route || [];
 		if (desc.act === "url") return desc.url || "#";
 		if (desc.act === "new") return prefix() + "/" + slugify(desc.doctype) + "/new";
+		if (!route.length || !route[0]) return "#";
 		if (route[0] === "List") return prefix() + "/" + slugify(route[1]);
 		if (route[0] === "Form") return prefix() + "/" + slugify(route[1]) + "/" + encodeURIComponent(route[2]);
 		if (route[0] === "query-report") return prefix() + "/query-report/" + encodeURIComponent(route[1]);
 		return prefix() + "/" + route.map(slugify).join("/");
+	}
+
+	function hasRoute(item) {
+		return Boolean(item && item.route && item.route.length && item.route[0]);
 	}
 
 	function runItem(desc) {
@@ -564,11 +569,14 @@
 			return;
 		}
 
+		if (desc.act === "route" && !hasRoute(desc)) return;
+
 		try {
 			if (desc.act === "new") frappe.new_doc(desc.doctype);
 			else frappe.set_route.apply(frappe, desc.route);
 		} catch (e) {
-			window.location.href = hrefFor(desc);
+			var href = hrefFor(desc);
+			if (href && href !== "#") window.location.href = href;
 		}
 		closeMega();
 	}
@@ -1389,7 +1397,8 @@
 	function shellNavGroups() {
 		return (nav.menus || []).map(function (menu) {
 			var items = [];
-			if (menu.overview) items.push(shellNavItem(menu.overview));
+			var landing = menuLanding(menu);
+			if (landing) items.push(shellNavItem(landing));
 			menu.columns.forEach(function (column) {
 				eachKind(column.items, areaIsMixed(column.items), function (bucket, rows) {
 					rows.forEach(function (row) {
@@ -2416,6 +2425,7 @@
 			el.scrim.remove();
 			el.scrim = null;
 		}
+		if (el.navBtns) paintNavActive();
 	}
 
 	function openTab(tabId) {
@@ -3305,14 +3315,14 @@
 			if (id === currentContentCard()) return;
 			var wasOpen = Boolean(el.pop);
 			if (id === "command") {
+				// Content only: keep Theme, Colour, Look, density as they are.
 				setShell("command");
 				if (wasOpen) reopenSettings();
 				return;
 			}
-			// A module view: the default "standard" set or a named profile. The
-			// workspace grid is the default look for any module content.
+			// Module nav or a named profile — swap which menus load, never the
+			// paint. Look (Standard / Workspace grid) stays on KEY.navView.
 			localStorage.setItem(KEY.content, id);
-			localStorage.setItem(KEY.navView, "grid");
 			schedulePush();
 			if (currentShell() !== "module") {
 				setShell("module");
@@ -3619,16 +3629,111 @@
 	   Bar
 	   ------------------------------------------------------------------ */
 
-	function buildBar(anchor) {
-		var brand = make("button", { class: "aur-brand", type: "button", title: "Theme and appearance" }, [
-			make("span", { class: "aur-brand-dot" }),
-			make("span", { text: brandName() }),
+	/* Brand, jump-search and the right-hand tools are the same chrome in both
+	   shells. Content only swaps the middle slot (command tabs vs module
+	   menus). Building them once is what keeps the two bars from drifting. */
+	function brandInfo() {
+		try {
+			var info = window.frappe && frappe.boot && frappe.boot.kaiten_company;
+			if (info && info.name) {
+				return { name: String(info.name), logo: String(info.logo || "") };
+			}
+		} catch (e) {}
+		var name = brandName();
+		try {
+			var company = companyName();
+			if (company) name = company;
+		} catch (e) {}
+		var logo = "";
+		try {
+			logo = (window.frappe && frappe.boot && frappe.boot.app_logo_url) || "";
+		} catch (e) {}
+		return { name: name, logo: logo };
+	}
+
+	function buildSharedBrand() {
+		var info = brandInfo();
+		var mark = info.logo
+			? make("img", { class: "aur-brand-logo", src: info.logo, alt: "" })
+			: make("span", { class: "aur-brand-dot" });
+		if (info.logo) {
+			mark.addEventListener("error", function () {
+				if (mark.parentNode) mark.replaceWith(make("span", { class: "aur-brand-dot" }));
+			});
+		}
+		var brand = make("button", { class: "aur-brand", type: "button", title: info.name + " \u2014 theme and appearance" }, [
+			mark,
+			make("span", { class: "aur-brand-label", text: info.name }),
 		]);
 		brand.addEventListener("click", function (event) {
 			event.stopPropagation();
 			openSettings(brand);
 		});
+		return brand;
+	}
 
+	function buildSharedSearch() {
+		el.search = make("input", {
+			class: "aur-search",
+			type: "search",
+			placeholder: "Jump to anything",
+			"aria-label": "Search the desk",
+		});
+		el.search.addEventListener("input", function () {
+			renderSearch(el.search.value);
+		});
+		el.search.addEventListener("focus", function () {
+			if (el.search.value.trim()) renderSearch(el.search.value);
+		});
+		return make("div", { class: "aur-search-wrap" }, [
+			make("span", { class: "aur-search-icon", text: "\u2315" }),
+			el.search,
+			make("span", { class: "aur-search-kbd", text: "/" }),
+		]);
+	}
+
+	function buildSharedTools() {
+		el.pinBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Pin this page", text: "\u2605" });
+		el.pinBtn.addEventListener("click", function (event) {
+			event.stopPropagation();
+			var desc = currentDesc();
+			if (desc) togglePin(desc, el.pinBtn);
+		});
+
+		var paletteBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Theme, colour and density", text: "\u25D5" });
+		paletteBtn.addEventListener("click", function (event) {
+			event.stopPropagation();
+			openSettings(paletteBtn);
+		});
+
+		var themeBtn = make("button", { class: "aur-icon-btn aur-appearance knav-appearance", type: "button" });
+		el.paintThemeBtn = function () {
+			var meta = appearanceMeta(currentAppearance());
+			themeBtn.textContent = meta.glyph;
+			themeBtn.setAttribute("title", meta.label + " \u2014 click for " + appearanceMeta(meta.next).label.toLowerCase());
+		};
+		themeBtn.addEventListener("click", function (event) {
+			event.stopPropagation();
+			setAppearance(nextAppearance());
+		});
+		el.paintThemeBtn();
+
+		var fullBtn = make("button", { class: "aur-icon-btn aur-fullscreen", type: "button", title: "Toggle fullscreen", text: "\u26F6" });
+		fullBtn.addEventListener("click", toggleFullscreen);
+
+		return {
+			searchWrap: buildSharedSearch(),
+			pinBtn: el.pinBtn,
+			paletteBtn: paletteBtn,
+			themeBtn: themeBtn,
+			fullBtn: fullBtn,
+			notifBtn: makeNotifBtn(),
+			userBtn: makeUserBtn(),
+		};
+	}
+
+	function buildBar(anchor) {
+		var brand = buildSharedBrand();
 		var nav = make("nav", { class: "aur-nav" });
 		el.tabNodes = {};
 
@@ -3662,68 +3767,22 @@
 			nav.appendChild(node);
 		});
 
-		el.search = make("input", {
-			class: "aur-search",
-			type: "search",
-			placeholder: "Jump to anything",
-			"aria-label": "Search the desk",
-		});
-		el.search.addEventListener("input", function () {
-			renderSearch(el.search.value);
-		});
-		el.search.addEventListener("focus", function () {
-			if (el.search.value.trim()) renderSearch(el.search.value);
-		});
-
-		var searchWrap = make("div", { class: "aur-search-wrap" }, [
-			make("span", { class: "aur-search-icon", text: "\u2315" }),
-			el.search,
-			make("span", { class: "aur-search-kbd", text: "/" }),
-		]);
-
-		el.pinBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Pin this page", text: "\u2605" });
-		el.pinBtn.addEventListener("click", function (event) {
-			event.stopPropagation();
-			var desc = currentDesc();
-			if (!desc) return;
-			togglePin(desc, el.pinBtn);
-		});
-
-		var paletteBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Theme, colour and density", text: "\u25D5" });
-		paletteBtn.addEventListener("click", function (event) {
-			event.stopPropagation();
-			openSettings(paletteBtn);
-		});
-
-		// The shortcut for light and dark: it moves straight to the next
-		// appearance instead of opening Frappe's three-card dialog. The panel
-		// offers the same three as a direct choice.
-		var themeBtn = make("button", { class: "aur-icon-btn aur-appearance", type: "button" });
-		el.paintThemeBtn = function () {
-			var meta = appearanceMeta(currentAppearance());
-			themeBtn.textContent = meta.glyph;
-			themeBtn.setAttribute("title", meta.label + " — click for " + appearanceMeta(meta.next).label.toLowerCase());
-		};
-		themeBtn.addEventListener("click", function (event) {
-			// Changing the look is never a reason to dismiss the panel that
-			// changes the look, even when the click landed outside it.
-			event.stopPropagation();
-			setAppearance(nextAppearance());
-		});
-		el.paintThemeBtn();
-
-		var fullBtn = make("button", { class: "aur-icon-btn aur-fullscreen", type: "button", title: "Toggle fullscreen", text: "\u26F6" });
-		fullBtn.addEventListener("click", toggleFullscreen);
-
-		var notifBtn = makeNotifBtn();
-		var userBtn = makeUserBtn();
+		var tools = buildSharedTools();
 
 		el.bar = make("div", { class: "aur-bar" }, [
 			make("div", { class: "aur-bar-progress" }),
 			make("div", { class: "aur-bar-inner" }, [
 				brand,
 				nav,
-				make("div", { class: "aur-bar-right" }, [searchWrap, el.pinBtn, paletteBtn, themeBtn, fullBtn, notifBtn, userBtn].filter(Boolean)),
+				make("div", { class: "aur-bar-right" }, [
+					tools.searchWrap,
+					tools.pinBtn,
+					tools.paletteBtn,
+					tools.themeBtn,
+					tools.fullBtn,
+					tools.notifBtn,
+					tools.userBtn,
+				].filter(Boolean)),
 			]),
 		]);
 
@@ -4937,34 +4996,45 @@
 	/* Where the menu's own name points. A configured menu says so outright; a
 	   workspace-derived one is named after the workspace it came from, so the
 	   slug of that name is the answer. */
+	function routeFromDeclared(declared) {
+		if (!declared) return null;
+		if (hasRoute(declared)) return declared.route;
+		var type = declared.type;
+		var to = declared.to;
+		if (!to) return null;
+		// Only targets the client can form without a server round-trip.
+		if (type === "Workspace") return [slugify(to)];
+		if (type === "DocType") return ["List", to];
+		if (type === "Dashboard") return ["dashboard-view", to];
+		return null;
+	}
+
+	/* The first place a module should open. Configured menus must not fall back
+	   to their record name: after hash autoname that slug is not a Page. */
 	function overviewItem(menu, declared) {
-		if (declared && declared.to) {
-			var item = navItem({
-				type: declared.type,
-				to: declared.to,
-				label: menu.label + " overview",
-				route: declared.type === "Workspace" ? [slugify(declared.to)] : null,
-				kind: "operate",
-			});
-
-			// Only a workspace target can be routed from the client alone; the
-			// rest were resolved server-side and arrive with a route already.
-			if (!item.route) item.route = declared.route || [slugify(declared.to)];
-			item.icon = menu.icon;
-			return item;
+		var route = routeFromDeclared(declared);
+		if (!route && nav.source === "auto" && menu.name) {
+			route = [slugify(menu.name)];
 		}
+		if (!route) return null;
 
-		return {
-			id: "ws:" + menu.name,
-			key: "ws:" + menu.slug,
+		var item = navItem({
+			type: (declared && declared.type) || "Workspace",
+			to: (declared && declared.to) || menu.name,
 			label: menu.label + " overview",
-			sub: "Workspace",
-			hue: hue(menu.name),
-			icon: menu.icon,
-			act: "route",
-			route: [menu.slug],
+			route: route,
 			kind: "operate",
-		};
+		});
+		item.icon = menu.icon;
+		return item;
+	}
+
+	function menuLanding(menu) {
+		if (!menu) return null;
+		if (hasRoute(menu.overview)) return menu.overview;
+		var col = menu.columns && menu.columns[0];
+		var first = col && col.items && col.items[0];
+		return hasRoute(first) ? first : null;
 	}
 
 	/* One index from every entry to the menu that holds it, so both the bar and
@@ -5046,8 +5116,10 @@
 	function paintNavActive() {
 		if (!el.navBtns) return;
 		var active = activeMenuName();
+		var openName = nav.dropFor || (moduleMegaOpen() ? state.activeKey : "");
 		Object.keys(el.navBtns).forEach(function (name) {
 			el.navBtns[name].classList.toggle("is-active", name === active);
+			el.navBtns[name].classList.toggle("aur-open", Boolean(openName) && name === openName);
 		});
 	}
 
@@ -5058,7 +5130,7 @@
 			nav.drop.remove();
 			nav.drop = null;
 		}
-		if (nav.dropBtn) nav.dropBtn.classList.remove("is-open");
+		if (nav.dropBtn) nav.dropBtn.classList.remove("is-open", "aur-open");
 		nav.dropBtn = null;
 		nav.dropFor = "";
 	}
@@ -5159,7 +5231,13 @@
 
 			// The workspace itself is reachable from the menu that represents it,
 			// which is where a user goes looking for the module's own dashboard.
-			if (index === 0 && menu.overview) parts.push(navLink(menu.overview));
+			if (index === 0 && menu.name !== "__more") {
+				var landing = menuLanding(menu);
+				var already = landing && (column.items || []).some(function (item) {
+					return (landing.id && item.id === landing.id) || (landing.key && item.key === landing.key);
+				});
+				if (landing && !already) parts.push(navLink(landing));
+			}
 
 			eachKind(column.items, areaIsMixed(column.items), function (bucket, rows, heading) {
 				if (heading) parts.push(make("div", { class: "knav-sub", text: heading }));
@@ -5182,7 +5260,7 @@
 
 		nav.dropFor = menu.name;
 		nav.dropBtn = btn;
-		btn.classList.add("is-open");
+		btn.classList.add("is-open", "aur-open");
 		placeNavDrop();
 	}
 
@@ -5210,14 +5288,15 @@
 		// clicked module is then brought to the front.
 		openTab("shellnav");
 		if (menu && menuByName(menu.name)) selectGroup("shellnav", menu.name);
+		paintNavActive();
 	}
 
 	/* The menu behind a button is looked up when it is opened rather than closed
 	   over, because the overflow button's contents depend on how many of the
 	   others currently fit. */
 	function navMenuButton(name, label, icon, getMenu) {
-		var btn = make("button", { class: "knav-menu", type: "button", title: label }, [
-			iconNode(icon, "knav-menu-glyph"),
+		var btn = make("button", { class: "aur-tab knav-menu", type: "button", title: label }, [
+			iconNode(icon, "aur-tab-glyph knav-menu-glyph"),
 			make("span", { class: "knav-menu-label", text: label }),
 		]);
 
@@ -5250,7 +5329,10 @@
 			if (isNarrow()) return;
 			if (currentNavView() === "grid" && moduleMegaOpen()) {
 				var menu = getMenu();
-				if (menu && state.activeKey !== menu.name) selectGroup("shellnav", menu.name);
+				if (menu && state.activeKey !== menu.name) {
+					selectGroup("shellnav", menu.name);
+					paintNavActive();
+				}
 				return;
 			}
 			if (nav.drop && nav.dropFor !== name) open();
@@ -5276,9 +5358,7 @@
 		for (var i = 0; i < menus.length; i += size) {
 			columns.push({
 				title: columns.length ? "\u00a0" : "More modules",
-				items: menus.slice(i, i + size).map(function (menu) {
-					return overviewItem(menu);
-				}),
+				items: menus.slice(i, i + size).map(menuLanding).filter(Boolean),
 			});
 		}
 
@@ -5462,7 +5542,8 @@
 		el.sideHead = head;
 		head.addEventListener("click", function () {
 			var menu = menuByName(activeMenuName());
-			if (menu && menu.overview) runItem(menu.overview);
+			var landing = menuLanding(menu);
+			if (landing) runItem(landing);
 		});
 
 		var collapse = make("button", {
@@ -5547,7 +5628,7 @@
 		el.sideIcon.appendChild(iconNode(menu.icon, "kside-head-glyph"));
 		if (el.sidePin) {
 			el.sidePin.innerHTML = "";
-			if (menu.overview) el.sidePin.appendChild(pinStar(menu.overview, "kside-head-star"));
+			if (menu.overview && hasRoute(menu.overview)) el.sidePin.appendChild(pinStar(menu.overview, "kside-head-star"));
 		}
 
 		var here = routeTargetKey();
@@ -5674,8 +5755,8 @@
 	}
 
 	function navTabBtn(id, label, icon) {
-		var btn = make("button", { class: "knav-tab", type: "button", title: label }, [
-			iconNode(icon, "knav-tab-glyph"),
+		var btn = make("button", { class: "aur-tab knav-tab", type: "button", title: label }, [
+			iconNode(icon, "aur-tab-glyph knav-tab-glyph"),
 			make("span", { class: "knav-tab-label", text: label }),
 			make("span", { class: "aur-tab-count", text: "\u2026" }),
 		]);
@@ -5984,26 +6065,9 @@
 	}
 
 	function buildModuleNav(anchor) {
-		// The company is what a user recognises the desk by; the product name
-		// sits under it, and drops out entirely when there is no company to name.
-		var brandText = brandName();
-		var company = companyName();
-		var title = company || brandText;
-		var subtitle = company && company !== brandText ? brandText : "";
+		var brand = buildSharedBrand();
 
-		var brand = make("button", { class: "knav-brand", type: "button", title: "Navigation, theme and appearance" }, [
-			make("span", { class: "knav-brand-mark", text: title.charAt(0).toUpperCase() || "K" }),
-			make("span", { class: "knav-brand-text" }, [
-				make("span", { class: "knav-brand-name", text: title }),
-				make("span", { class: "knav-brand-sub", text: subtitle }),
-			]),
-		]);
-		brand.addEventListener("click", function (event) {
-			event.stopPropagation();
-			openSettings(brand);
-		});
-
-		el.navMenus = make("nav", { class: "knav-menus", "aria-label": "Modules" });
+		el.navMenus = make("nav", { class: "knav-menus aur-nav", "aria-label": "Modules" });
 
 		el.sideToggle = make("button", {
 			class: "knav-side-toggle",
@@ -6019,74 +6083,32 @@
 			setSideCollapsed(nav.drawerOpen);
 		});
 
-		el.search = make("input", {
-			class: "knav-search",
-			type: "search",
-			placeholder: "Search",
-			"aria-label": "Search the desk",
-		});
-		el.search.addEventListener("input", function () {
-			renderSearch(el.search.value);
-		});
-		el.search.addEventListener("focus", function () {
-			if (el.search.value.trim()) renderSearch(el.search.value);
-		});
-
-		var searchWrap = make("div", { class: "knav-search-wrap" }, [
-			iconNode("search", "knav-search-icon"),
-			el.search,
-			make("span", { class: "knav-kbd", text: "/" }),
-		]);
-
-		// Pinned and Recent are the command bar's own two lists, opened in the
-		// same panel, so registering them here is all this shell has to do.
 		el.tabNodes = {};
 		var pinnedBtn = navTabBtn("pinned", "Pinned", "star");
 		var recentBtn = navTabBtn("recent", "Recent", "history");
+		var tools = buildSharedTools();
 
-		el.pinBtn = make("button", { class: "aur-icon-btn knav-pin", type: "button", title: "Pin this page", text: "\u2605" });
-		el.pinBtn.addEventListener("click", function (event) {
-			event.stopPropagation();
-			var desc = currentDesc();
-			if (desc) togglePin(desc, el.pinBtn);
-		});
-
-		var themeBtn = make("button", { class: "aur-icon-btn knav-appearance", type: "button" });
-		el.paintThemeBtn = function () {
-			var meta = appearanceMeta(currentAppearance());
-			themeBtn.textContent = meta.glyph;
-			themeBtn.setAttribute("title", meta.label + " \u2014 click for " + appearanceMeta(meta.next).label.toLowerCase());
-		};
-		themeBtn.addEventListener("click", function (event) {
-			event.stopPropagation();
-			setAppearance(nextAppearance());
-		});
-		el.paintThemeBtn();
-
-		/* Deliberately fewer controls than the command bar carries. Every button
-		   here is width the module menus do not get, and the palette and
-		   fullscreen both duplicate something already reachable — the brand
-		   opens the same settings panel, and the desk has its own fullscreen. */
-		el.navBar = make("div", { class: "knav" }, [
-			make("div", { class: "knav-inner" }, [
+		el.navBar = make("div", { class: "knav aur-bar" }, [
+			make("div", { class: "aur-bar-progress" }),
+			make("div", { class: "knav-inner aur-bar-inner" }, [
 				el.sideToggle,
 				brand,
 				el.navMenus,
-				make("div", { class: "knav-right" }, [
-					searchWrap,
+				make("div", { class: "knav-right aur-bar-right" }, [
+					tools.searchWrap,
 					pinnedBtn,
 					recentBtn,
-					el.pinBtn,
-					themeBtn,
-					makeNotifBtn(),
-					makeUserBtn(),
+					tools.pinBtn,
+					tools.paletteBtn,
+					tools.themeBtn,
+					tools.fullBtn,
+					tools.notifBtn,
+					tools.userBtn,
 				].filter(Boolean)),
 			]),
 			buildRateBar(),
 		]);
 
-		// positionMega and the scrim both measure "the bar", whichever shell
-		// drew it, so this one answers to the same name.
 		el.bar = el.navBar;
 		mountBar(anchor);
 		root.classList.add("kaiten-nav-on");

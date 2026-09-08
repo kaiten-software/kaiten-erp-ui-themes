@@ -137,6 +137,10 @@
 		gap: 4px;
 	}
 
+	.knav-tab-label {
+		display: none;
+	}
+
 	.knav-side-toggle,
 	.knav-brand,
 	.knav-right {

@@ -700,11 +700,12 @@ html.kaiten-bar-on:not([data-kaiten-shell="module"]) {
 	display: inline-flex;
 	align-items: center;
 	gap: 7px;
+	max-width: min(280px, 34vw);
 	font-weight: 700;
 	font-size: 12.5px;
-	letter-spacing: 0.02em;
-	text-transform: uppercase;
-	padding: 5px 11px;
+	letter-spacing: 0;
+	text-transform: none;
+	padding: 4px 10px 4px 5px;
 	border-radius: 999px;
 	color: #fff;
 	background: var(--aur-grad);
@@ -713,6 +714,24 @@ html.kaiten-bar-on:not([data-kaiten-shell="module"]) {
 	box-shadow: 0 6px 18px -8px rgba(139, 92, 246, 0.9);
 	border: none;
 	cursor: pointer;
+	flex: none;
+	min-width: 0;
+}
+
+.aur-brand-label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+}
+
+.aur-brand-logo {
+	height: 18px;
+	width: auto;
+	max-width: 36px;
+	border-radius: 5px;
+	object-fit: contain;
+	background: #fff;
 	flex: none;
 }
 
@@ -4740,7 +4759,7 @@ body[data-route^="Form"] .layout-side-section {
 }
 
 @media (max-width: 767px) {
-	.aur-brand span:not(.aur-brand-dot) {
+	.aur-brand .aur-brand-label {
 		display: none;
 	}
 
