@@ -4823,6 +4823,14 @@
 			function (event) {
 				var target = event.target.closest(".btn, .es-button, .aur-item, .aur-tab, .aur-icon-btn, .dock-item");
 				if (!target) return;
+				// Nested v17 menus live inside the button. A blend ripple on
+				// that parent paints through the open list.
+				if (
+					target.matches(".dropdown-toggle, [data-toggle='dropdown']") ||
+					target.querySelector(":scope > .dropdown-menu")
+				) {
+					return;
+				}
 
 				var rect = target.getBoundingClientRect();
 				var size = Math.max(rect.width, rect.height);

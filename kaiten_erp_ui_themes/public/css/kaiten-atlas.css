@@ -277,3 +277,9 @@
 .aurora-on[data-kaiten-skin="atlas"] .form-tabs-list .nav-link {
 	border-radius: var(--aur-r-sm);
 }
+
+.aurora-on[data-kaiten-skin="atlas"] .dropdown-menu {
+	background: var(--aur-surface);
+	border: 1px solid var(--aur-line);
+	box-shadow: var(--aur-shadow-lg);
+}

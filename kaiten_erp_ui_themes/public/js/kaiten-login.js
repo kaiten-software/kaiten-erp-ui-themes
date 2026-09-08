@@ -26,7 +26,6 @@
 
 	var TAGLINES = [
 		"Your whole business, one keystroke away.",
-		"512 doctypes. One menu. No hunting.",
 		"Pin what you use. Forget the rest.",
 		"Press ⌘K anywhere once you are in.",
 	];

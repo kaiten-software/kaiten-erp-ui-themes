@@ -1882,7 +1882,11 @@ a.aur-item:focus {
 /* The ripple needs the button to clip, but v17 nests dropdown menus inside
    the button that opens them (the sort selector, the list menu, the grid row
    menus). Clipping those buttons swallows the menu whole, so any button that
-   carries one opts out. */
+   carries one opts out.
+
+   Transform is also banned: hover/active lift creates a stacking context, so
+   the menu's z-index stays trapped in the button and the sticky list header
+   paints through it until the pointer leaves. */
 .aurora-on .btn:has(.dropdown-menu),
 .aurora-on .es-button:has(.dropdown-menu),
 .aurora-on .btn[data-toggle="dropdown"],
@@ -1890,6 +1894,24 @@ a.aur-item:focus {
 .aurora-on .btn.dropdown-toggle,
 .aurora-on .es-button.dropdown-toggle {
 	overflow: visible;
+	transform: none;
+	transition: box-shadow var(--aur-fast) var(--aur-ease), filter var(--aur-fast) var(--aur-ease),
+		background var(--aur-fast) var(--aur-ease), border-color var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on .btn:has(.dropdown-menu):hover,
+.aurora-on .es-button:has(.dropdown-menu):hover,
+.aurora-on .btn[data-toggle="dropdown"]:hover,
+.aurora-on .es-button[data-toggle="dropdown"]:hover,
+.aurora-on .btn.dropdown-toggle:hover,
+.aurora-on .es-button.dropdown-toggle:hover,
+.aurora-on .btn:has(.dropdown-menu):active,
+.aurora-on .es-button:has(.dropdown-menu):active,
+.aurora-on .btn[data-toggle="dropdown"]:active,
+.aurora-on .es-button[data-toggle="dropdown"]:active,
+.aurora-on .btn.dropdown-toggle:active,
+.aurora-on .es-button.dropdown-toggle:active {
+	transform: none;
 }
 
 .aurora-on .btn:hover {
@@ -2876,6 +2898,7 @@ html.kaiten-bar-on .form-layout .section-body {
 }
 
 .aurora-on .dropdown-menu {
+	background: var(--aur-surface);
 	border-radius: var(--aur-r);
 	border: 1px solid var(--aur-line);
 	box-shadow: var(--aur-shadow-lg);
