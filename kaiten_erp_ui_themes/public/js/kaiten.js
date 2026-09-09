@@ -3560,9 +3560,74 @@
 		delete list._aurNext;
 		delete list._aurAnchor;
 		list.classList.remove("aur-unclipped");
-		["position", "width", "minWidth", "maxHeight", "left", "top", "bottom", "right", "zIndex", "overflowY"].forEach(function (prop) {
+		["position", "width", "minWidth", "maxHeight", "left", "top", "bottom", "right", "zIndex", "overflowY", "background", "backgroundColor"].forEach(function (prop) {
 			list.style[prop] = "";
 		});
+	}
+
+	function popoverFill() {
+		// Hard hex only. Theme tokens in v17 dark are the same as the page
+		// and the grid editor, which is why "Insert Below" showed through
+		// a list that thought it had a background.
+		return root.getAttribute("data-theme") === "dark" ? "#252838" : "#ffffff";
+	}
+
+	function paintPopover(node) {
+		var fill = popoverFill();
+		if (!node || !node.style) return;
+		node.style.setProperty("background", fill, "important");
+		node.style.setProperty("background-color", fill, "important");
+		node.style.setProperty("opacity", "1", "important");
+	}
+
+	/* Stock Desk: max-height min(60vh, 300px), open below the field, overlap
+	   whatever is under it. Do not shrink to the footer gap — that is why
+	   Link To in a grid editor only showed three rows. */
+	function stockListHeight() {
+		return Math.round(Math.min(window.innerHeight * 0.6, 300));
+	}
+
+	function placeStockList(node, rect, opts) {
+		opts = opts || {};
+		var minWidth = opts.minWidth || 250;
+		var cap = stockListHeight();
+		var width = Math.max(Math.round(rect.width), minWidth);
+		var left = Math.round(rect.left);
+		if (left + width > window.innerWidth - 8) {
+			left = Math.max(8, window.innerWidth - width - 8);
+		}
+
+		// Width first, then measure: how tall the content is depends on how
+		// wide it may wrap.
+		node.style.position = "fixed";
+		node.style.zIndex = "2000";
+		node.style.width = width + "px";
+		node.style.minWidth = minWidth + "px";
+		node.style.bottom = "auto";
+		node.style.right = "auto";
+		node.style.left = left + "px";
+
+		/* Flip on what the list actually needs, not on the 300px cap. A field
+		   near the bottom with two rows in it (a link with no matches, showing
+		   only "Create a new ..." ) has room below and must open there; sizing
+		   the decision on the cap is what threw that popup up over the form. */
+		if (!opts.skipHeight) node.style.maxHeight = "";
+		var natural = Math.max(node.scrollHeight || 0, node.offsetHeight || 0, 40);
+		var wanted = opts.skipHeight ? natural : Math.min(cap, natural);
+
+		var below = window.innerHeight - rect.bottom - 8;
+		var above = rect.top - 8;
+		var flip = below < wanted && above > below;
+		var room = flip ? above : below;
+		var height = Math.min(wanted, Math.max(room, Math.min(wanted, 180)));
+
+		if (!opts.skipHeight) {
+			node.style.maxHeight = height + "px";
+			node.style.overflowY = natural > height ? "auto" : "hidden";
+		}
+		node.style.top = flip
+			? Math.round(Math.max(8, rect.top - height - 4)) + "px"
+			: Math.round(rect.bottom + 2) + "px";
 	}
 
 	function unclip(list) {
@@ -3582,10 +3647,11 @@
 		if (!anchor) return;
 
 		if (!list.dataset.aurUnclipped) {
-			if (!clippedBy(list)) return;
-			// position:fixed still paints inside overflow:hidden/auto ancestors
-			// (the pencil .form-in-grid, a prompt .modal-body). The only way
-			// the list can use the viewport is to leave that tree.
+			// Date pickers already paint themselves; only rescue them when a
+			// parent clips. Link lists always leave the field — stock paint
+			// dies the moment the ul is not a child of .awesomplete, and
+			// Default-skin --bg-color is the same token as the page.
+			if (list.classList.contains("datepicker") && !clippedBy(list)) return;
 			list._aurHome = list.parentElement;
 			list._aurNext = list.nextSibling;
 			list._aurAnchor = anchor;
@@ -3601,28 +3667,25 @@
 			list.classList.add("aur-unclipped");
 		}
 
+		// Enter can leave a previous copy of the same field parked on body.
+		document.querySelectorAll(".aur-unclipped").forEach(function (other) {
+			if (other === list) return;
+			if (other._aurAnchor === anchor) {
+				other.hidden = true;
+				reclip(other);
+			}
+		});
+		if (el.selectPop) closeSelect();
+
+		paintPopover(list);
+
 		var rect = anchor.getBoundingClientRect();
 		if (!rect.width && !rect.height) return;
 
-		var below = window.innerHeight - rect.bottom - 12;
-		var above = rect.top - 12;
-		var flip = below < 240 && above > below;
-		var room = flip ? above : below;
-		var maxH = Math.round(clamp(room, 200, Math.min(480, Math.round(window.innerHeight * 0.55))));
-		var width = Math.max(rect.width, 190);
-
-		list.style.position = "fixed";
-		list.style.zIndex = "1400";
-		list.style.width = Math.round(width) + "px";
-		list.style.minWidth = "190px";
-		list.style.maxHeight = maxH + "px";
-		list.style.overflowY = "auto";
-		list.style.bottom = "auto";
-		list.style.right = "auto";
-		list.style.left = Math.round(clamp(rect.left, 8, window.innerWidth - width - 8)) + "px";
-		list.style.top = flip
-			? Math.round(Math.max(8, rect.top - maxH - 6)) + "px"
-			: Math.round(rect.bottom + 6) + "px";
+		placeStockList(list, rect, {
+			minWidth: 250,
+			skipHeight: list.classList.contains("datepicker"),
+		});
 	}
 
 	function watchPopups() {
@@ -3675,10 +3738,13 @@
 	}
 
 	function openSelect(select) {
+		if (el.selectPop && el.selectPop._aurSelect === select) return;
 		closeSelect();
 
 		var options = Array.prototype.slice.call(select.options);
 		var pop = make("div", { class: "aur-select-pop" });
+		pop._aurSelect = select;
+		paintPopover(pop);
 
 		if (!options.length) pop.appendChild(make("div", { class: "aur-select-empty", text: "No options" }));
 
@@ -3700,20 +3766,7 @@
 
 		document.body.appendChild(pop);
 
-		var rect = select.getBoundingClientRect();
-		var width = Math.max(rect.width, 190);
-		var below = window.innerHeight - rect.bottom - 12;
-		var above = rect.top - 12;
-		var flip = below < 200 && above > below;
-		var room = Math.max(120, flip ? above : below);
-		var maxH = Math.round(clamp(room, 120, 330));
-
-		pop.style.minWidth = Math.round(width) + "px";
-		pop.style.maxHeight = maxH + "px";
-		pop.style.left = Math.round(clamp(rect.left, 8, window.innerWidth - width - 8)) + "px";
-		pop.style.top = flip
-			? Math.round(Math.max(8, rect.top - maxH - 6)) + "px"
-			: Math.round(rect.bottom + 6) + "px";
+		placeStockList(pop, select.getBoundingClientRect(), { minWidth: 190 });
 
 		// Wheel must stay on this list. If it reaches the dialog/page scroller,
 		// the capture scroll listener used to tear the pop down mid-gesture.
@@ -3727,7 +3780,39 @@
 
 		el.selectPop = pop;
 		var selected = pop.querySelector(".aur-selected");
-		if (selected) selected.scrollIntoView({ block: "nearest" });
+		if (selected) {
+			selected.classList.add("aur-cursor");
+			selected.scrollIntoView({ block: "nearest" });
+		}
+	}
+
+	function selectOptions() {
+		return el.selectPop ? el.selectPop.querySelectorAll(".aur-select-opt") : [];
+	}
+
+	function moveSelectCursor(delta) {
+		var opts = selectOptions();
+		if (!opts.length) return;
+		var i = 0;
+		for (; i < opts.length; i++) if (opts[i].classList.contains("aur-cursor")) break;
+		if (i >= opts.length) {
+			for (i = 0; i < opts.length; i++) if (opts[i].classList.contains("aur-selected")) break;
+		}
+		if (i >= opts.length) i = 0;
+		else i = (i + delta + opts.length) % opts.length;
+		Array.prototype.forEach.call(opts, function (row) {
+			row.classList.remove("aur-cursor");
+		});
+		opts[i].classList.add("aur-cursor");
+		opts[i].scrollIntoView({ block: "nearest" });
+	}
+
+	function commitSelectCursor() {
+		if (!el.selectPop) return false;
+		var row = el.selectPop.querySelector(".aur-cursor") || el.selectPop.querySelector(".aur-selected");
+		if (!row) return false;
+		row.click();
+		return true;
 	}
 
 	function onPageScroll(event) {
@@ -3761,6 +3846,45 @@
 
 		document.addEventListener("scroll", onPageScroll, true);
 		window.addEventListener("resize", closeSelect);
+
+		// mousedown only covers the mouse. Enter / Space / arrows open the
+		// native OS list as well, which is the doubled "Approve / Revise" menu.
+		document.addEventListener(
+			"keydown",
+			function (event) {
+				var target = event.target;
+				var select = target && target.closest ? target.closest("select") : null;
+				var key = event.key;
+				var popOpen = Boolean(el.selectPop);
+
+				if (popOpen && (key === "Escape" || key === "Tab")) {
+					closeSelect();
+					return;
+				}
+
+				if (popOpen && (key === "ArrowDown" || key === "ArrowUp")) {
+					event.preventDefault();
+					moveSelectCursor(key === "ArrowDown" ? 1 : -1);
+					return;
+				}
+
+				if (popOpen && (key === "Enter" || key === " " || key === "Spacebar")) {
+					event.preventDefault();
+					if (!commitSelectCursor()) closeSelect();
+					return;
+				}
+
+				if (!select || select.multiple || select.disabled || select.size > 1 || select.closest(".aur-native")) return;
+
+				if (key === "Enter" || key === " " || key === "Spacebar" || key === "ArrowDown" || key === "ArrowUp" || key === "F4") {
+					event.preventDefault();
+					openSelect(select);
+					if (key === "ArrowUp") moveSelectCursor(-1);
+					if (key === "ArrowDown" || key === "F4") moveSelectCursor(0);
+				}
+			},
+			true
+		);
 	}
 
 	/* ---------------------------------------------------------------------
@@ -5078,6 +5202,24 @@
 		return (NAV_KEY_PREFIX[type] || "dt:") + target;
 	}
 
+	function itemMatchesRoute(item, here) {
+		if (!item) return false;
+		if (item.key && here && item.key === here) return true;
+		if (item.key && here && slugify(item.key) === slugify(here)) return true;
+
+		var itemTail = item.key ? item.key.split(":").slice(1).join(":") : "";
+		var hereTail = here ? String(here).split(":").slice(1).join(":") : "";
+		if (itemTail && hereTail && slugify(itemTail) === slugify(hereTail)) return true;
+
+		var first = item.route && item.route[0] ? String(item.route[0]) : "";
+		if (!first) return false;
+		var head = "";
+		try {
+			head = String((frappe.get_route() || [])[0] || "");
+		} catch (e) {}
+		return Boolean(head) && (first === head || slugify(first) === slugify(head));
+	}
+
 	function itemKind(entry) {
 		if (entry.kind === "report" || entry.kind === "setup") return entry.kind;
 		if (entry.type === "Report") return "report";
@@ -5175,12 +5317,21 @@
 		return item;
 	}
 
+	/* Where a menu opens when its own name is clicked. Overview is optional:
+	   a URL-only menu (every item an external link, no Overview Link To) has
+	   none, and must still be openable rather than dead. */
 	function menuLanding(menu) {
 		if (!menu) return null;
 		if (hasRoute(menu.overview)) return menu.overview;
-		var col = menu.columns && menu.columns[0];
-		var first = col && col.items && col.items[0];
-		return hasRoute(first) ? first : null;
+
+		var found = null;
+		(menu.columns || []).forEach(function (column) {
+			(column.items || []).forEach(function (item) {
+				if (found) return;
+				if (hasRoute(item) || (item && item.act === "url" && item.url)) found = item;
+			});
+		});
+		return found;
 	}
 
 	/* One index from every entry to the menu that holds it, so both the bar and
@@ -5192,32 +5343,54 @@
 		// stay honest about whether it maintains itself.
 		nav.source = payload.source || "auto";
 
-		nav.menus = (payload.menus || []).map(function (menu) {
-			var built = {
-				name: menu.name,
-				label: menu.label,
-				module: menu.module || "",
-				slug: slugify(menu.name),
-				icon: resolveIcon(menu.icon, menu.label, menu.module),
-				hue: hue(menu.name),
-				columns: (menu.columns || []).map(function (column) {
-					return {
-						title: column.title || menu.label,
-						items: (column.items || []).map(navItem),
+		/* One malformed menu must not cost the site its whole bar. Each record
+		   is built on its own, and a record that throws is dropped instead of
+		   aborting the loop — the bar then renders every menu that is fine. */
+		nav.menus = (payload.menus || [])
+			.map(function (menu) {
+				try {
+					var built = {
+						name: menu.name,
+						label: menu.label,
+						module: menu.module || "",
+						slug: slugify(menu.name),
+						icon: resolveIcon(menu.icon, menu.label, menu.module),
+						hue: hue(menu.name),
+						columns: (menu.columns || []).map(function (column) {
+							return {
+								title: column.title || menu.label,
+								items: (column.items || []).map(navItem),
+							};
+						}),
 					};
-				}),
-			};
-			built.overview = overviewItem(built, menu.overview);
-			return built;
-		});
+					// Optional by design: URL-only menus send overview: null.
+					built.overview = overviewItem(built, menu.overview) || null;
+					return built;
+				} catch (e) {
+					console.warn("Kaiten: skipped a nav menu that could not be built", menu && menu.name, e);
+					return null;
+				}
+			})
+			.filter(Boolean);
 
 		nav.byKey = {};
 		nav.menus.forEach(function (menu) {
-			if (menu.overview.key && !nav.byKey[menu.overview.key]) nav.byKey[menu.overview.key] = menu.name;
+			function remember(item) {
+				if (!item || !item.key) return;
+				if (!nav.byKey[item.key]) nav.byKey[item.key] = menu.name;
+				// Pages are keyed as page:<Page.name> but the desk route is a
+				// single slug. Index both so the sidebar can highlight them.
+				if (item.key.indexOf("page:") === 0) {
+					var raw = item.key.slice(5);
+					var slug = slugify(raw);
+					if (!nav.byKey["page:" + slug]) nav.byKey["page:" + slug] = menu.name;
+					if (!nav.byKey["ws:" + slug]) nav.byKey["ws:" + slug] = menu.name;
+					if (!nav.byKey["ws:" + raw]) nav.byKey["ws:" + raw] = menu.name;
+				}
+			}
+			remember(menu.overview);
 			menu.columns.forEach(function (column) {
-				column.items.forEach(function (item) {
-					if (item.key && !nav.byKey[item.key]) nav.byKey[item.key] = menu.name;
-				});
+				column.items.forEach(remember);
 			});
 		});
 	}
@@ -5241,12 +5414,39 @@
 		if (head === "query-report") return "rep:" + route[1];
 		if (head === "List" && route[2] === "Report") return "rep:" + route[3];
 		if (head === "List" || head === "Form" || head === "Tree" || head === "print") return "dt:" + route[1];
+		if (head === "dashboard-view" || head === "Dashboard") return "dash:" + (route[1] || "");
 
 		// A workspace arrives as ["Workspaces", "Buying"] even though its URL is
 		// /desk/buying, so the name has to be read off the second element.
 		if (head === "Workspaces") return "ws:" + slugify(route[1] || "");
 
-		return "ws:" + slugify(head);
+		// Custom Page: ["gem-rate-approval"]. Nav keys are page:<Page.name>.
+		var slug = slugify(head);
+		var candidates = ["page:" + head, "page:" + slug, "ws:" + slug, "ws:" + head];
+		for (var i = 0; i < candidates.length; i++) {
+			if (nav.byKey && nav.byKey[candidates[i]]) return candidates[i];
+		}
+
+		if (nav.menus) {
+			for (var m = 0; m < nav.menus.length; m++) {
+				var menu = nav.menus[m];
+				var pool = [];
+				if (menu.overview) pool.push(menu.overview);
+				(menu.columns || []).forEach(function (column) {
+					(column.items || []).forEach(function (item) {
+						pool.push(item);
+					});
+				});
+				for (var j = 0; j < pool.length; j++) {
+					var item = pool[j];
+					if (!item || !item.key) continue;
+					var first = item.route && item.route[0] ? String(item.route[0]) : "";
+					if (first === head || slugify(first) === slug) return item.key;
+				}
+			}
+		}
+
+		return "ws:" + slug;
 	}
 
 	function activeMenuName() {
@@ -5794,7 +5994,7 @@
 					if (heading) el.sideBody.appendChild(make("div", { class: "kside-sub", text: heading }));
 					var list = make("div", { class: "kside-items" });
 					rows.forEach(function (item) {
-						list.appendChild(sideLink(item, item.key === here));
+						list.appendChild(sideLink(item, itemMatchesRoute(item, here)));
 					});
 					el.sideBody.appendChild(list);
 				});
@@ -5810,7 +6010,7 @@
 		// only the one in hand.
 		var holder = menu.columns.findIndex(function (column) {
 			return column.items.some(function (item) {
-				return item.key === here;
+				return itemMatchesRoute(item, here);
 			});
 		});
 
@@ -5867,7 +6067,7 @@
 
 			var list = make("div", { class: "kside-items" });
 			rows.forEach(function (item) {
-				list.appendChild(sideLink(item, item.key === here));
+				list.appendChild(sideLink(item, itemMatchesRoute(item, here)));
 			});
 			el.sideBody.appendChild(list);
 		});
@@ -6279,7 +6479,13 @@
 		frappe
 			.xcall("kaiten_erp_ui_themes.api.get_shell_nav", args)
 			.then(function (payload) {
-				buildNavModel(payload);
+				// The bar is drawn even if the model was only partly built, so
+				// one bad record can never leave the site with no navigation.
+				try {
+					buildNavModel(payload);
+				} catch (error) {
+					console.warn("Kaiten: could not build the module menu model", error);
+				}
 				renderNavMenus();
 				syncNavToRoute();
 				renderSide();

@@ -891,7 +891,10 @@ html[data-kaiten-nav-view="dropdown"] .kside-item:hover .kside-item-icon {
 }
 
 html[data-kaiten-nav-view="dropdown"] .kside-item.is-active {
-	color: color-mix(in oklab, var(--knav-accent) 62%, var(--knav-panel-ink));
+	background: color-mix(in oklab, var(--knav-accent) 22%, var(--knav-panel));
+	box-shadow: inset 3px 0 0 var(--knav-accent);
+	color: color-mix(in oklab, var(--knav-accent) 70%, var(--knav-panel-ink));
+	font-weight: 700;
 }
 
 html[data-kaiten-nav-view="dropdown"] .kside-item.is-active .kside-item-icon {
@@ -1023,7 +1026,7 @@ html[data-kaiten-shell="module"] .dock {
    setting still governs, per the theme's house rule.
    ---------------------------------------------------------------------- */
 
-html[data-kaiten-pages="custom"] .form-section {
+html[data-kaiten-pages="custom"] .page-body .form-section {
 	margin-bottom: 10px;
 	padding: 12px 14px;
 	border: 1px solid var(--knav-panel-line, #e6e9f0);
@@ -1031,17 +1034,17 @@ html[data-kaiten-pages="custom"] .form-section {
 	background: var(--knav-panel, #fff);
 }
 
-html[data-kaiten-pages="custom"][data-aur-density="cozy"] .form-section {
+html[data-kaiten-pages="custom"][data-aur-density="cozy"] .page-body .form-section {
 	margin-bottom: 8px;
 	padding: 8px 12px;
 }
 
-html[data-kaiten-pages="custom"][data-aur-density="compact"] .form-section {
+html[data-kaiten-pages="custom"][data-aur-density="compact"] .page-body .form-section {
 	margin-bottom: 5px;
 	padding: 6px 10px;
 }
 
-html[data-kaiten-pages="custom"] .form-section .section-head {
+html[data-kaiten-pages="custom"] .page-body .form-section .section-head {
 	margin-bottom: 8px;
 	color: var(--knav-panel-ink-soft, #64748b);
 	font-size: 11px;
@@ -1050,15 +1053,15 @@ html[data-kaiten-pages="custom"] .form-section .section-head {
 	text-transform: uppercase;
 }
 
-html[data-kaiten-pages="custom"][data-aur-density="cozy"] .form-section .section-head {
+html[data-kaiten-pages="custom"][data-aur-density="cozy"] .page-body .form-section .section-head {
 	margin-bottom: 5px;
 }
 
-html[data-kaiten-pages="custom"][data-aur-density="compact"] .form-section .section-head {
+html[data-kaiten-pages="custom"][data-aur-density="compact"] .page-body .form-section .section-head {
 	margin-bottom: 3px;
 }
 
-html[data-kaiten-pages="custom"] .frappe-control .control-label {
+html[data-kaiten-pages="custom"] .page-body .frappe-control .control-label {
 	margin-bottom: 3px;
 	color: var(--knav-panel-ink-soft, #64748b);
 	font-size: 11px;
@@ -1066,33 +1069,35 @@ html[data-kaiten-pages="custom"] .frappe-control .control-label {
 }
 
 /* Fields read as fields even when empty, which is the whole complaint about
-   the stock form: an unfilled input is invisible until it is clicked. */
-html[data-kaiten-pages="custom"] .frappe-control input[type="text"],
-html[data-kaiten-pages="custom"] .frappe-control input[type="number"],
-html[data-kaiten-pages="custom"] .frappe-control input[type="date"],
-html[data-kaiten-pages="custom"] .frappe-control input[type="email"],
-html[data-kaiten-pages="custom"] .frappe-control input[type="password"],
-html[data-kaiten-pages="custom"] .frappe-control select,
-html[data-kaiten-pages="custom"] .frappe-control textarea {
+   the stock form: an unfilled input is invisible until it is clicked.
+   Scoped to the page canvas so stock dialogs (column picker, field select,
+   link search) keep Frappe's own list and popup layout. */
+html[data-kaiten-pages="custom"] .page-body .frappe-control input[type="text"],
+html[data-kaiten-pages="custom"] .page-body .frappe-control input[type="number"],
+html[data-kaiten-pages="custom"] .page-body .frappe-control input[type="date"],
+html[data-kaiten-pages="custom"] .page-body .frappe-control input[type="email"],
+html[data-kaiten-pages="custom"] .page-body .frappe-control input[type="password"],
+html[data-kaiten-pages="custom"] .page-body .frappe-control select,
+html[data-kaiten-pages="custom"] .page-body .frappe-control textarea {
 	border: 1px solid var(--knav-panel-line, #e6e9f0);
 	border-radius: 8px;
 	background: var(--knav-panel-2, #f7f8fb);
 }
 
-html[data-kaiten-pages="custom"] .frappe-control input:focus,
-html[data-kaiten-pages="custom"] .frappe-control select:focus,
-html[data-kaiten-pages="custom"] .frappe-control textarea:focus {
+html[data-kaiten-pages="custom"] .page-body .frappe-control input:focus,
+html[data-kaiten-pages="custom"] .page-body .frappe-control select:focus,
+html[data-kaiten-pages="custom"] .page-body .frappe-control textarea:focus {
 	border-color: color-mix(in oklab, var(--knav-accent, #e0a24a) 62%, transparent);
 	background: var(--knav-panel, #fff);
 	box-shadow: 0 0 0 3px color-mix(in oklab, var(--knav-accent, #e0a24a) 16%, transparent);
 }
 
-html[data-kaiten-pages="custom"] .list-row-head,
-html[data-kaiten-pages="custom"] .list-row {
+html[data-kaiten-pages="custom"] .page-body .list-row-head,
+html[data-kaiten-pages="custom"] .page-body .list-row {
 	border-radius: 0;
 }
 
-html[data-kaiten-pages="custom"] .list-row-head {
+html[data-kaiten-pages="custom"] .page-body .list-row-head {
 	color: var(--knav-panel-ink-soft, #64748b);
 	font-size: 11px;
 	font-weight: 800;

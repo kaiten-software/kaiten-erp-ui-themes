@@ -26,8 +26,9 @@
 
 	--aur-grad-soft: linear-gradient(135deg, rgba(99, 102, 241, 0.14), rgba(236, 72, 153, 0.1));
 
-	--aur-surface: rgba(255, 255, 255, 0.94);
-	--aur-surface-2: rgba(248, 250, 255, 0.88);
+	--aur-surface: #ffffff;
+	--aur-surface-2: #f8faff;
+	--aur-popover: #ffffff;
 	--aur-line: rgba(99, 102, 241, 0.14);
 	--aur-line-strong: rgba(99, 102, 241, 0.28);
 	--aur-ink: #0f172a;
@@ -55,8 +56,9 @@
 }
 
 [data-theme="dark"] {
-	--aur-surface: rgba(28, 30, 44, 0.92);
-	--aur-surface-2: rgba(22, 24, 36, 0.88);
+	--aur-surface: #1c1e2c;
+	--aur-surface-2: #161824;
+	--aur-popover: #1c1e2c;
 	--aur-line: rgba(148, 163, 255, 0.16);
 	--aur-line-strong: rgba(148, 163, 255, 0.3);
 	--aur-ink: #e2e8f0;
@@ -2399,47 +2401,110 @@ html.kaiten-bar-on .form-layout .section-body {
 
 /* The command palette is one card already. Framing its own suggestion list
    as a second floating panel is what made Ctrl+K look doubled up. */
+.awesomplete:has(#navbar-search) > ul,
 .aurora-on .awesomplete:has(#navbar-search) > ul {
-	border: none;
-	border-radius: 0;
-	box-shadow: none;
-	background: transparent;
+	border: none !important;
+	border-radius: 0 !important;
+	box-shadow: none !important;
+	background: transparent !important;
+	background-color: transparent !important;
+}
+
+/* -------------------------------------------------------------------------
+   Overlay panels — Default skin included
+   -------------------------------------------------------------------------
+   v17 maps --bg-color and --fg-color to the same --surface-base as the page.
+   Link lists that leave .awesomplete (unclipped onto body) also lose the
+   stock ".awesomplete > [role=listbox]" paint. Either way the options sit
+   on the form with no panel. These rules pin an opaque elevated surface
+   on every floating list, in every skin.
+   ---------------------------------------------------------------------- */
+
+html .awesomplete > ul,
+html .awesomplete > [role="listbox"],
+html .autocomplete-results,
+html .datepicker,
+html .datepicker.active,
+html .datepicker--content,
+html .datepicker--nav,
+html .dropdown-menu,
+html .popover,
+html .filter-popover,
+html .aur-select-pop,
+html .aur-unclipped {
+	background: #ffffff !important;
+	background-color: #ffffff !important;
+	background-image: none !important;
+	opacity: 1 !important;
+	isolation: isolate;
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
+}
+
+html .awesomplete > ul,
+html .awesomplete > [role="listbox"],
+html ul.aur-unclipped,
+html .autocomplete-results,
+html .aur-select-pop {
+	max-height: min(60vh, 300px);
+}
+
+html[data-theme="dark"] .awesomplete > ul,
+html[data-theme="dark"] .awesomplete > [role="listbox"],
+html[data-theme="dark"] .autocomplete-results,
+html[data-theme="dark"] .datepicker,
+html[data-theme="dark"] .datepicker.active,
+html[data-theme="dark"] .datepicker--content,
+html[data-theme="dark"] .datepicker--nav,
+html[data-theme="dark"] .dropdown-menu,
+html[data-theme="dark"] .popover,
+html[data-theme="dark"] .filter-popover,
+html[data-theme="dark"] .aur-select-pop,
+html[data-theme="dark"] .aur-unclipped {
+	/* One step above the grid editor / page so it reads as a card, the way
+	   stock Desk used --fg-color on --bg-color. Theme tokens are the same
+	   surface as the modal, which is why Insert Below showed through. */
+	background: #252838 !important;
+	background-color: #252838 !important;
 }
 
 /* Moved to document.body so .form-in-grid / .modal overflow cannot crop it.
-   Once it leaves .awesomplete, the stock "ul > li" rules no longer apply.
-   Base rules use Frappe variables so every skin (including Default) works. */
+   Once it leaves .awesomplete, the stock "ul > li" rules no longer apply. */
 .aur-unclipped {
-	z-index: 1400 !important;
+	z-index: 2000 !important;
 	overflow-x: hidden;
 	overflow-y: auto;
 	overscroll-behavior: contain;
-	background: var(--bg-color);
 	list-style: none;
 	margin: 0;
-	padding: var(--padding-xs);
+	padding: var(--padding-xs, 5px);
 	box-sizing: border-box;
-	border-radius: var(--border-radius);
-	border: 1px solid var(--border-color);
-	box-shadow: var(--shadow-md);
+	border-radius: var(--border-radius, 8px);
+	border: 1px solid var(--border-color, rgba(15, 23, 42, 0.12));
+	box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+	color: var(--text-color, #111827);
+}
+html[data-theme="dark"] .aur-unclipped {
+	border-color: rgba(255, 255, 255, 0.1);
+	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+	color: var(--text-color, #e5e7eb);
 }
 .aurora-on .aur-unclipped {
-	background: var(--aur-surface);
 	border-radius: var(--aur-r);
 	border-color: var(--aur-line);
 	box-shadow: var(--aur-shadow-lg);
 	padding: 6px 6px 12px;
+	color: var(--aur-ink);
 }
 
 .aur-unclipped > li,
 .aur-unclipped > [role="option"] {
 	cursor: pointer;
-	padding: var(--padding-sm);
-	border-radius: var(--border-radius);
-	color: var(--text-color);
-	white-space: nowrap;
+	padding: var(--padding-sm, 7px);
+	border-radius: var(--border-radius, 8px);
+	color: inherit;
+	white-space: normal;
 	overflow: hidden;
-	text-overflow: ellipsis;
 }
 .aurora-on .aur-unclipped > li,
 .aurora-on .aur-unclipped > [role="option"] {
@@ -2452,14 +2517,14 @@ html.kaiten-bar-on .form-layout .section-body {
 .aur-unclipped > li[aria-selected="true"],
 .aur-unclipped > [role="option"]:hover,
 .aur-unclipped > [role="option"][aria-selected="true"] {
-	background: var(--fg-hover-color, var(--gray-100));
-	color: var(--text-color);
+	background: var(--fg-hover-color, var(--surface-gray-2, var(--gray-100, #f3f3f3)));
+	color: inherit;
 }
 .aurora-on .aur-unclipped > li:hover,
 .aurora-on .aur-unclipped > li[aria-selected="true"],
 .aurora-on .aur-unclipped > [role="option"]:hover,
 .aurora-on .aur-unclipped > [role="option"][aria-selected="true"] {
-	background: color-mix(in oklab, var(--aur-accent) 16%, var(--aur-surface));
+	background: color-mix(in oklab, var(--aur-accent) 16%, var(--aur-popover, var(--aur-surface)));
 	color: var(--aur-ink);
 }
 
@@ -2467,6 +2532,24 @@ html.kaiten-bar-on .form-layout .section-body {
 .aur-unclipped > [role="option"] p {
 	margin: 0;
 	color: inherit;
+}
+
+html:not(.aurora-on)[data-theme="dark"] .modal-content,
+html:not(.aurora-on)[data-theme="dark"] .modal-header,
+html:not(.aurora-on)[data-theme="dark"] .modal-body,
+html:not(.aurora-on)[data-theme="dark"] .modal-footer,
+html:not(.aurora-on)[data-theme="dark"] .form-in-grid {
+	background: var(--surface-elevation-1, var(--gray-900, #1a1d2b));
+}
+
+/* Re-state after the !important overlay paint so Ctrl+K stays a single card. */
+html .awesomplete:has(#navbar-search) > ul,
+.aurora-on .awesomplete:has(#navbar-search) > ul {
+	border: none !important;
+	border-radius: 0 !important;
+	box-shadow: none !important;
+	background: transparent !important;
+	background-color: transparent !important;
 }
 
 /* -------------------------------------------------------------------------
@@ -3319,9 +3402,9 @@ html.kaiten-bar-on .form-layout .section-body {
 
 .aur-select-pop {
 	position: fixed;
-	z-index: 1400;
+	z-index: 2000;
 	min-width: 190px;
-	max-height: 330px;
+	max-height: min(60vh, 300px);
 	overflow-x: hidden;
 	overflow-y: auto;
 	overscroll-behavior: contain;
@@ -4219,6 +4302,8 @@ html.kaiten-bar-on .form-layout .section-body {
 
 .grid-row-open .form-in-grid .grid-footer-toolbar {
 	flex: 0 0 auto;
+	position: relative;
+	z-index: 0;
 }
 
 .aurora-on .form-grid-container,
