@@ -2390,7 +2390,7 @@ html.kaiten-bar-on .form-layout .section-body {
 /* Suggestion lists must float above the cards they sit inside. */
 .aurora-on .awesomplete > ul,
 .aurora-on .autocomplete-results,
-.aurora-on ul.aur-unclipped {
+.aurora-on .aur-unclipped {
 	z-index: 1300;
 	border-radius: var(--aur-r);
 	border: 1px solid var(--aur-line);
@@ -2407,37 +2407,64 @@ html.kaiten-bar-on .form-layout .section-body {
 }
 
 /* Moved to document.body so .form-in-grid / .modal overflow cannot crop it.
-   Once it leaves .awesomplete, the stock "ul > li" rules no longer apply. */
-.aurora-on .aur-unclipped {
+   Once it leaves .awesomplete, the stock "ul > li" rules no longer apply.
+   Base rules use Frappe variables so every skin (including Default) works. */
+.aur-unclipped {
 	z-index: 1400 !important;
 	overflow-x: hidden;
 	overflow-y: auto;
 	overscroll-behavior: contain;
-	background: var(--aur-surface);
+	background: var(--bg-color);
 	list-style: none;
 	margin: 0;
-	padding: 6px 6px 12px;
+	padding: var(--padding-xs);
 	box-sizing: border-box;
+	border-radius: var(--border-radius);
+	border: 1px solid var(--border-color);
+	box-shadow: var(--shadow-md);
+}
+.aurora-on .aur-unclipped {
+	background: var(--aur-surface);
+	border-radius: var(--aur-r);
+	border-color: var(--aur-line);
+	box-shadow: var(--aur-shadow-lg);
+	padding: 6px 6px 12px;
 }
 
-.aurora-on ul.aur-unclipped > li,
-.aurora-on ul.aur-unclipped > [role="option"] {
+.aur-unclipped > li,
+.aur-unclipped > [role="option"] {
 	cursor: pointer;
+	padding: var(--padding-sm);
+	border-radius: var(--border-radius);
+	color: var(--text-color);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.aurora-on .aur-unclipped > li,
+.aurora-on .aur-unclipped > [role="option"] {
 	padding: 7px 10px;
 	border-radius: 9px;
 	color: var(--aur-ink);
 }
 
-.aurora-on ul.aur-unclipped > li:hover,
-.aurora-on ul.aur-unclipped > li[aria-selected="true"],
-.aurora-on ul.aur-unclipped > [role="option"]:hover,
-.aurora-on ul.aur-unclipped > [role="option"][aria-selected="true"] {
+.aur-unclipped > li:hover,
+.aur-unclipped > li[aria-selected="true"],
+.aur-unclipped > [role="option"]:hover,
+.aur-unclipped > [role="option"][aria-selected="true"] {
+	background: var(--fg-hover-color, var(--gray-100));
+	color: var(--text-color);
+}
+.aurora-on .aur-unclipped > li:hover,
+.aurora-on .aur-unclipped > li[aria-selected="true"],
+.aurora-on .aur-unclipped > [role="option"]:hover,
+.aurora-on .aur-unclipped > [role="option"][aria-selected="true"] {
 	background: color-mix(in oklab, var(--aur-accent) 16%, var(--aur-surface));
 	color: var(--aur-ink);
 }
 
-.aurora-on ul.aur-unclipped > li p,
-.aurora-on ul.aur-unclipped > [role="option"] p {
+.aur-unclipped > li p,
+.aur-unclipped > [role="option"] p {
 	margin: 0;
 	color: inherit;
 }
