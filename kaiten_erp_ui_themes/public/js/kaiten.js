@@ -3264,44 +3264,27 @@
 		}
 	}
 
-	/* Which control the panel hangs from, as something that survives the bar
-	   being rebuilt. Every shell carries the same theme button and the same
-	   brand pill, so the class is enough to find the new one. */
-	var SETTINGS_ANCHORS = [".aur-theme-btn", ".knav-brand", ".aur-brand"];
-
-	function anchorKey(node) {
-		if (!node || !node.classList) return "";
-		for (var i = 0; i < SETTINGS_ANCHORS.length; i += 1) {
-			if (node.classList.contains(SETTINGS_ANCHORS[i].slice(1))) return SETTINGS_ANCHORS[i];
-		}
-		return "";
-	}
-
-	function settingsAnchor(prefer) {
-		var order = prefer ? [prefer].concat(SETTINGS_ANCHORS) : SETTINGS_ANCHORS;
-		for (var i = 0; i < order.length; i += 1) {
-			var found = document.querySelector(order[i]);
-			if (found) return found;
-		}
-		return null;
+	/* The appearance panel always hangs from the theme button on the right.
+	   The brand pill can also open it (on a site with no Kaiten Home), and
+	   hanging from the brand put the panel on the far left — which is what
+	   every screenshot of "the popup went left" actually was, including in
+	   a fresh incognito window. */
+	function themeButton() {
+		return document.querySelector(".aur-theme-btn");
 	}
 
 	function reopenSettings() {
-		/* Switching shell rebuilds the bar and its settings button, which closes
-		   any open panel. When the switch came from inside the panel, open a
-		   fresh one so the choices never disappear mid-change — and open it on
-		   the same control it was hanging from. Reaching for the brand pill
-		   instead threw the panel from the right of the bar to the left on every
-		   content switch, which reads as the panel running away from the cursor.
+		/* Switching shell rebuilds the bar and closes the panel. Open a fresh
+		   one on the theme button so the choices never disappear mid-change
+		   and never jump to the company mark.
 
 		   Deferred a tick so the click that triggered the switch finishes
 		   bubbling first: the old outside-click listener then sees the panel
 		   already gone and retires itself, rather than shutting the freshly
 		   opened one. */
-		var want = state.popAnchor;
 		setTimeout(function () {
 			if (el.pop) return;
-			var anchor = settingsAnchor(want);
+			var anchor = themeButton();
 			if (anchor) openSettings(anchor);
 		}, 0);
 	}
@@ -3359,7 +3342,7 @@
 
 	function openSettings(anchor) {
 		if (el.pop) return closePop();
-		state.popAnchor = anchorKey(anchor) || state.popAnchor;
+		anchor = themeButton() || anchor;
 
 		// The tone row belongs to the chosen theme, so both are rebuilt together
 		// and the row simply disappears for a theme that offers no tones.
@@ -3647,7 +3630,7 @@
 			// which would slide the panel into the top-left corner on the next
 			// resize. Take the replacement instead.
 			if (!anchor.isConnected) {
-				var again = settingsAnchor(state.popAnchor);
+				var again = themeButton();
 				if (!again) return;
 				anchor = again;
 			}
@@ -4153,7 +4136,7 @@
 		});
 
 		// Named, because the panel it opens has to find it again after a content
-		// switch rebuilds the bar — see settingsAnchor().
+		// switch rebuilds the bar — see themeButton().
 		var paletteBtn = make("button", {
 			class: "aur-icon-btn aur-theme-btn",
 			type: "button",
@@ -4992,7 +4975,16 @@
 			if (typeof kaiten_desk !== "undefined" && kaiten_desk) return true;
 		} catch (e) {}
 		try {
-			return Boolean(window.frappe && frappe.boot && frappe.boot.kaiten_desk);
+			if (window.frappe && frappe.boot && frappe.boot.kaiten_desk) return true;
+		} catch (e) {}
+		/* prergesp (and any kaiten_erp site) has a Home page without kaiten_desk.
+		   The brand used to treat that as "no home" and open the appearance
+		   panel under the company name — the left-hand popup in every screenshot. */
+		try {
+			var boot = window.frappe && frappe.boot;
+			if (boot && boot.page_info && boot.page_info["kaiten-home"]) return true;
+			var allowed = (boot && boot.allowed_pages) || [];
+			if (allowed.indexOf && allowed.indexOf("kaiten-home") >= 0) return true;
 		} catch (e) {}
 		return false;
 	}
