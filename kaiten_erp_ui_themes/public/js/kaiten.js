@@ -4955,8 +4955,8 @@
 	   navbar keeps an entry for it. */
 	function goKaitenHome() {
 		try {
-			if (typeof kaiten_desk !== "undefined" && kaiten_desk.openKaitenHome) {
-				kaiten_desk.openKaitenHome();
+			if (typeof kaiten_desk !== "undefined" && kaiten_desk.showKaitenHome) {
+				kaiten_desk.showKaitenHome();
 				return;
 			}
 		} catch (e) {}
@@ -4967,8 +4967,8 @@
 		try {
 			if (typeof kaiten_desk !== "undefined") {
 				kaiten_desk.clearArea();
-				if (kaiten_desk.openKaitenHome) {
-					kaiten_desk.openKaitenHome();
+				if (kaiten_desk.showKaitenHome) {
+					kaiten_desk.showKaitenHome();
 					return;
 				}
 			}
