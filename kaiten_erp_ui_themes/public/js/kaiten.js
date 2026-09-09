@@ -952,6 +952,64 @@
 		return out;
 	}
 
+	/* One comparable address per page, so the same destination reached by
+	   different spellings lands on one string. A workspace is the reason this
+	   exists: the desk hands it over as ["Workspaces", "Recruitment"] while the
+	   menu carries it as ["recruitment"], and both have to read as the same
+	   place or the star cannot tell it is already pinned. */
+	function routeAddress(route) {
+		var parts = (route || []).map(String);
+		if (!parts.length) return "";
+		var head = parts[0];
+
+		if (head === "Form" && parts[2]) return "form/" + slugify(parts[1]) + "/" + parts[2];
+
+		// A report with a reference doctype is addressed through that doctype's
+		// list — ["List", "Sales Invoice", "Report", "Gross Profit"] — so it has
+		// to be read as the report it is, not as the list it borrows.
+		if (head === "List" && parts[2] === "Report" && parts[3]) return "report/" + slugify(parts[3]);
+		if (head === "List" && parts[1]) return "list/" + slugify(parts[1]);
+		if (head === "Tree" && parts[1]) return "tree/" + slugify(parts[1]);
+		if (head === "query-report" && parts[1]) return "report/" + slugify(parts[1]);
+		if ((head === "dashboard-view" || head === "Dashboard") && parts[1]) return "dash/" + slugify(parts[1]);
+		if (head === "Workspaces" && parts[1]) return "ws/" + slugify(parts[1]);
+		if (parts.length === 1) return "ws/" + slugify(head);
+		return parts.map(slugify).join("/");
+	}
+
+	/* Pins are stored under an id, so the id has to be the same whichever way a
+	   page was pinned. The menu model is what names things, so it answers first
+	   and the star only invents an id for an address no menu carries. */
+	function menuItemForRoute(route) {
+		var want = routeAddress(route);
+		if (!want) return null;
+
+		var found = null;
+		function consider(item) {
+			if (found || !item || !item.id) return;
+			if (routeAddress(item.route) === want) found = item;
+		}
+
+		var tabs = state.tabs || {};
+		Object.keys(tabs).forEach(function (tabId) {
+			(tabs[tabId] || []).forEach(function (group) {
+				(group.items || []).forEach(consider);
+			});
+		});
+
+		// The module shell draws from its own model, and under a content profile
+		// that model is the only place a hand-written entry exists at all. Its
+		// ids are what its own stars use, so they have to win here too.
+		(nav.menus || []).forEach(function (menu) {
+			if (menu.overview) consider(menu.overview);
+			(menu.columns || []).forEach(function (column) {
+				(column.items || []).forEach(consider);
+			});
+		});
+
+		return found;
+	}
+
 	function describeRoute(route) {
 		if (!route || !route.length) return null;
 		var head = route[0];
@@ -972,6 +1030,19 @@
 				route: ["Form", doctype, name],
 			};
 		}
+		var known = menuItemForRoute(route);
+		if (known) {
+			return {
+				id: known.id,
+				label: known.label,
+				sub: known.sub,
+				hue: known.hue,
+				icon: known.icon,
+				act: "route",
+				route: known.route,
+			};
+		}
+
 		if (head === "List" && route[1]) {
 			return {
 				id: "list:" + route[1],
@@ -992,6 +1063,44 @@
 				icon: "chart-column",
 				act: "route",
 				route: ["query-report", route[1]],
+			};
+		}
+		if (head === "Tree" && route[1]) {
+			return {
+				id: "tree:" + route[1],
+				label: route[1],
+				sub: "Tree",
+				hue: hue(route[1]),
+				icon: resolveIcon(null, route[1]),
+				act: "route",
+				route: ["Tree", route[1]],
+			};
+		}
+
+		// A dashboard and a workspace both used to fall through to null, which
+		// left the star inert on two of the desk's most visited pages. The
+		// prefixes match the ones the menu builds, so a page pinned from either
+		// side is the same pin.
+		if ((head === "dashboard-view" || head === "Dashboard") && route[1]) {
+			return {
+				id: "dashboard:" + route[1],
+				label: titleize(route[1]),
+				sub: "Dashboard",
+				hue: hue(route[1]),
+				icon: resolveIcon(null, "Dashboard", "report"),
+				act: "route",
+				route: ["dashboard-view", route[1]],
+			};
+		}
+		if (head === "Workspaces" && route[1]) {
+			return {
+				id: "ws:" + route[1],
+				label: titleize(route[1]),
+				sub: "Workspace",
+				hue: hue(route[1]),
+				icon: resolveIcon(null, titleize(route[1])),
+				act: "route",
+				route: [slugify(route[1])],
 			};
 		}
 		if (route.length === 1) {
@@ -6588,6 +6697,9 @@
 			.then(function (menu) {
 				buildModel(menu);
 				setCounts();
+				// The star reads its id off this model, so until the model is
+				// here it can only guess at one. Ask it again now.
+				syncPinButton();
 				if (megaOpen() && state.activeTab) renderGroups(state.activeTab);
 			})
 			.catch(function (error) {
