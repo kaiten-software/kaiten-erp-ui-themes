@@ -346,6 +346,7 @@
 .aurora-on[data-kaiten-skin="cast"] .frappe-control select.form-control:focus,
 .aurora-on[data-kaiten-skin="cast"] .frappe-control textarea.form-control:focus {
 	border-color: var(--aur-accent);
+	background: color-mix(in oklab, var(--aur-accent) 16%, var(--aur-surface));
 	box-shadow: 3px 3px 0 color-mix(in oklab, var(--aur-accent) 35%, transparent);
 }
 

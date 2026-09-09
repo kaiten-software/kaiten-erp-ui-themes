@@ -326,8 +326,11 @@
 	border: 1px solid var(--aur-line);
 }
 
-.aurora-on[data-kaiten-skin="lumen"] .form-control:focus {
-	background: var(--aur-surface);
+.aurora-on[data-kaiten-skin="lumen"] .form-control:focus,
+.aurora-on[data-kaiten-skin="lumen"] .frappe-control input.form-control:focus,
+.aurora-on[data-kaiten-skin="lumen"] .frappe-control select.form-control:focus,
+.aurora-on[data-kaiten-skin="lumen"] .frappe-control textarea.form-control:focus {
+	background: color-mix(in oklab, var(--aur-accent) 18%, var(--aur-surface));
 	border-color: var(--aur-accent);
 	box-shadow: var(--aur-glow);
 }

@@ -2368,8 +2368,12 @@ a.aur-item:focus {
 		background var(--aur-fast) var(--aur-ease);
 }
 
-.aurora-on .form-control:focus {
-	border-color: transparent;
+.aurora-on .form-control:focus,
+.aurora-on .frappe-control input.form-control:focus,
+.aurora-on .frappe-control select.form-control:focus,
+.aurora-on .frappe-control textarea.form-control:focus {
+	border-color: var(--aur-accent);
+	background: color-mix(in oklab, var(--aur-accent) 16%, var(--aur-surface));
 	box-shadow: var(--aur-glow);
 }
 
@@ -3927,8 +3931,74 @@ a.aur-item:focus {
 	color: var(--aur-ink-soft);
 }
 
+/* -------------------------------------------------------------------------
+   Required fields — scan-at-a-glance across every custom theme
+   Frappe toggles .reqd on the label. Accent rail + tinted field so mandatory
+   inputs read as a different colour family from optional ones.
+   ---------------------------------------------------------------------- */
+
+.aurora-on.aurora-on .frappe-control:has(> .form-group > .control-label.reqd),
+.aurora-on.aurora-on .frappe-control:has(.control-label.reqd) {
+	position: relative;
+	padding-left: 11px;
+}
+
+.aurora-on.aurora-on .frappe-control:has(.control-label.reqd)::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 2px;
+	bottom: 2px;
+	width: 3px;
+	border-radius: 999px;
+	background: var(--aur-accent);
+	box-shadow: 0 0 0 3px color-mix(in oklab, var(--aur-accent) 18%, transparent);
+	pointer-events: none;
+}
+
+.aurora-on.aurora-on .control-label.reqd,
+.aurora-on.aurora-on .frappe-control .control-label.reqd {
+	color: var(--aur-accent) !important;
+	font-weight: 800;
+}
+
+.aurora-on.aurora-on .control-label.reqd:after,
+.aurora-on.aurora-on .frappe-control .control-label.reqd:after {
+	color: var(--aur-accent);
+	opacity: 1;
+	font-weight: 900;
+}
+
+.aurora-on.aurora-on .frappe-control:has(.control-label.reqd) .form-control,
+.aurora-on.aurora-on .frappe-control:has(.control-label.reqd) input.form-control,
+.aurora-on.aurora-on .frappe-control:has(.control-label.reqd) select.form-control,
+.aurora-on.aurora-on .frappe-control:has(.control-label.reqd) textarea.form-control {
+	background: color-mix(in oklab, var(--aur-accent) 14%, var(--aur-surface)) !important;
+	border-color: color-mix(in oklab, var(--aur-accent) 48%, var(--aur-line-strong, var(--aur-line))) !important;
+}
+
+.aurora-on.aurora-on .frappe-control:has(.control-label.reqd) .form-control:focus,
+.aurora-on.aurora-on .frappe-control:has(.control-label.reqd) input.form-control:focus,
+.aurora-on.aurora-on .frappe-control:has(.control-label.reqd) select.form-control:focus,
+.aurora-on.aurora-on .frappe-control:has(.control-label.reqd) textarea.form-control:focus {
+	background: color-mix(in oklab, var(--aur-accent) 22%, var(--aur-surface)) !important;
+	border-color: var(--aur-accent) !important;
+}
+
 .aurora-on .frappe-control:focus-within .control-label {
 	color: var(--aur-accent);
+}
+
+.aurora-on.aurora-on .frappe-control:focus-within .control-label.reqd {
+	color: var(--aur-accent) !important;
+}
+
+/* Grid column headers that are mandatory. */
+.aurora-on.aurora-on .grid-heading-row .grid-static-col.reqd,
+.aurora-on.aurora-on .form-grid .grid-static-col .static-area.reqd,
+.aurora-on.aurora-on .grid-heading-row .reqd {
+	color: var(--aur-accent);
+	font-weight: 750;
 }
 
 /* Read-only values should still look like values, not like disabled inputs. */

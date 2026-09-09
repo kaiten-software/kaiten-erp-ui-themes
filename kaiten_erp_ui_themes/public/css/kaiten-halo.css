@@ -374,6 +374,8 @@
 	margin-bottom: 6px;
 }
 
+/* Required highlight lives in kaiten.css (shared across all skins). */
+
 .aurora-on[data-kaiten-skin="halo"] .form-control,
 .aurora-on[data-kaiten-skin="halo"] .frappe-control input.form-control,
 .aurora-on[data-kaiten-skin="halo"] .frappe-control select.form-control,
@@ -402,7 +404,7 @@
 .aurora-on[data-kaiten-skin="halo"] .frappe-control select.form-control:focus,
 .aurora-on[data-kaiten-skin="halo"] .frappe-control textarea.form-control:focus {
 	border-color: var(--aur-accent);
-	background: #fff;
+	background: color-mix(in oklab, var(--aur-accent) 18%, var(--aur-surface));
 	box-shadow: var(--aur-glow), 0 10px 22px -12px color-mix(in oklab, var(--aur-accent) 55%, transparent);
 }
 
