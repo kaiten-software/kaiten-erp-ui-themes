@@ -841,9 +841,9 @@
 }
 
 .aur-search {
-	width: 210px;
+	width: 118px;
 	height: 32px;
-	padding: 0 32px 0 32px;
+	padding: 0 12px 0 32px;
 	border-radius: 999px;
 	border: 1px solid var(--aur-line);
 	background: var(--aur-surface);
@@ -859,7 +859,7 @@
 }
 
 .aur-search:focus {
-	width: 320px;
+	width: 220px;
 	border-color: transparent;
 	box-shadow: var(--aur-glow);
 }
@@ -908,6 +908,23 @@
 
 .aur-icon-btn:active {
 	transform: scale(0.92);
+}
+
+/* The one theme control on the bar — a filled accent disc so it reads as a
+   colour tool, not another ghost icon next to pin and fullscreen. */
+.aur-icon-btn.aur-theme-btn {
+	color: #fff;
+	border-color: transparent;
+	background: var(--aur-grad);
+	background-size: 220% 220%;
+	box-shadow: 0 6px 16px -8px color-mix(in oklab, var(--aur-accent) 70%, transparent);
+}
+
+.aur-icon-btn.aur-theme-btn:hover {
+	color: #fff;
+	background: var(--aur-grad);
+	background-size: 220% 220%;
+	box-shadow: 0 10px 22px -10px color-mix(in oklab, var(--aur-accent) 85%, transparent);
 }
 
 /* -------------------------------------------------------------------------
@@ -4467,11 +4484,11 @@ a.aur-item:focus {
 
 @media (max-width: 991px) {
 	.aur-search {
-		width: 140px;
+		width: 96px;
 	}
 
 	.aur-search:focus {
-		width: 200px;
+		width: 160px;
 	}
 
 	.aur-mega-cols {

@@ -3552,13 +3552,17 @@
 	}
 
 	function buildBar(anchor) {
-		var brand = make("button", { class: "aur-brand", type: "button", title: "Theme and appearance" }, [
+		/* Brand is Home — the desk page — not the theme panel. Theme lives on
+		   the colourful control at the right of the bar. */
+		var brand = make("button", { class: "aur-brand", type: "button", title: "Home" }, [
 			make("span", { class: "aur-brand-dot" }),
 			make("span", { text: brandName() }),
 		]);
 		brand.addEventListener("click", function (event) {
 			event.stopPropagation();
-			openSettings(brand);
+			closeMega();
+			if (window.frappe && typeof frappe.set_route === "function") frappe.set_route("home");
+			else window.location.href = prefix() + "/home";
 		});
 
 		var nav = make("nav", { class: "aur-nav" });
@@ -3602,7 +3606,7 @@
 		el.search = make("input", {
 			class: "aur-search",
 			type: "search",
-			placeholder: "Jump to anything",
+			placeholder: "Search /",
 			"aria-label": "Search the desk",
 		});
 		el.search.addEventListener("input", function () {
@@ -3612,10 +3616,11 @@
 			if (el.search.value.trim()) renderSearch(el.search.value);
 		});
 
+		/* The slash sits in the placeholder so the field can stay narrow —
+		   a second "/" badge next to it was only eating bar space. */
 		var searchWrap = make("div", { class: "aur-search-wrap" }, [
 			make("span", { class: "aur-search-icon", text: "\u2315" }),
 			el.search,
-			make("span", { class: "aur-search-kbd", text: "/" }),
 		]);
 
 		el.pinBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Pin this page", text: "\u2605" });
@@ -3626,28 +3631,18 @@
 			togglePin(desc, el.pinBtn);
 		});
 
-		var paletteBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Theme, colour and density", text: "\u25D5" });
+		/* One colourful theme control. Light/dark stays inside the panel —
+		   a second sun/moon button on the bar was noise next to this. */
+		var paletteBtn = make("button", {
+			class: "aur-icon-btn aur-theme-btn",
+			type: "button",
+			title: "Theme, colour and appearance",
+			text: "\u25D5",
+		});
 		paletteBtn.addEventListener("click", function (event) {
 			event.stopPropagation();
 			openSettings(paletteBtn);
 		});
-
-		// The shortcut for light and dark: it moves straight to the next
-		// appearance instead of opening Frappe's three-card dialog. The panel
-		// offers the same three as a direct choice.
-		var themeBtn = make("button", { class: "aur-icon-btn", type: "button" });
-		el.paintThemeBtn = function () {
-			var meta = appearanceMeta(currentAppearance());
-			themeBtn.textContent = meta.glyph;
-			themeBtn.setAttribute("title", meta.label + " — click for " + appearanceMeta(meta.next).label.toLowerCase());
-		};
-		themeBtn.addEventListener("click", function (event) {
-			// Changing the look is never a reason to dismiss the panel that
-			// changes the look, even when the click landed outside it.
-			event.stopPropagation();
-			setAppearance(nextAppearance());
-		});
-		el.paintThemeBtn();
 
 		var fullBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Toggle fullscreen", text: "\u26F6" });
 		fullBtn.addEventListener("click", toggleFullscreen);
@@ -3778,7 +3773,7 @@
 			make("div", { class: "aur-bar-inner" }, [
 				brand,
 				el.navWrap,
-				make("div", { class: "aur-bar-right" }, [searchWrap, el.pinBtn, paletteBtn, themeBtn, fullBtn]),
+				make("div", { class: "aur-bar-right" }, [searchWrap, el.pinBtn, paletteBtn, fullBtn]),
 			]),
 		]);
 
@@ -4049,9 +4044,8 @@
 			});
 		} catch (e) {}
 
-		// The bar shortcut and the panel show the same state, and either can be
-		// the one that changed it, so both are repainted from here.
-		if (el.paintThemeBtn) el.paintThemeBtn();
+		// The panel's appearance row shows the same state; light/dark no longer
+		// has a separate button on the bar.
 		if (el.paintAppearanceSeg) el.paintAppearanceSeg();
 	}
 
