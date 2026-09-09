@@ -26,9 +26,8 @@
 
 	--aur-grad-soft: linear-gradient(135deg, rgba(99, 102, 241, 0.14), rgba(236, 72, 153, 0.1));
 
-	--aur-surface: #ffffff;
-	--aur-surface-2: #f8faff;
-	--aur-popover: #ffffff;
+	--aur-surface: rgba(255, 255, 255, 0.94);
+	--aur-surface-2: rgba(248, 250, 255, 0.88);
 	--aur-line: rgba(99, 102, 241, 0.14);
 	--aur-line-strong: rgba(99, 102, 241, 0.28);
 	--aur-ink: #0f172a;
@@ -56,14 +55,12 @@
 }
 
 [data-theme="dark"] {
-	--aur-surface: #1c1e2c;
-	--aur-surface-2: #161824;
-	--aur-popover: #1c1e2c;
+	--aur-surface: rgba(28, 30, 44, 0.92);
+	--aur-surface-2: rgba(22, 24, 36, 0.88);
 	--aur-line: rgba(148, 163, 255, 0.16);
 	--aur-line-strong: rgba(148, 163, 255, 0.3);
 	--aur-ink: #e2e8f0;
-	--aur-ink-soft: #cbd5e1;
-	--placeholder-color: #94a3b8;
+	--aur-ink-soft: #94a3b8;
 
 	--aur-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
 	--aur-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), 0 14px 32px -22px rgba(0, 0, 0, 0.9);
@@ -214,93 +211,18 @@
 /* -------------------------------------------------------------------------
    1d. Density
    -------------------------------------------------------------------------
-   Three seats: Normal leaves Frappe's own spacing alone, Cozy trims a little,
-   Compact is the tight field stack. Frappe derives most of its spacing from
-   --padding-*, --margin-* and a handful of height tokens, so remapping those
-   reaches every stock component in one move — including ones this theme
-   never names. The rules after the token block are for the places that
-   hard-code their own numbers, plus this theme's own chrome.
+   Compact means less air, not smaller everything. Frappe derives most of its
+   spacing from --padding-*, --margin-* and a handful of height tokens, so
+   remapping those reaches every stock component in one move — including ones
+   this theme never names. The rules after the token block are for the places
+   that hard-code their own numbers, plus this theme's own chrome.
 
-   The attribute is doubled so the block outranks a skin's token block, which
-   is 0-2-0 on the same element: density is a preference and has to win over
-   the look, whichever stylesheet happens to load last. It is not gated on
-   .aurora-on — Default skin still has to tighten a form.
+   The class is doubled so the block outranks a skin's token block, which is
+   0-2-0 on the same element: density is a preference and has to win over the
+   look, whichever stylesheet happens to load last.
    ---------------------------------------------------------------------- */
 
-html[data-aur-density="cozy"][data-aur-density="cozy"] {
-	--padding-xs: 5px;
-	--padding-sm: 7px;
-	--padding-md: 12px;
-	--padding-lg: 16px;
-	--padding-xl: 24px;
-	--padding-2xl: 32px;
-
-	--margin-xs: 4px;
-	--margin-sm: 8px;
-	--margin-md: 12px;
-	--margin-lg: 16px;
-	--margin-xl: 24px;
-	--margin-2xl: 32px;
-
-	--input-height: 28px;
-	--btn-height: 28px;
-	--checkbox-size: 14px;
-	--page-head-height: 46px;
-}
-
-html[data-aur-density="cozy"][data-aur-density="cozy"] .frappe-control {
-	margin-bottom: 8px;
-}
-
-html[data-aur-density="cozy"][data-aur-density="cozy"] .control-label {
-	margin-bottom: 3px;
-}
-
-html[data-aur-density="cozy"][data-aur-density="cozy"] .form-control,
-html[data-aur-density="cozy"][data-aur-density="cozy"] .frappe-control input.form-control,
-html[data-aur-density="cozy"][data-aur-density="cozy"] .frappe-control select.form-control,
-html[data-aur-density="cozy"][data-aur-density="cozy"] .frappe-control textarea.form-control,
-html[data-aur-density="cozy"][data-aur-density="cozy"] .like-disabled-input {
-	padding: 3px 8px;
-}
-
-html[data-aur-density="cozy"][data-aur-density="cozy"] .frappe-control textarea.form-control {
-	min-height: 64px;
-}
-
-html[data-aur-density="cozy"][data-aur-density="cozy"] .form-section {
-	padding: 0 12px;
-	margin-bottom: 10px;
-}
-
-html[data-aur-density="cozy"][data-aur-density="cozy"] .section-body {
-	padding-top: 8px;
-}
-
-html[data-aur-density="cozy"][data-aur-density="cozy"] .form-section .section-head {
-	padding: 8px 12px;
-}
-
-html[data-aur-density="cozy"][data-aur-density="cozy"] .form-column {
-	padding: 0 12px;
-}
-
-html[data-aur-density="cozy"][data-aur-density="cozy"] .form-column .frappe-control {
-	padding-right: 12px;
-}
-
-html[data-aur-density="cozy"][data-aur-density="cozy"] .form-grid .grid-static-col,
-html[data-aur-density="cozy"][data-aur-density="cozy"] .form-grid .grid-row .col,
-html[data-aur-density="cozy"][data-aur-density="cozy"] .datatable .dt-cell__content {
-	padding: 5px 8px;
-}
-
-html[data-aur-density="cozy"][data-aur-density="cozy"] .list-row-container .list-row {
-	padding-top: 3px;
-	padding-bottom: 3px;
-}
-
-html[data-aur-density="compact"][data-aur-density="compact"] {
+.aurora-on.aurora-on[data-aur-density="compact"] {
 	--padding-xs: 4px;
 	--padding-sm: 5px;
 	--padding-md: 10px;
@@ -339,63 +261,63 @@ html[data-aur-density="compact"][data-aur-density="compact"] {
 
 /* Fields — the vertical rhythm of a form is label margin, control margin and
    section padding stacked; all three come down together or nothing does. */
-html[data-aur-density="compact"][data-aur-density="compact"] .frappe-control {
+.aurora-on.aurora-on[data-aur-density="compact"] .frappe-control {
 	margin-bottom: 4px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .control-label {
+.aurora-on.aurora-on[data-aur-density="compact"] .control-label {
 	margin-bottom: 2px;
 	font-size: 11.5px;
 	line-height: 1.4;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .form-control,
-html[data-aur-density="compact"][data-aur-density="compact"] .frappe-control input.form-control,
-html[data-aur-density="compact"][data-aur-density="compact"] .frappe-control select.form-control,
-html[data-aur-density="compact"][data-aur-density="compact"] .frappe-control textarea.form-control,
-html[data-aur-density="compact"][data-aur-density="compact"] .like-disabled-input {
+.aurora-on.aurora-on[data-aur-density="compact"] .form-control,
+.aurora-on.aurora-on[data-aur-density="compact"] .frappe-control input.form-control,
+.aurora-on.aurora-on[data-aur-density="compact"] .frappe-control select.form-control,
+.aurora-on.aurora-on[data-aur-density="compact"] .frappe-control textarea.form-control,
+.aurora-on.aurora-on[data-aur-density="compact"] .like-disabled-input {
 	padding: 2px 7px;
 	font-size: 12.5px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .frappe-control textarea.form-control {
+.aurora-on.aurora-on[data-aur-density="compact"] .frappe-control textarea.form-control {
 	min-height: 52px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .form-section {
+.aurora-on.aurora-on[data-aur-density="compact"] .form-section {
 	padding: 0 10px;
 	margin-bottom: 7px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .section-body {
+.aurora-on.aurora-on[data-aur-density="compact"] .section-body {
 	padding-top: 5px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .form-section .section-head {
+.aurora-on.aurora-on[data-aur-density="compact"] .form-section .section-head {
 	padding: 6px 10px;
 	font-size: 12px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .form-column {
+.aurora-on.aurora-on[data-aur-density="compact"] .form-column {
 	padding: 0 10px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .form-column .frappe-control {
+.aurora-on.aurora-on[data-aur-density="compact"] .form-column .frappe-control {
 	padding-right: 10px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .form-tabs-list .nav-link,
-html[data-aur-density="compact"][data-aur-density="compact"] .form-tabs .nav-link {
+.aurora-on.aurora-on[data-aur-density="compact"] .form-tabs-list .nav-link,
+.aurora-on.aurora-on[data-aur-density="compact"] .form-tabs .nav-link {
 	padding-top: 5px;
 	padding-bottom: 5px;
 	font-size: 12.5px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .form-footer {
+.aurora-on.aurora-on[data-aur-density="compact"] .form-footer {
 	gap: 8px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .comment-box {
+.aurora-on.aurora-on[data-aur-density="compact"] .comment-box {
 	padding: 8px 10px;
 	margin-top: 12px;
 	margin-bottom: 8px;
@@ -403,98 +325,98 @@ html[data-aur-density="compact"][data-aur-density="compact"] .comment-box {
 
 /* Child tables and the report grid: a cell is read across, so its height is
    pure cost. */
-html[data-aur-density="compact"][data-aur-density="compact"] .form-grid .grid-static-col,
-html[data-aur-density="compact"][data-aur-density="compact"] .form-grid .grid-row .col,
-html[data-aur-density="compact"][data-aur-density="compact"] .datatable .dt-cell__content {
+.aurora-on.aurora-on[data-aur-density="compact"] .form-grid .grid-static-col,
+.aurora-on.aurora-on[data-aur-density="compact"] .form-grid .grid-row .col,
+.aurora-on.aurora-on[data-aur-density="compact"] .datatable .dt-cell__content {
 	padding: 3px 7px;
 	font-size: 12px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .grid-heading-row .grid-row {
+.aurora-on.aurora-on[data-aur-density="compact"] .grid-heading-row .grid-row {
 	font-size: 11px;
 }
 
 /* List rows */
-html[data-aur-density="compact"][data-aur-density="compact"] .list-row-container .list-row {
+.aurora-on.aurora-on[data-aur-density="compact"] .list-row-container .list-row {
 	padding-top: 1px;
 	padding-bottom: 1px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .list-row-col,
-html[data-aur-density="compact"][data-aur-density="compact"] .list-subject {
+.aurora-on.aurora-on[data-aur-density="compact"] .list-row-col,
+.aurora-on.aurora-on[data-aur-density="compact"] .list-subject {
 	font-size: 12.5px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .list-row-col {
+.aurora-on.aurora-on[data-aur-density="compact"] .list-row-col {
 	margin-right: 10px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .list-row-head {
+.aurora-on.aurora-on[data-aur-density="compact"] .list-row-head {
 	font-size: 10.5px;
 }
 
 /* Cards */
-html[data-aur-density="compact"][data-aur-density="compact"] .widget {
+.aurora-on.aurora-on[data-aur-density="compact"] .widget {
 	padding: 5px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .widget-head {
+.aurora-on.aurora-on[data-aur-density="compact"] .widget-head {
 	padding: 2px 6px;
 	min-height: 28px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .widget .widget-body {
+.aurora-on.aurora-on[data-aur-density="compact"] .widget .widget-body {
 	padding-top: 4px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .widget .widget-title {
+.aurora-on.aurora-on[data-aur-density="compact"] .widget .widget-title {
 	font-size: 13px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .layout-main-section {
+.aurora-on.aurora-on[data-aur-density="compact"] .layout-main-section {
 	padding-top: 4px;
 	padding-bottom: 4px;
 }
 
 /* Page head and titles */
-html[data-aur-density="compact"][data-aur-density="compact"] .page-title .title-text,
-html[data-aur-density="compact"][data-aur-density="compact"] .page-head .title-text {
+.aurora-on.aurora-on[data-aur-density="compact"] .page-title .title-text,
+.aurora-on.aurora-on[data-aur-density="compact"] .page-head .title-text {
 	font-size: 14.5px;
 }
 
 /* Rails */
-html[data-aur-density="compact"][data-aur-density="compact"] .body-sidebar .standard-sidebar-item {
+.aurora-on.aurora-on[data-aur-density="compact"] .body-sidebar .standard-sidebar-item {
 	padding: 2px 6px;
 	margin: 0 5px;
 	font-size: 12.5px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .body-sidebar .sidebar-item-icon {
+.aurora-on.aurora-on[data-aur-density="compact"] .body-sidebar .sidebar-item-icon {
 	width: 18px;
 	height: 18px;
 	border-radius: 6px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .dock .dock-items .dock-item {
+.aurora-on.aurora-on[data-aur-density="compact"] .dock .dock-items .dock-item {
 	width: 24px;
 	height: 24px;
 }
 
 /* Overlays */
-html[data-aur-density="compact"][data-aur-density="compact"] .modal-header {
+.aurora-on.aurora-on[data-aur-density="compact"] .modal-header {
 	padding: 10px 14px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .modal-body {
+.aurora-on.aurora-on[data-aur-density="compact"] .modal-body {
 	padding: 12px 14px;
 }
 
 /* This theme's own chrome */
-html[data-aur-density="compact"][data-aur-density="compact"] .aur-item {
+.aurora-on.aurora-on[data-aur-density="compact"] .aur-item {
 	padding: 5px 8px;
 }
 
-html[data-aur-density="compact"][data-aur-density="compact"] .aur-tab {
+.aurora-on.aurora-on[data-aur-density="compact"] .aur-tab {
 	padding: 4px 9px;
 	font-size: 12px;
 }
@@ -642,15 +564,6 @@ html[data-aur-density="compact"][data-aur-density="compact"] .aur-tab {
    5. Aurora bar — the sticky mega menu strip
    ---------------------------------------------------------------------- */
 
-html.kaiten-bar-on:not([data-kaiten-shell="module"]) {
-	--navbar-height: var(--aur-bar-h);
-
-	/* How much of the window the chrome eats, for anything sized against
-	   100vh. The bar is sticky rather than fixed here, so it is exactly the
-	   bar. */
-	--kchrome-h: var(--aur-bar-h);
-}
-
 .aur-bar {
 	position: sticky;
 	top: 0;
@@ -703,12 +616,11 @@ html.kaiten-bar-on:not([data-kaiten-shell="module"]) {
 	display: inline-flex;
 	align-items: center;
 	gap: 7px;
-	max-width: min(280px, 34vw);
 	font-weight: 700;
 	font-size: 12.5px;
-	letter-spacing: 0;
-	text-transform: none;
-	padding: 4px 10px 4px 5px;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	padding: 5px 11px;
 	border-radius: 999px;
 	color: #fff;
 	background: var(--aur-grad);
@@ -717,24 +629,6 @@ html.kaiten-bar-on:not([data-kaiten-shell="module"]) {
 	box-shadow: 0 6px 18px -8px rgba(139, 92, 246, 0.9);
 	border: none;
 	cursor: pointer;
-	flex: none;
-	min-width: 0;
-}
-
-.aur-brand-label {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	min-width: 0;
-}
-
-.aur-brand-logo {
-	height: 18px;
-	width: auto;
-	max-width: 36px;
-	border-radius: 5px;
-	object-fit: contain;
-	background: #fff;
 	flex: none;
 }
 
@@ -769,6 +663,14 @@ html.kaiten-bar-on:not([data-kaiten-shell="module"]) {
 	}
 }
 
+.aur-nav-wrap {
+	position: relative;
+	display: flex;
+	align-items: center;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
 .aur-nav {
 	display: flex;
 	align-items: center;
@@ -777,10 +679,81 @@ html.kaiten-bar-on:not([data-kaiten-shell="module"]) {
 	min-width: 0;
 	overflow-x: auto;
 	scrollbar-width: none;
+	/* Room for the keyboard ring and the slight lift under it, either of which
+	   the scroll frame would otherwise slice off — including sideways, where the
+	   first and last tab sit flush against the edge. The negative margin keeps
+	   the bar the height it was. */
+	padding: 7px 5px;
+	margin: -7px 0;
 }
 
 .aur-nav::-webkit-scrollbar {
 	display: none;
+}
+
+/* Tabs dissolve into whichever end still has more behind it, rather than being
+   cut off mid-word. A mask does this over the bar's own blurred gradient, which
+   no solid overlay could match. */
+.aur-nav-wrap.aur-more-left .aur-nav {
+	-webkit-mask-image: linear-gradient(90deg, transparent, #000 40px);
+	mask-image: linear-gradient(90deg, transparent, #000 40px);
+}
+
+.aur-nav-wrap.aur-more-right .aur-nav {
+	-webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+	mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+}
+
+.aur-nav-wrap.aur-more-left.aur-more-right .aur-nav {
+	-webkit-mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+	mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+}
+
+/* A handle on each fade, shown only while there is something that way, so the
+   strip admits it continues instead of leaving it to be discovered. */
+.aur-nav-more {
+	position: absolute;
+	top: 50%;
+	z-index: 4;
+	display: none;
+	place-items: center;
+	width: 21px;
+	height: 21px;
+	margin-top: -10px;
+	padding: 0;
+	border-radius: 999px;
+	border: 1px solid var(--aur-line-strong);
+	background: var(--aur-surface);
+	color: var(--aur-ink-soft);
+	cursor: pointer;
+	box-shadow: 0 5px 14px -6px rgba(15, 23, 42, 0.45);
+	transition: color var(--aur-fast) var(--aur-ease), border-color var(--aur-fast) var(--aur-ease),
+		transform var(--aur-fast) var(--aur-ease-back);
+}
+
+.aur-nav-more-left {
+	left: 0;
+}
+
+.aur-nav-more-right {
+	right: 0;
+}
+
+.aur-nav-wrap.aur-more-left .aur-nav-more-left,
+.aur-nav-wrap.aur-more-right .aur-nav-more-right {
+	display: grid;
+}
+
+.aur-nav-more:hover {
+	color: #fff;
+	border-color: transparent;
+	background: var(--aur-grad-cool);
+	transform: scale(1.12);
+}
+
+.aur-nav-more-glyph {
+	width: 13px;
+	height: 13px;
 }
 
 .aur-tab {
@@ -820,6 +793,24 @@ html.kaiten-bar-on:not([data-kaiten-shell="module"]) {
 	color: #fff;
 	background: var(--aur-grad-cool);
 	box-shadow: 0 8px 20px -10px rgba(79, 70, 229, 0.95);
+}
+
+/* Keyboard is on the top tabs: a ring around the open one so ←→ has somewhere
+   visible to land, and the panel below softens so it is clear focus left it. */
+/* The tab you are standing on has to read as the loudest thing in the bar, so
+   it is lifted out of the stack as well as ringed: tabs sit on each other's
+   shoulders in document order, and the panel is right underneath, either of
+   which used to swallow the near edge of the ring. */
+.aur-tab.aur-kb,
+.aur-tab.aur-cursor {
+	z-index: 3;
+	box-shadow: 0 0 0 2px var(--aur-surface), 0 0 0 4px color-mix(in oklab, var(--aur-accent) 78%, transparent),
+		0 10px 24px -10px rgba(79, 70, 229, 0.95);
+}
+
+.aur-bar.aur-kb-bar .aur-tab.aur-open.aur-kb,
+.aur-bar.aur-kb-bar .aur-tab.aur-cursor {
+	transform: translateY(-1px) scale(1.04);
 }
 
 .aur-tab-count {
@@ -917,105 +908,6 @@ html.kaiten-bar-on:not([data-kaiten-shell="module"]) {
 
 .aur-icon-btn:active {
 	transform: scale(0.92);
-}
-
-.aur-user-btn {
-	width: 32px;
-	height: 32px;
-	padding: 0;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	overflow: hidden;
-	border-radius: 50%;
-	border: 1px solid var(--aur-line);
-	background: var(--aur-surface);
-	color: var(--aur-ink);
-	cursor: pointer;
-	flex: none;
-	transition: transform var(--aur-fast) var(--aur-ease-back), box-shadow var(--aur-fast) var(--aur-ease);
-}
-
-.aur-user-btn:hover,
-.aur-user-btn.aur-user-open {
-	transform: translateY(-2px);
-	box-shadow: var(--aur-glow);
-}
-
-.aur-user-btn:active {
-	transform: scale(0.94);
-}
-
-.aur-user-btn .aur-user-face,
-.aur-user-btn .avatar,
-.aur-user-btn .avatar-frame {
-	width: 30px;
-	height: 30px;
-	margin: 0;
-}
-
-.aur-user-btn .aur-user-initials {
-	font-size: 11px;
-	font-weight: 700;
-	letter-spacing: 0.02em;
-}
-
-/* Stock account dropdown must sit above the Kaiten bar (z-index 1202). */
-.frappe-menu.context-menu {
-	z-index: 1400;
-}
-
-/* Hide the stock Frappe header (KAITEN SOFTWARE + Ctrl+K + SK). The Kaiten bar replaces it. */
-html.kaiten-bar-on header.navbar {
-	display: none !important;
-}
-
-.aur-notif-btn {
-	position: relative;
-}
-
-.aur-notif-btn .notification-count {
-	position: absolute;
-	top: 2px;
-	right: 2px;
-	width: 8px;
-	height: 8px;
-	padding: 0;
-	border-radius: 50%;
-	border: 1px solid var(--aur-surface, #fff);
-	background: #2563eb;
-	font-size: 0;
-	color: transparent;
-	overflow: hidden;
-	line-height: 0;
-}
-
-.aur-notif-btn .notification-count.hidden {
-	display: none;
-}
-
-/* Floated off hidden navbar/sidebar so the stock list can actually paint. */
-body > .dropdown-notifications.kaiten-notif-float {
-	position: static !important;
-	inset: auto !important;
-	pointer-events: auto !important;
-	z-index: 1450;
-}
-
-body > .dropdown-notifications.kaiten-notif-float.hidden {
-	display: none !important;
-}
-
-html.kaiten-bar-on .kaiten-notif-float:not(.hidden) .notifications-list,
-html.kaiten-bar-on .dropdown-notifications:not(.hidden) .notifications-list {
-	position: fixed !important;
-	height: min(70vh, 560px);
-	max-height: calc(100vh - 64px);
-	min-height: 280px;
-	width: 360px;
-	z-index: 1450;
-	border-radius: 12px;
-	box-shadow: 0 18px 40px -16px rgba(15, 23, 42, 0.35);
 }
 
 /* -------------------------------------------------------------------------
@@ -1116,9 +1008,9 @@ html.kaiten-bar-on .dropdown-notifications:not(.hidden) .notifications-list {
 	background: color-mix(in oklab, var(--aur-accent) 14%, transparent);
 }
 
-/* Set apart from the filter's own controls by a gap and a ring, so the end of
-   the strip reads as "close the panel" rather than as one more thing that acts
-   on the search box. */
+/* Set apart from the filter's own controls by a rule, so the end of the strip
+   reads as "close the panel" rather than as one more thing that acts on the
+   search box. */
 .aur-mega-close {
 	display: grid;
 	place-items: center;
@@ -1297,10 +1189,41 @@ html.kaiten-bar-on .dropdown-notifications:not(.hidden) .notifications-list {
 	transform: translateX(3px);
 }
 
+/* Which list is on show, and where the keyboard is standing, are two different
+   facts about the rail, and drawing them the same — both a full accent fill —
+   read as two cursors at once. Worse, the selection outlived the cursor: move
+   into the items and "All workspaces" still looked like it held focus. So
+   selection is now quiet, a tint with a marker down its edge, and says only
+   "these are the entries you are looking at". */
 .aur-group.aur-active {
+	color: hsl(var(--h, 245) 58% 34%);
+	background: var(--aur-grad-soft);
+	box-shadow: inset 2.5px 0 0 var(--aur-accent);
+	font-weight: 700;
+}
+
+[data-theme="dark"] .aur-group.aur-active {
+	color: #dfe6ff;
+}
+
+.aur-group.aur-active .aur-group-icon {
+	color: var(--aur-accent);
+}
+
+/* The cursor is the loudest thing in the rail, and there is only ever one. It
+   is defined after the selection on purpose: standing on the group already on
+   show must still look like standing on it. */
+.aur-group.aur-kb,
+.aur-group.aur-cursor {
 	color: #fff;
 	background: var(--aur-grad-cool);
-	box-shadow: 0 10px 22px -14px rgba(79, 70, 229, 0.95);
+	box-shadow: 0 0 0 2px color-mix(in oklab, var(--aur-accent) 40%, transparent),
+		0 10px 22px -14px rgba(79, 70, 229, 0.95);
+}
+
+.aur-group.aur-kb .aur-group-icon,
+.aur-group.aur-cursor .aur-group-icon {
+	color: #fff;
 }
 
 /* An <svg> with only a viewBox falls back to 300x150, so every glyph needs a
@@ -1326,10 +1249,6 @@ html.kaiten-bar-on .dropdown-notifications:not(.hidden) .notifications-list {
 
 .aur-group:hover .aur-group-icon {
 	transform: scale(1.18) rotate(-8deg);
-}
-
-.aur-group.aur-active .aur-group-icon {
-	color: #fff;
 }
 
 .aur-group-count {
@@ -1368,46 +1287,6 @@ html.kaiten-bar-on .dropdown-notifications:not(.hidden) .notifications-list {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(228px, 1fr));
 	gap: 8px;
-}
-
-/* An area heading in the detail panel — the Card Break title a client gave a
-   group, printed above its tiles so the panel reads as named areas rather than
-   one long grid. Sits a little heavier than the Reports/Setup subheading below
-   it, and carries the same trailing rule as the panel title. */
-.aur-mega-area {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	margin: 16px 0 8px;
-	font-size: 12px;
-	font-weight: 750;
-	letter-spacing: 0.02em;
-	color: var(--aur-ink);
-}
-
-.aur-mega-area::after {
-	content: "";
-	flex: 1;
-	height: 1px;
-	background: linear-gradient(90deg, var(--aur-line-strong), transparent);
-}
-
-/* The Reports / Setup subheading inside an area — quieter than the area name,
-   the same key the sidebar uses so the two shells read alike. */
-.aur-mega-sub {
-	margin: 10px 0 6px;
-	font-size: 10px;
-	font-weight: 700;
-	letter-spacing: 0.09em;
-	text-transform: uppercase;
-	color: var(--aur-ink-soft);
-}
-
-/* The first heading of the panel should not push a blank band below the title
-   that already introduces the module. */
-.aur-mega-title + .aur-grid + .aur-mega-area,
-.aur-mega-title + .aur-mega-area {
-	margin-top: 4px;
 }
 
 /* -------------------------------------------------------------------------
@@ -1835,6 +1714,53 @@ a.aur-item:focus {
 	font-size: 12.5px;
 }
 
+/* When this tab has nothing under the filter, point at the tabs that do —
+   permissions already decided what those tabs contain. */
+.aur-elsewhere {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 4px 10px 18px;
+	padding: 12px 14px;
+	border-radius: var(--aur-r);
+	border: 1px dashed var(--aur-line-strong);
+	background: color-mix(in oklab, var(--aur-accent) 6%, transparent);
+}
+
+.aur-elsewhere-label {
+	width: 100%;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--aur-ink-soft);
+}
+
+.aur-elsewhere-chip {
+	font: inherit;
+	font-size: 12.5px;
+	font-weight: 650;
+	padding: 6px 12px;
+	border-radius: 999px;
+	border: 1px solid color-mix(in oklab, var(--aur-accent) 28%, var(--aur-line));
+	background: var(--aur-surface);
+	color: var(--aur-ink);
+	cursor: pointer;
+	transition: background var(--aur-fast), border-color var(--aur-fast), transform var(--aur-fast);
+}
+
+.aur-elsewhere-chip:hover,
+.aur-elsewhere-chip.aur-cursor {
+	background: color-mix(in oklab, var(--aur-accent) 14%, transparent);
+	border-color: var(--aur-accent);
+	transform: translateY(-1px);
+}
+
+.aur-elsewhere-chip.aur-cursor {
+	box-shadow: 0 0 0 2px color-mix(in oklab, var(--aur-accent) 28%, transparent);
+}
+
 .aur-stagger {
 	animation: aur-pop var(--aur-mid) var(--aur-ease) both;
 	animation-delay: calc(var(--i, 0) * 14ms);
@@ -1869,22 +1795,6 @@ a.aur-item:focus {
 	}
 }
 
-/* A Bootstrap modal is 1050 and every piece of this bar's chrome stands above
-   that — the scrim at 1200, the panel at 1201, the bar itself at 1202. So a
-   dialog raised from the menu was drawn behind the very panel that asked for
-   it: the Clear question opened, took the click that should have answered it,
-   and looked like a dead button.
-   Dialogs belong above all of the chrome. They stay below the field lists that
-   are floated to the body at 2000, because a link field inside a dialog has to
-   drop its suggestions over that dialog. */
-html.kaiten-bar-on .modal-backdrop {
-	z-index: 1490;
-}
-
-html.kaiten-bar-on .modal {
-	z-index: 1500;
-}
-
 /* -------------------------------------------------------------------------
    7. Buttons + ripple
    ---------------------------------------------------------------------- */
@@ -1901,11 +1811,7 @@ html.kaiten-bar-on .modal {
 /* The ripple needs the button to clip, but v17 nests dropdown menus inside
    the button that opens them (the sort selector, the list menu, the grid row
    menus). Clipping those buttons swallows the menu whole, so any button that
-   carries one opts out.
-
-   Transform is also banned: hover/active lift creates a stacking context, so
-   the menu's z-index stays trapped in the button and the sticky list header
-   paints through it until the pointer leaves. */
+   carries one opts out. */
 .aurora-on .btn:has(.dropdown-menu),
 .aurora-on .es-button:has(.dropdown-menu),
 .aurora-on .btn[data-toggle="dropdown"],
@@ -1913,24 +1819,6 @@ html.kaiten-bar-on .modal {
 .aurora-on .btn.dropdown-toggle,
 .aurora-on .es-button.dropdown-toggle {
 	overflow: visible;
-	transform: none;
-	transition: box-shadow var(--aur-fast) var(--aur-ease), filter var(--aur-fast) var(--aur-ease),
-		background var(--aur-fast) var(--aur-ease), border-color var(--aur-fast) var(--aur-ease);
-}
-
-.aurora-on .btn:has(.dropdown-menu):hover,
-.aurora-on .es-button:has(.dropdown-menu):hover,
-.aurora-on .btn[data-toggle="dropdown"]:hover,
-.aurora-on .es-button[data-toggle="dropdown"]:hover,
-.aurora-on .btn.dropdown-toggle:hover,
-.aurora-on .es-button.dropdown-toggle:hover,
-.aurora-on .btn:has(.dropdown-menu):active,
-.aurora-on .es-button:has(.dropdown-menu):active,
-.aurora-on .btn[data-toggle="dropdown"]:active,
-.aurora-on .es-button[data-toggle="dropdown"]:active,
-.aurora-on .btn.dropdown-toggle:active,
-.aurora-on .es-button.dropdown-toggle:active {
-	transform: none;
 }
 
 .aurora-on .btn:hover {
@@ -2028,91 +1916,10 @@ html.kaiten-bar-on .modal {
    ---------------------------------------------------------------------- */
 
 .aurora-on .page-head {
-	/* Must be a real sheet. Glass here lets the form scroll through the title
-	   and look like the heading and the first fields are printed on top of
-	   each other — the Lumen/Aurora "text override" on scroll. */
-	background: var(--aur-sheet, #fff);
-	backdrop-filter: none;
-	-webkit-backdrop-filter: none;
+	background: transparent;
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
 	border-bottom: 1px solid var(--aur-line);
-	z-index: 15;
-}
-
-/* --- sticky offsets under the page head ---------------------------------
-   The desk scroller is padded to clear our fixed bar, so a sticky offset is
-   already measured from below the chrome. Frappe parks the tab strip and the
-   list heading row on --navbar-height, which only lines up with the page head
-   on a stock desk where the two happen to be the same size. With a taller bar
-   the strip lands a band below the head, and the form scrolls through that gap
-   — the heading and the first fields printed over each other.
-
-   --kpage-head-h is the head's measured height, published by kaiten.js so a
-   head that wraps onto two rows on a phone still gets an exact answer. The
-   var falls back to the token for the frame before the first measurement. */
-.form-tabs-list.form-tabs-sticky-up,
-.form-tabs-list.form-tabs-sticky-down,
-.form-tabs-list.form-tabs-sticky-down.show-navbar {
-	/* The pixel back hides the strip's own top border under the head's bottom
-	   one, so the two do not read as a double rule. */
-	top: calc(var(--kpage-head-h, var(--page-head-height)) - 1px);
-}
-
-/* The list's own scroller (.result-container) already begins below the page
-   head, so the heading — being the first thing in it — sits flush at its top.
-   The old offset measured from the page head instead, and because the heading
-   is always at the scroller's top edge that offset pinned it permanently a
-   headfull down, leaving the first row to ride up over it. Zero is the only
-   value that keeps it flush at rest and stuck to the scroller top on scroll. */
-.frappe-list .list-row-container:first-child {
-	top: 0;
-}
-
-/* Sized against the window in stock, and the window includes our chrome, so
-   the rail ran past the bottom of the screen and its last links could not be
-   reached. */
-body[data-route^="Form"] .layout-side-section {
-	top: var(--kpage-head-h, var(--page-head-height));
-	height: calc(100vh - var(--kchrome-h, 0px) - var(--kpage-head-h, var(--page-head-height)));
-}
-
-/* Clicking a tab scrolls its panel into view. Stock measures the margin from
-   the navbar. Our bar is fixed on top of that, so the same number parks the
-   first fields under the title — Address & Contact then reads as a pile of
-   labels with the values missing. Clear the chrome, the head and the strip. */
-.form-tab-content,
-.tab-pane.active {
-	scroll-margin-top: calc(
-		var(--kchrome-h, 0px) + var(--kpage-head-h, var(--page-head-height)) + var(--kform-tabs-h, 38px) + 8px
-	);
-}
-
-.layout-main-section {
-	scroll-margin-top: calc(var(--kchrome-h, 0px) + var(--kpage-head-h, var(--page-head-height)) + 8px);
-}
-
-/* A new form autofocuses its first required field. Frappe scrolls that field
-   to the top of the content scroller, which sits under the sticky page head,
-   so the field lands hidden behind it and the page reads as a small upward
-   jump. Reserving the head's height at the top of the scroller parks the
-   focused field just below it instead. Scoped to the shell, since this head
-   offset only exists while our bar is on. */
-html.kaiten-bar-on .main-section,
-html.kaiten-bar-on .layout-main-section-wrapper {
-	scroll-padding-top: calc(var(--kpage-head-h, var(--page-head-height)) + 16px);
-}
-
-html.kaiten-bar-on .form-layout .frappe-control,
-html.kaiten-bar-on .form-layout .form-control,
-html.kaiten-bar-on .form-layout .form-section,
-html.kaiten-bar-on .form-layout .section-body {
-	scroll-margin-top: calc(var(--kpage-head-h, var(--page-head-height)) + 16px);
-}
-
-/* A column that only holds hidden fields still takes its Bootstrap share, so
-   a three-up section with one unused lane looks like the remaining fields
-   floated into random corners. */
-.form-column:not(:has(.frappe-control:not(.hide-control))) {
-	display: none;
 }
 
 .aurora-on .page-title .title-text,
@@ -2377,16 +2184,11 @@ html.kaiten-bar-on .form-layout .section-body {
 	box-shadow: var(--aur-glow);
 }
 
-.aurora-on .form-tabs-list {
-	background: var(--aur-sheet, #fff);
-	z-index: 14;
-}
-
 .aurora-on .form-tabs .nav-link,
 .aurora-on .form-tabs-list .nav-link {
 	border-radius: var(--radius-sm);
 	font-weight: 600;
-	background: var(--aur-sheet, #fff);
+	background: none;
 	transition: color var(--aur-fast) var(--aur-ease), box-shadow var(--aur-fast) var(--aur-ease);
 }
 
@@ -2407,8 +2209,7 @@ html.kaiten-bar-on .form-layout .section-body {
 
 /* Suggestion lists must float above the cards they sit inside. */
 .aurora-on .awesomplete > ul,
-.aurora-on .autocomplete-results,
-.aurora-on .aur-unclipped {
+.aurora-on .autocomplete-results {
 	z-index: 1300;
 	border-radius: var(--aur-r);
 	border: 1px solid var(--aur-line);
@@ -2417,155 +2218,21 @@ html.kaiten-bar-on .form-layout .section-body {
 
 /* The command palette is one card already. Framing its own suggestion list
    as a second floating panel is what made Ctrl+K look doubled up. */
-.awesomplete:has(#navbar-search) > ul,
 .aurora-on .awesomplete:has(#navbar-search) > ul {
-	border: none !important;
-	border-radius: 0 !important;
-	box-shadow: none !important;
-	background: transparent !important;
-	background-color: transparent !important;
+	border: none;
+	border-radius: 0;
+	box-shadow: none;
+	background: transparent;
 }
 
-/* -------------------------------------------------------------------------
-   Overlay panels — Default skin included
-   -------------------------------------------------------------------------
-   v17 maps --bg-color and --fg-color to the same --surface-base as the page.
-   Link lists that leave .awesomplete (unclipped onto body) also lose the
-   stock ".awesomplete > [role=listbox]" paint. Either way the options sit
-   on the form with no panel. These rules pin an opaque elevated surface
-   on every floating list, in every skin.
-   ---------------------------------------------------------------------- */
-
-html .awesomplete > ul,
-html .awesomplete > [role="listbox"],
-html .autocomplete-results,
-html .datepicker,
-html .datepicker.active,
-html .datepicker--content,
-html .datepicker--nav,
-html .dropdown-menu,
-html .popover,
-html .filter-popover,
-html .aur-select-pop,
-html .aur-unclipped {
-	background: #ffffff !important;
-	background-color: #ffffff !important;
-	background-image: none !important;
-	opacity: 1 !important;
-	isolation: isolate;
-	backdrop-filter: none !important;
-	-webkit-backdrop-filter: none !important;
-}
-
-html .awesomplete > ul,
-html .awesomplete > [role="listbox"],
-html ul.aur-unclipped,
-html .autocomplete-results,
-html .aur-select-pop {
-	max-height: min(60vh, 300px);
-}
-
-html[data-theme="dark"] .awesomplete > ul,
-html[data-theme="dark"] .awesomplete > [role="listbox"],
-html[data-theme="dark"] .autocomplete-results,
-html[data-theme="dark"] .datepicker,
-html[data-theme="dark"] .datepicker.active,
-html[data-theme="dark"] .datepicker--content,
-html[data-theme="dark"] .datepicker--nav,
-html[data-theme="dark"] .dropdown-menu,
-html[data-theme="dark"] .popover,
-html[data-theme="dark"] .filter-popover,
-html[data-theme="dark"] .aur-select-pop,
-html[data-theme="dark"] .aur-unclipped {
-	/* One step above the grid editor / page so it reads as a card, the way
-	   stock Desk used --fg-color on --bg-color. Theme tokens are the same
-	   surface as the modal, which is why Insert Below showed through. */
-	background: #252838 !important;
-	background-color: #252838 !important;
-}
-
-/* Moved to document.body so .form-in-grid / .modal overflow cannot crop it.
-   Once it leaves .awesomplete, the stock "ul > li" rules no longer apply. */
-.aur-unclipped {
-	z-index: 2000 !important;
-	overflow-x: hidden;
-	overflow-y: auto;
-	overscroll-behavior: contain;
-	list-style: none;
-	margin: 0;
-	padding: var(--padding-xs, 5px);
-	box-sizing: border-box;
-	border-radius: var(--border-radius, 8px);
-	border: 1px solid var(--border-color, rgba(15, 23, 42, 0.12));
-	box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
-	color: var(--text-color, #111827);
-}
-html[data-theme="dark"] .aur-unclipped {
-	border-color: rgba(255, 255, 255, 0.1);
-	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-	color: var(--text-color, #e5e7eb);
-}
+/* Re-anchored to the viewport by the script above, once a clipping ancestor
+   is found between the list and the page. */
 .aurora-on .aur-unclipped {
-	border-radius: var(--aur-r);
-	border-color: var(--aur-line);
-	box-shadow: var(--aur-shadow-lg);
-	padding: 6px 6px 12px;
-	color: var(--aur-ink);
-}
-
-.aur-unclipped > li,
-.aur-unclipped > [role="option"] {
-	cursor: pointer;
-	padding: var(--padding-sm, 7px);
-	border-radius: var(--border-radius, 8px);
-	color: inherit;
-	white-space: normal;
-	overflow: hidden;
-}
-.aurora-on .aur-unclipped > li,
-.aurora-on .aur-unclipped > [role="option"] {
-	padding: 7px 10px;
-	border-radius: 9px;
-	color: var(--aur-ink);
-}
-
-.aur-unclipped > li:hover,
-.aur-unclipped > li[aria-selected="true"],
-.aur-unclipped > [role="option"]:hover,
-.aur-unclipped > [role="option"][aria-selected="true"] {
-	background: var(--fg-hover-color, var(--surface-gray-2, var(--gray-100, #f3f3f3)));
-	color: inherit;
-}
-.aurora-on .aur-unclipped > li:hover,
-.aurora-on .aur-unclipped > li[aria-selected="true"],
-.aurora-on .aur-unclipped > [role="option"]:hover,
-.aurora-on .aur-unclipped > [role="option"][aria-selected="true"] {
-	background: color-mix(in oklab, var(--aur-accent) 16%, var(--aur-popover, var(--aur-surface)));
-	color: var(--aur-ink);
-}
-
-.aur-unclipped > li p,
-.aur-unclipped > [role="option"] p {
-	margin: 0;
-	color: inherit;
-}
-
-html:not(.aurora-on)[data-theme="dark"] .modal-content,
-html:not(.aurora-on)[data-theme="dark"] .modal-header,
-html:not(.aurora-on)[data-theme="dark"] .modal-body,
-html:not(.aurora-on)[data-theme="dark"] .modal-footer,
-html:not(.aurora-on)[data-theme="dark"] .form-in-grid {
-	background: var(--surface-elevation-1, var(--gray-900, #1a1d2b));
-}
-
-/* Re-state after the !important overlay paint so Ctrl+K stays a single card. */
-html .awesomplete:has(#navbar-search) > ul,
-.aurora-on .awesomplete:has(#navbar-search) > ul {
-	border: none !important;
-	border-radius: 0 !important;
-	box-shadow: none !important;
-	background: transparent !important;
-	background-color: transparent !important;
+	z-index: 1350 !important;
+	overflow-y: auto;
+	background: var(--aur-surface);
+	backdrop-filter: blur(14px) saturate(150%);
+	-webkit-backdrop-filter: blur(14px) saturate(150%);
 }
 
 /* -------------------------------------------------------------------------
@@ -3052,7 +2719,6 @@ html .awesomplete:has(#navbar-search) > ul,
 }
 
 .aurora-on .dropdown-menu {
-	background: var(--aur-surface);
 	border-radius: var(--aur-r);
 	border: 1px solid var(--aur-line);
 	box-shadow: var(--aur-shadow-lg);
@@ -3418,22 +3084,22 @@ html .awesomplete:has(#navbar-search) > ul,
 
 .aur-select-pop {
 	position: fixed;
-	z-index: 2000;
+	z-index: 1300;
 	min-width: 190px;
-	max-height: min(60vh, 300px);
-	overflow-x: hidden;
+	max-height: 330px;
 	overflow-y: auto;
-	overscroll-behavior: contain;
 	padding: 6px;
 	border-radius: var(--aur-r);
 	border: 1px solid var(--aur-line);
-	background: var(--aur-surface);
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 255, 0.96));
+	backdrop-filter: blur(18px) saturate(160%);
+	-webkit-backdrop-filter: blur(18px) saturate(160%);
 	box-shadow: var(--aur-shadow-lg);
 	animation: aur-mega-in 0.16s var(--aur-ease) both;
 }
 
 [data-theme="dark"] .aur-select-pop {
-	background: var(--aur-surface);
+	background: linear-gradient(180deg, rgba(26, 28, 42, 0.99), rgba(18, 20, 32, 0.97));
 }
 
 .aur-select-opt {
@@ -3446,24 +3112,20 @@ html .awesomplete:has(#navbar-search) > ul,
 	color: var(--aur-ink);
 	cursor: pointer;
 	white-space: nowrap;
-	transition: background var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease);
+	transition: background var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease),
+		transform var(--aur-fast) var(--aur-ease);
 }
 
 .aur-select-opt:hover,
 .aur-select-opt.aur-cursor {
-	background: color-mix(in oklab, var(--aur-accent) 16%, var(--aur-surface));
-	color: var(--aur-ink);
+	background: var(--aur-grad-soft);
+	transform: translateX(2px);
 }
 
 .aur-select-opt.aur-selected {
 	color: #fff;
-	background: var(--aur-accent);
-}
-
-.aur-select-opt.aur-selected:hover,
-.aur-select-opt.aur-selected.aur-cursor {
-	color: #fff;
-	background: color-mix(in oklab, var(--aur-accent) 86%, #000);
+	background: var(--aur-grad-cool);
+	box-shadow: 0 8px 18px -12px rgba(79, 70, 229, 0.95);
 }
 
 .aur-select-dot {
@@ -3627,74 +3289,6 @@ html .awesomplete:has(#navbar-search) > ul,
 	opacity: 1;
 }
 
-/* Navigation — two cards, each a desk skeleton, not a colour. */
-.aur-shells {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-	gap: 7px;
-	width: 100%;
-}
-
-.aur-shell-preview {
-	display: flex;
-	flex-direction: column;
-	gap: 3px;
-	height: 44px;
-	padding: 4px;
-	border-radius: calc(var(--aur-r) - 6px);
-	border: 1px solid var(--aur-line);
-	background: var(--aur-surface);
-}
-
-.aur-shell-bar {
-	flex: none;
-	height: 6px;
-	border-radius: 2px;
-	background: color-mix(in oklab, var(--aur-ink) 14%, var(--aur-surface));
-}
-
-.aur-shell-preview-module .aur-shell-bar {
-	background: color-mix(in oklab, var(--aur-ink) 72%, var(--aur-surface));
-}
-
-.aur-shell-tabs {
-	display: flex;
-	gap: 3px;
-	flex: none;
-}
-
-.aur-shell-tab {
-	width: 16px;
-	height: 4px;
-	border-radius: 99px;
-	background: color-mix(in oklab, var(--aur-ink) 22%, var(--aur-surface));
-}
-
-.aur-shell-body {
-	display: flex;
-	gap: 3px;
-	flex: 1 1 auto;
-	min-height: 0;
-}
-
-.aur-shell-rail {
-	flex: none;
-	width: 12px;
-	border-radius: 2px;
-	background: color-mix(in oklab, var(--aur-ink) 16%, var(--aur-surface));
-}
-
-.aur-shell-page {
-	flex: 1 1 auto;
-	min-width: 0;
-	border-radius: 2px;
-	background: color-mix(in oklab, var(--aur-ink) 7%, var(--aur-surface));
-}
-
-.aur-shell-preview-command > .aur-shell-page {
-	flex: 1 1 auto;
-}
-
 /* Theme — the skin cards. Their swatch is the whole preview. */
 .aur-skins {
 	display: grid;
@@ -3744,16 +3338,15 @@ html .awesomplete:has(#navbar-search) > ul,
 	line-height: 1.2;
 }
 
-/* Two lines: the old single clipped line hid "ERP menus on top" and made
-   Navigation look like another Theme row. */
+/* The note is the tooltip's text; at this width it has to stay one clipped
+   line rather than push the cards to different heights. */
 .aur-skin-note {
 	font-size: 9.5px;
 	color: var(--aur-ink-soft);
 	line-height: 1.25;
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
 	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .aur-swatches {
@@ -3789,16 +3382,11 @@ html .awesomplete:has(#navbar-search) > ul,
 
 .aur-mixer.aur-open {
 	display: grid;
-	/* Without a bounded track the rows size to their content and spill past the
-	   panel's right edge; minmax(0,1fr) pins them to the mixer's own width so
-	   the swatches and the save row stay inside. */
-	grid-template-columns: minmax(0, 1fr);
 	animation: aur-pop var(--aur-fast) var(--aur-ease) both;
 }
 
 .aur-mixer-dots {
 	display: flex;
-	min-width: 0;
 	gap: 8px;
 }
 
@@ -3823,7 +3411,6 @@ html .awesomplete:has(#navbar-search) > ul,
 
 .aur-mixer-foot {
 	display: flex;
-	min-width: 0;
 	gap: 7px;
 }
 
@@ -3978,7 +3565,7 @@ html .awesomplete:has(#navbar-search) > ul,
 	letter-spacing: 0.02em;
 	text-transform: uppercase;
 	font-size: 0.72rem;
-	color: var(--aur-ink);
+	color: color-mix(in oklab, var(--aur-accent) 55%, var(--aur-ink));
 }
 
 .aurora-on .frappe-list .list-paging-area {
@@ -4016,23 +3603,6 @@ html .awesomplete:has(#navbar-search) > ul,
 .aurora-on .standard-filter-section .frappe-control input:focus {
 	border-color: transparent;
 	box-shadow: var(--aur-glow);
-}
-
-/* Desk compiles placeholders to --gray-500. That step is a dark surface in
-   v17 dark mode, and our accent tint makes it vanish on the same-coloured
-   field. Ink-soft remaps in both themes; do not retint --gray-500 itself or
-   Frappe surfaces that use it as a fill go missing. */
-.aurora-on .form-control::placeholder,
-.aurora-on .form-control::-webkit-input-placeholder,
-.aurora-on input::placeholder,
-.aurora-on textarea::placeholder,
-.aurora-on select::placeholder {
-	color: var(--aur-ink-soft);
-	opacity: 1;
-}
-
-.aurora-on .dropdown-header {
-	color: var(--aur-ink-soft);
 }
 
 /* -------------------------------------------------------------------------
@@ -4089,10 +3659,6 @@ html .awesomplete:has(#navbar-search) > ul,
 	gap: 8px;
 	padding-top: 10px;
 	color: color-mix(in oklab, hsl(var(--cyc-h, 245) 60% 45%) 70%, var(--aur-ink));
-}
-
-.aurora-on[data-theme="dark"] .form-section .section-head {
-	color: var(--aur-ink);
 }
 
 .aurora-on .form-section .section-head::before {
@@ -4249,143 +3815,16 @@ html .awesomplete:has(#navbar-search) > ul,
 }
 
 .aurora-on .form-grid {
-	/* Frappe scrolls wide child tables on .form-grid-container. overflow:
-	   hidden here clipped the max-content rows to the card, so the container
-	   never overflowed and the scrollbar that Default shows vanished. */
-	overflow-x: visible;
-	overflow-y: hidden;
+	overflow: hidden;
 	box-shadow: var(--aur-shadow-sm);
 }
 
-/* The pencil editor is position:fixed and taller than the grid. Keep it
-   unclipped, and drop any ancestor transform that would trap it in the card. */
-.aurora-on .form-grid:has(.grid-row-open),
-.aurora-on .form-grid-container:has(.grid-row-open) {
-	overflow: visible;
-}
-
-.aurora-on .form-section:has(.grid-row-open),
-.aurora-on .form-section.aur-reveal:has(.grid-row-open) {
-	transform: none !important;
-}
-
-/* The editor is a dialog in everything but name, and stock gives it a card
-   colour and nothing else. On a light veil that is white on white: the table
-   looks like it vanished rather than like something opened over it. */
-.aurora-on .grid-row-open .form-in-grid {
-	border: 1px solid var(--aur-line);
-	box-shadow: var(--aur-shadow-lg);
-}
-
-/* Stock veils the page in --bg-color, which under these skins is as light as
-   the dialog on top of it. */
-.aurora-on #freeze.grid-form {
-	background: color-mix(in oklab, var(--aur-ink) 78%, transparent);
-}
-
-/* Stock caps the field area at 80vh and then stacks a heading and a shortcut
-   bar around it, so on a short window the editor runs off the bottom edge and
-   takes its Insert and Delete buttons with it. Capping the whole panel and
-   letting the fields take the slack keeps both ends reachable. Desk CSS
-   restates display and overflow on the open row, so those two have to win. */
-.grid-row-open .form-in-grid {
-	display: flex !important;
-	flex-direction: column;
-	max-height: 90vh;
-	overflow: hidden !important;
-}
-
-.grid-row-open .form-in-grid .grid-form-heading {
-	flex: 0 0 auto;
-}
-
-/* The shortcut bar lives inside the body, not beside it, so the body has to
-   be the column that keeps the bar on screen while the fields scroll. */
-.grid-row-open .form-in-grid .grid-form-body {
-	display: flex;
-	flex-direction: column;
-	flex: 1 1 auto;
-	min-height: 0;
-	max-height: none !important;
-	overflow: hidden;
-}
-
-.grid-row-open .form-in-grid .grid-form-body .form-area {
-	flex: 1 1 auto;
-	min-height: 0;
-	overflow: auto;
-}
-
-.grid-row-open .form-in-grid .grid-footer-toolbar {
-	flex: 0 0 auto;
-	position: relative;
-	z-index: 0;
-}
-
-.aurora-on .form-grid-container,
-.aurora-on .form-grid {
-	scrollbar-width: thin;
-	scrollbar-color: color-mix(in oklab, var(--aur-accent) 50%, #64748b) transparent;
-}
-
-.aurora-on .form-grid-container::-webkit-scrollbar,
-.aurora-on .form-grid::-webkit-scrollbar {
-	height: 12px;
-	width: 12px;
-}
-
-.aurora-on .form-grid-container::-webkit-scrollbar-track,
-.aurora-on .form-grid::-webkit-scrollbar-track {
-	background: color-mix(in oklab, var(--aur-ink) 6%, var(--aur-sheet, #fff));
-	border-radius: 999px;
-}
-
-.aurora-on .form-grid-container::-webkit-scrollbar-thumb,
-.aurora-on .form-grid::-webkit-scrollbar-thumb {
-	border-radius: 999px;
-	border: 2px solid var(--aur-sheet, #fff);
-	background: color-mix(in oklab, var(--aur-accent) 45%, #64748b);
-	background-clip: padding-box;
-}
-
-/* Frappe paints heading cells with --gray-600. That token is a dark surface
-   in v17 dark mode, so the titles vanish on --aur-sheet. Ink remaps in both
-   themes, so the same rule stays readable in light and dark. */
-.aurora-on .grid-heading-row,
-.aurora-on .grid-heading-row .grid-static-col,
-.aurora-on .grid-heading-row .col {
-	color: var(--aur-ink);
-}
-
 .aurora-on .grid-heading-row {
-	background: var(--aur-sheet);
+	background: linear-gradient(180deg, color-mix(in oklab, var(--aur-accent) 13%, transparent), transparent),
+		var(--aur-sheet);
 	border-bottom: 1px solid var(--aur-line-strong);
 	font-weight: 650;
 	letter-spacing: 0.02em;
-}
-
-/* Default skin leaves Frappe's dark tokens in place. --gray-600 is a dark
-   fill there, but desk uses it as grid/list heading text, so titles vanish.
-   Recolor ink only — no Aurora surfaces or chrome. */
-html:not(.aurora-on)[data-theme="dark"] .grid-heading-row,
-html:not(.aurora-on)[data-theme="dark"] .grid-heading-row .grid-static-col,
-html:not(.aurora-on)[data-theme="dark"] .grid-heading-row .col,
-html:not(.aurora-on)[data-theme="dark"] .datatable .dt-cell--header .dt-cell__content,
-html:not(.aurora-on)[data-theme="dark"] .list-row-head,
-html:not(.aurora-on)[data-theme="dark"] .list-row-head .list-row-col,
-html:not(.aurora-on)[data-theme="dark"] .list-row-head .list-subject {
-	color: var(--text-color, #e5e5e5);
-}
-
-html:not(.aurora-on)[data-theme="dark"] .form-control::placeholder,
-html:not(.aurora-on)[data-theme="dark"] input::placeholder,
-html:not(.aurora-on)[data-theme="dark"] textarea::placeholder {
-	color: var(--text-muted, #a3a3a3);
-	opacity: 1;
-}
-
-.aurora-on .grid-empty {
-	color: var(--aur-ink-soft);
 }
 
 /* The body cannot clip — link fields in its rows have to open past it — so a
@@ -4420,7 +3859,7 @@ html:not(.aurora-on)[data-theme="dark"] textarea::placeholder {
 
 .aurora-on .datatable .dt-cell--header .dt-cell__content {
 	font-weight: 650;
-	color: var(--aur-ink);
+	color: color-mix(in oklab, var(--aur-accent) 55%, var(--aur-ink));
 }
 
 .aurora-on .datatable .dt-row:hover .dt-cell {
@@ -5054,7 +4493,7 @@ html:not(.aurora-on)[data-theme="dark"] textarea::placeholder {
 }
 
 @media (max-width: 767px) {
-	.aur-brand .aur-brand-label {
+	.aur-brand span:not(.aur-brand-dot) {
 		display: none;
 	}
 

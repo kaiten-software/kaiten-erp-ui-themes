@@ -226,17 +226,9 @@
 }
 
 .aurora-on[data-kaiten-skin="lumen"] .widget:hover,
-.aurora-on[data-kaiten-skin="lumen"] .frappe-card:hover {
-	transform: translateY(-2px);
-	border-color: var(--aur-line);
-	box-shadow: var(--aur-shadow-lg);
-}
-
-/* A transform on the section makes Frappe's pencil editor (position: fixed)
-   a child of the card. It then opens as a sliver inside the table instead of
-   a desk modal — the list looks like it vanished. Lift stays on widgets. */
+.aurora-on[data-kaiten-skin="lumen"] .frappe-card:hover,
 .aurora-on[data-kaiten-skin="lumen"] .form-section:hover {
-	transform: none;
+	transform: translateY(-2px);
 	border-color: var(--aur-line);
 	box-shadow: var(--aur-shadow-lg);
 }
@@ -273,12 +265,10 @@
 	color: var(--aur-ink);
 }
 
-.aurora-on[data-kaiten-skin="lumen"] .page-head,
-.aurora-on[data-kaiten-skin="lumen"] .form-tabs-list {
+.aurora-on[data-kaiten-skin="lumen"] .page-head {
 	border-bottom: 0;
 	backdrop-filter: none;
 	-webkit-backdrop-filter: none;
-	background: var(--aur-sheet);
 }
 
 /* -------------------------------------------------------------------------
@@ -292,17 +282,11 @@
 .aurora-on[data-kaiten-skin="lumen"] .sort-selector .btn,
 .aurora-on[data-kaiten-skin="lumen"] .list-count,
 .aurora-on[data-kaiten-skin="lumen"] .indicator-pill,
+.aurora-on[data-kaiten-skin="lumen"] .form-tabs .nav-link,
+.aurora-on[data-kaiten-skin="lumen"] .form-tabs-list .nav-link,
 .aurora-on[data-kaiten-skin="lumen"] .document-link .count,
 .aurora-on[data-kaiten-skin="lumen"] .badge-link .count {
 	border-radius: 999px;
-}
-
-/* A form tab is marked by an underline on its own bottom edge, so it is the one
-   control that must not be a pill: on a 999px radius the line bends into an arc
-   that reads as a stray circle drawn around the label. */
-.aurora-on[data-kaiten-skin="lumen"] .form-tabs .nav-link,
-.aurora-on[data-kaiten-skin="lumen"] .form-tabs-list .nav-link {
-	border-radius: var(--radius-sm);
 }
 
 .aurora-on[data-kaiten-skin="lumen"] .btn-primary,
@@ -378,15 +362,26 @@
 
 .aurora-on[data-kaiten-skin="lumen"] .aur-tab,
 .aurora-on[data-kaiten-skin="lumen"] .aur-icon-btn,
-.aurora-on[data-kaiten-skin="lumen"] .aur-user-btn,
 .aurora-on[data-kaiten-skin="lumen"] .aur-search-wrap {
 	border-radius: 999px;
 }
 
 .aurora-on[data-kaiten-skin="lumen"] .aur-tab.aur-open {
-	background: var(--aur-surface);
-	color: var(--aur-ink);
-	box-shadow: var(--aur-shadow-sm);
+	background: var(--aur-grad-cool);
+	color: #fff;
+	box-shadow: 0 8px 20px -10px color-mix(in oklab, var(--aur-accent) 70%, transparent);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .aur-tab.aur-open .aur-tab-count {
+	background: rgba(255, 255, 255, 0.28);
+	color: #fff;
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .aur-tab.aur-cursor,
+.aurora-on[data-kaiten-skin="lumen"] .aur-tab.aur-kb {
+	z-index: 3;
+	box-shadow: 0 0 0 2px var(--aur-surface), 0 0 0 4px color-mix(in oklab, var(--aur-accent) 78%, transparent),
+		0 10px 24px -10px color-mix(in oklab, var(--aur-accent) 70%, transparent);
 }
 
 /* -------------------------------------------------------------------------
@@ -555,8 +550,7 @@
 	--aur-line: rgba(255, 255, 255, 0.07);
 	--aur-line-strong: rgba(255, 255, 255, 0.13);
 	--aur-ink: #e9ebf1;
-	--aur-ink-soft: #c5cad6;
-	--placeholder-color: #969db0;
+	--aur-ink-soft: #969db0;
 
 	--aur-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
 	--aur-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 18px 40px -24px rgba(0, 0, 0, 0.9);

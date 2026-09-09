@@ -21,23 +21,17 @@
 		skinAccent: "kaiten_ui_skin_accent",
 		palettes: "kaiten_ui_palettes",
 		density: "kaiten_ui_density",
-		densityRev: "kaiten_ui_density_rev",
 		pins: "kaiten_ui_pins",
 		pinGroups: "kaiten_ui_pin_groups",
 		recent: "kaiten_ui_recent",
 		layout: "kaiten_ui_layout",
-		shell: "kaiten_ui_shell",
-		pages: "kaiten_ui_pages",
-		content: "kaiten_ui_content",
-		navView: "kaiten_ui_nav_view",
-		navSide: "kaiten_ui_nav_side",
 		rev: "kaiten_ui_rev",
 	};
 
 	// Everything worth carrying between machines. Anything not listed here stays
 	// local to the browser it was set in.
 	var SYNC_KEYS = ["pins", "pinGroups", "recent", "palettes"];
-	var SYNC_FLAGS = ["accent", "content", "density", "enabled", "layout", "navSide", "navView", "pages", "shell", "skin"];
+	var SYNC_FLAGS = ["accent", "density", "enabled", "layout", "skin"];
 	// Keyed objects rather than lists: which tone each skin was last left on.
 	var SYNC_MAPS = ["skinAccent"];
 
@@ -46,67 +40,6 @@
 	var LAYOUTS = [
 		{ id: "split", icon: "panel-left", label: "Split", title: "Groups on the left, entries on the right" },
 		{ id: "columns", icon: "layout-grid", label: "Columns", title: "Every group side by side" },
-	];
-
-	/* The shell is a different axis from the skin, and the two must not be
-	   confused: a skin repaints what is on screen, a shell decides what is on
-	   screen. "command" is the bar this app started with. "module" is the
-	   arrangement most ERP users already know — one menu per workspace across
-	   the top, each opening columns of entries, with a sidebar scoped to
-	   whichever module is open. Every feature works in both. */
-	var SHELLS = [
-		{
-			id: "command",
-			label: "Command bar",
-			note: "Tabs, mega menu, jump to anything",
-		},
-		{
-			id: "module",
-			label: "Module nav",
-			note: "ERP menus on top, sidebar per module",
-		},
-	];
-
-	/* How the Module nav opens a top module. "dropdown" is the compact menu that
-	   drops under the clicked module. "grid" is the launcher the command bar
-	   uses — every module listed down the left, the chosen module's entries laid
-	   out as an icon grid on the right — so the same module content can be shown
-	   either way. Only the Module nav reads this; the command bar has its own. */
-	var NAV_VIEWS = [
-		{ id: "dropdown", label: "Dropdown", note: "Menu drops under the module" },
-		{ id: "grid", label: "Workspace grid", note: "Modules left, entries as a grid" },
-	];
-
-	/* A colour wash cannot tell these two apart. The card has to show the
-	   skeleton: command is a strip and tabs; module is a bar and a rail. */
-	function shellPreview(id) {
-		if (id === "module") {
-			return make("span", { class: "aur-shell-preview aur-shell-preview-module" }, [
-				make("span", { class: "aur-shell-bar" }),
-				make("span", { class: "aur-shell-body" }, [
-					make("span", { class: "aur-shell-rail" }),
-					make("span", { class: "aur-shell-page" }),
-				]),
-			]);
-		}
-
-		return make("span", { class: "aur-shell-preview aur-shell-preview-command" }, [
-			make("span", { class: "aur-shell-bar" }),
-			make("span", { class: "aur-shell-tabs" }, [
-				make("span", { class: "aur-shell-tab" }),
-				make("span", { class: "aur-shell-tab" }),
-				make("span", { class: "aur-shell-tab" }),
-			]),
-			make("span", { class: "aur-shell-page" }),
-		]);
-	}
-
-	/* Whether the desk's own field and list styling is left as Frappe draws it,
-	   or replaced with the denser boxed treatment. Independent of both the skin
-	   and the shell, because it is a different question. */
-	var PAGE_STYLES = [
-		{ id: "standard", label: "Standard", note: "Frappe's own forms and lists" },
-		{ id: "custom", label: "Custom", note: "Boxed sections, tighter fields" },
 	];
 
 	// Always present, never deleted: anything pinned without an answer lands here.
@@ -144,18 +77,6 @@
 		{ id: "blush", label: "Blush", swatch: "linear-gradient(135deg,#f43f5e,#fb7185,#fecdd3)" },
 	];
 
-	/* Atlas is the flat, classic-ERP look: one solid accent per tone rather than
-	   a gradient, so the swatch is a single colour. The stylesheet paints the
-	   bar and rail in that accent's darkest step and keeps everything else
-	   near-neutral, which is why the tones only need to name a hue. */
-	var ATLAS_TONES = [
-		{ id: "navy", label: "Navy", swatch: "#1e293b" },
-		{ id: "teal", label: "Teal", swatch: "#0f766e" },
-		{ id: "indigo", label: "Indigo", swatch: "#3730a3" },
-		{ id: "slate", label: "Slate", swatch: "#334155" },
-		{ id: "plum", label: "Plum", swatch: "#6d28d9" },
-	];
-
 	/* A skin is a look, and nothing more: one stylesheet of token overrides
 	   layered on kaiten.css, picked with data-kaiten-skin. It is independent of
 	   the light/dark appearance, which stays Frappe's. "default" carries no
@@ -183,13 +104,6 @@
 			swatch: "linear-gradient(135deg,#ede9fe 0%,#c4b5fd 38%,#fbcfe8 68%,#fde68a 100%)",
 			tones: LUMEN_TONES,
 		},
-		{
-			id: "atlas",
-			label: "Atlas",
-			note: "Flat ERP bar, plain surfaces, square corners",
-			swatch: "linear-gradient(135deg,#334155 0%,#334155 55%,#1e293b 100%)",
-			tones: ATLAS_TONES,
-		},
 	];
 
 	/* Frappe's three appearances. Its own name for the third is "automatic",
@@ -198,15 +112,6 @@
 		{ id: "light", label: "Light", glyph: "\u2600", next: "dark" },
 		{ id: "dark", label: "Dark", glyph: "\u263D", next: "automatic" },
 		{ id: "automatic", label: "System", glyph: "\u25D1", next: "light" },
-	];
-
-	/* Normal is stock Frappe air. Cozy trims a little. Compact is the tight
-	   field stack the jewellery desk asks for. v1 used "cozy" for stock, so
-	   that stored value is rewritten to normal once. */
-	var DENSITIES = [
-		{ id: "normal", label: "Normal" },
-		{ id: "cozy", label: "Cozy" },
-		{ id: "compact", label: "Compact" },
 	];
 
 	// A tone the user mixed themselves is stored as one of these and referenced
@@ -365,6 +270,11 @@
 		openCols: {},
 		hints: null,
 		hintPrefix: "",
+		/* Which floor the arrows are on: "bar" = top tabs, "groups" = the left
+		   rail, "items" = the rows. Down descends, Up and Left climb back, and
+		   no end wraps — the bar is the ceiling and the last group a hard stop. */
+		kbZone: "bar",
+		pinCursor: null,
 	};
 	var hover = { timer: null, tabTimer: null, vx: 0, x: 0, t: 0 };
 
@@ -412,18 +322,6 @@
 		adopt("aurora_ui_recent", KEY.recent);
 		adopt("aurora_ui_layout", KEY.layout);
 		adopt("aurora:accent", KEY.accent);
-	}
-
-	function adoptDensityV3() {
-		try {
-			if (localStorage.getItem(KEY.densityRev) === "3") return false;
-			var stored = localStorage.getItem(KEY.density);
-			if (stored === "cozy") localStorage.setItem(KEY.density, "normal");
-			localStorage.setItem(KEY.densityRev, "3");
-			return stored === "cozy";
-		} catch (e) {
-			return false;
-		}
 	}
 
 	/* ---------------------------------------------------------------------
@@ -476,14 +374,6 @@
 		}
 	}
 
-	function canWrite(doctype) {
-		try {
-			return (frappe.boot.user.can_write || []).indexOf(doctype) !== -1;
-		} catch (e) {
-			return false;
-		}
-	}
-
 	function clamp(value, min, max) {
 		return Math.min(Math.max(value, min), Math.max(min, max));
 	}
@@ -512,24 +402,6 @@
 		if (spriteHas(preferred)) return preferred;
 		var guess = guessIcon(label, context);
 		return spriteHas(guess) ? guess : "file-text";
-	}
-
-	function plural(count, one, many) {
-		return count === 1 ? one : many;
-	}
-
-	/* Anything that throws work away asks first. The desk's own confirm is used
-	   where it exists so the question looks like every other question the desk
-	   asks; the browser's is only there so a missing dialog cannot turn a
-	   guarded action into an unguarded one. */
-	function askFirst(question, run) {
-		try {
-			if (window.frappe && frappe.confirm) {
-				frappe.confirm(question, run);
-				return;
-			}
-		} catch (e) {}
-		if (window.confirm(question)) run();
 	}
 
 	function footKey(keys, label) {
@@ -563,38 +435,20 @@
 
 	function hrefFor(desc) {
 		var route = desc.route || [];
-		if (desc.act === "url") return desc.url || "#";
 		if (desc.act === "new") return prefix() + "/" + slugify(desc.doctype) + "/new";
-		if (!route.length || !route[0]) return "#";
 		if (route[0] === "List") return prefix() + "/" + slugify(route[1]);
 		if (route[0] === "Form") return prefix() + "/" + slugify(route[1]) + "/" + encodeURIComponent(route[2]);
 		if (route[0] === "query-report") return prefix() + "/query-report/" + encodeURIComponent(route[1]);
 		return prefix() + "/" + route.map(slugify).join("/");
 	}
 
-	function hasRoute(item) {
-		return Boolean(item && item.route && item.route.length && item.route[0]);
-	}
-
 	function runItem(desc) {
 		if (!desc) return;
-
-		// An external link leaves the desk, so it opens beside it rather than
-		// replacing the app the user is working in.
-		if (desc.act === "url") {
-			if (desc.url) window.open(desc.url, "_blank", "noopener");
-			closeMega();
-			return;
-		}
-
-		if (desc.act === "route" && !hasRoute(desc)) return;
-
 		try {
 			if (desc.act === "new") frappe.new_doc(desc.doctype);
 			else frappe.set_route.apply(frappe, desc.route);
 		} catch (e) {
-			var href = hrefFor(desc);
-			if (href && href !== "#") window.location.href = href;
+			window.location.href = hrefFor(desc);
 		}
 		closeMega();
 	}
@@ -939,7 +793,6 @@
 		write(KEY.pins, list.slice(Math.max(0, list.length - PIN_LIMIT)));
 		setCounts();
 		syncPinButton();
-		paintPinStars();
 
 		// Offer the shelves, but only ever as an offer: ignoring the popover
 		// leaves the pin where it already is, in the default group.
@@ -970,64 +823,6 @@
 		return out;
 	}
 
-	/* One comparable address per page, so the same destination reached by
-	   different spellings lands on one string. A workspace is the reason this
-	   exists: the desk hands it over as ["Workspaces", "Recruitment"] while the
-	   menu carries it as ["recruitment"], and both have to read as the same
-	   place or the star cannot tell it is already pinned. */
-	function routeAddress(route) {
-		var parts = (route || []).map(String);
-		if (!parts.length) return "";
-		var head = parts[0];
-
-		if (head === "Form" && parts[2]) return "form/" + slugify(parts[1]) + "/" + parts[2];
-
-		// A report with a reference doctype is addressed through that doctype's
-		// list — ["List", "Sales Invoice", "Report", "Gross Profit"] — so it has
-		// to be read as the report it is, not as the list it borrows.
-		if (head === "List" && parts[2] === "Report" && parts[3]) return "report/" + slugify(parts[3]);
-		if (head === "List" && parts[1]) return "list/" + slugify(parts[1]);
-		if (head === "Tree" && parts[1]) return "tree/" + slugify(parts[1]);
-		if (head === "query-report" && parts[1]) return "report/" + slugify(parts[1]);
-		if ((head === "dashboard-view" || head === "Dashboard") && parts[1]) return "dash/" + slugify(parts[1]);
-		if (head === "Workspaces" && parts[1]) return "ws/" + slugify(parts[1]);
-		if (parts.length === 1) return "ws/" + slugify(head);
-		return parts.map(slugify).join("/");
-	}
-
-	/* Pins are stored under an id, so the id has to be the same whichever way a
-	   page was pinned. The menu model is what names things, so it answers first
-	   and the star only invents an id for an address no menu carries. */
-	function menuItemForRoute(route) {
-		var want = routeAddress(route);
-		if (!want) return null;
-
-		var found = null;
-		function consider(item) {
-			if (found || !item || !item.id) return;
-			if (routeAddress(item.route) === want) found = item;
-		}
-
-		var tabs = state.tabs || {};
-		Object.keys(tabs).forEach(function (tabId) {
-			(tabs[tabId] || []).forEach(function (group) {
-				(group.items || []).forEach(consider);
-			});
-		});
-
-		// The module shell draws from its own model, and under a content profile
-		// that model is the only place a hand-written entry exists at all. Its
-		// ids are what its own stars use, so they have to win here too.
-		(nav.menus || []).forEach(function (menu) {
-			if (menu.overview) consider(menu.overview);
-			(menu.columns || []).forEach(function (column) {
-				(column.items || []).forEach(consider);
-			});
-		});
-
-		return found;
-	}
-
 	function describeRoute(route) {
 		if (!route || !route.length) return null;
 		var head = route[0];
@@ -1048,19 +843,6 @@
 				route: ["Form", doctype, name],
 			};
 		}
-		var known = menuItemForRoute(route);
-		if (known) {
-			return {
-				id: known.id,
-				label: known.label,
-				sub: known.sub,
-				hue: known.hue,
-				icon: known.icon,
-				act: "route",
-				route: known.route,
-			};
-		}
-
 		if (head === "List" && route[1]) {
 			return {
 				id: "list:" + route[1],
@@ -1081,44 +863,6 @@
 				icon: "chart-column",
 				act: "route",
 				route: ["query-report", route[1]],
-			};
-		}
-		if (head === "Tree" && route[1]) {
-			return {
-				id: "tree:" + route[1],
-				label: route[1],
-				sub: "Tree",
-				hue: hue(route[1]),
-				icon: resolveIcon(null, route[1]),
-				act: "route",
-				route: ["Tree", route[1]],
-			};
-		}
-
-		// A dashboard and a workspace both used to fall through to null, which
-		// left the star inert on two of the desk's most visited pages. The
-		// prefixes match the ones the menu builds, so a page pinned from either
-		// side is the same pin.
-		if ((head === "dashboard-view" || head === "Dashboard") && route[1]) {
-			return {
-				id: "dashboard:" + route[1],
-				label: titleize(route[1]),
-				sub: "Dashboard",
-				hue: hue(route[1]),
-				icon: resolveIcon(null, "Dashboard", "report"),
-				act: "route",
-				route: ["dashboard-view", route[1]],
-			};
-		}
-		if (head === "Workspaces" && route[1]) {
-			return {
-				id: "ws:" + route[1],
-				label: titleize(route[1]),
-				sub: "Workspace",
-				hue: hue(route[1]),
-				icon: resolveIcon(null, titleize(route[1])),
-				act: "route",
-				route: [slugify(route[1])],
 			};
 		}
 		if (route.length === 1) {
@@ -1146,7 +890,6 @@
 	function noteRoute() {
 		var desc = currentDesc();
 		syncPinButton();
-		syncNavToRoute();
 		if (!desc) return;
 
 		var list = read(KEY.recent, []).filter(function (item) {
@@ -1164,62 +907,6 @@
 		// knowable yet. Look again once it has had time to load.
 		setTimeout(refineRecent, 700);
 		setTimeout(refineRecent, 2200);
-		setTimeout(settleFormChrome, 80);
-		setTimeout(settleFormChrome, 400);
-	}
-
-	/* Frappe's tab click does scrollIntoView against --navbar-height. With a
-	   two-row bar that number is short, so the new pane lands under the title
-	   and the first fields read as fragments floating in the tab strip. */
-	function settleFormChrome() {
-		var scroller = document.querySelector(".main-section");
-		if (!scroller) return;
-
-		measureChrome();
-
-		var pane = document.querySelector(".tab-pane.active") || document.querySelector(".form-page");
-		if (!pane) return;
-
-		var first = null;
-		var sections = pane.querySelectorAll(".form-section");
-		for (var i = 0; i < sections.length; i++) {
-			var section = sections[i];
-			if (section.classList.contains("hide-control") || section.classList.contains("empty-section")) continue;
-			if (!section.offsetHeight) continue;
-			first = section;
-			break;
-		}
-		if (!first) return;
-
-		var cover = chromeBottom();
-		var head = null;
-		var heads = document.querySelectorAll(".page-head");
-		for (var h = 0; h < heads.length; h++) {
-			if (heads[h].offsetHeight) {
-				head = heads[h];
-				break;
-			}
-		}
-		if (head) cover = Math.max(cover, head.getBoundingClientRect().bottom);
-
-		var tabs = document.querySelector(".form-tabs-list");
-		if (tabs && tabs.offsetHeight) cover = Math.max(cover, tabs.getBoundingClientRect().bottom);
-
-		var gap = Math.round(cover + 8 - first.getBoundingClientRect().top);
-		if (gap > 1) scroller.scrollTop += gap;
-	}
-
-	function bindFormTabs() {
-		document.addEventListener(
-			"click",
-			function (event) {
-				var tab = event.target && event.target.closest && event.target.closest(".form-tabs .nav-link");
-				if (!tab) return;
-				setTimeout(settleFormChrome, 30);
-				setTimeout(settleFormChrome, 200);
-			},
-			true
-		);
 	}
 
 	function formRef(item) {
@@ -1499,71 +1186,7 @@
 		}
 		if (tabId === "recent")
 			return [{ key: "__recent", label: "Recently visited", icon: "history", hue: 200, items: read(KEY.recent, []) }];
-		if (tabId === "shellnav") return shellNavGroups();
 		return state.tabs[tabId] || [];
-	}
-
-	/* The Module nav's own content, reshaped into the exact group/item model the
-	   mega menu draws: every configured module becomes a group down the rail,
-	   its entries the grid on the right. Because it is the same model, the tiles,
-	   the "New" chip, the keyboard and the filter all come for free — the grid
-	   view is the command menu wearing the module content. */
-	function shellNavItem(item) {
-		var copy = Object.assign({}, item);
-		copy.search = (item.label + " " + (item.sub || "")).toLowerCase();
-
-		// A list entry earns the same New chip it has in the command menu, so
-		// the two are indistinguishable. The doctype is the tail of the id.
-		if (!copy.extra && typeof copy.id === "string" && copy.id.indexOf("list:") === 0) {
-			var doctype = copy.id.slice("list:".length);
-			if (canCreate(doctype)) copy.extra = { label: "New", act: "new", doctype: doctype };
-		}
-		return copy;
-	}
-
-	function shellNavGroups() {
-		return (nav.menus || []).map(function (menu) {
-			// The flat list still backs search, the count and keyboard walking;
-			// the sections carry the same rows grouped by their Card Break area
-			// and then by Main/Reports/Setup, so the detail panel can print the
-			// headings a client set instead of one undifferentiated grid.
-			var items = [];
-
-			var landing = menuLanding(menu);
-			var landingItem = landing ? shellNavItem(landing) : null;
-			if (landingItem) items.push(landingItem);
-
-			// Areas are only worth naming when there is more than one. A single
-			// untitled area is just "the module", so it stays a plain list —
-			// the standard behaviour for a menu whose author set no groups.
-			var showArea = (menu.columns || []).length > 1;
-
-			var sections = [];
-			(menu.columns || []).forEach(function (column) {
-				var mixed = areaIsMixed(column.items);
-				var subs = [];
-				eachKind(column.items, mixed, function (bucket, rows, heading) {
-					var built = rows.map(shellNavItem);
-					built.forEach(function (row) {
-						items.push(row);
-					});
-					subs.push({ heading: heading || "", rows: built });
-				});
-				if (!subs.length) return;
-				var title = showArea && column.title !== menu.label ? column.title : "";
-				sections.push({ title: title || "", subs: subs });
-			});
-
-			return {
-				key: menu.name,
-				label: menu.label,
-				icon: menu.icon,
-				hue: menu.hue,
-				items: items,
-				landing: landingItem,
-				sections: sections,
-			};
-		});
 	}
 
 	/* ---------------------------------------------------------------------
@@ -1715,41 +1338,6 @@
 			return;
 		}
 
-		// Module content arrives grouped: the landing tile first, then each
-		// Card Break area under its own heading, and Reports/Setup under theirs
-		// inside it. A search flattens back to one grid — the matches are the
-		// point then, not the shape they came from.
-		if (options.sections && options.sections.length) {
-			var seq = 0;
-
-			if (options.landing) {
-				var lead = make("div", { class: "aur-grid" });
-				lead.appendChild(renderItem(options.landing, seq++, options));
-				el.body.appendChild(lead);
-			}
-
-			options.sections.forEach(function (section) {
-				if (section.title) {
-					el.body.appendChild(make("div", { class: "aur-mega-area", text: section.title }));
-				}
-				section.subs.forEach(function (sub) {
-					if (sub.heading) {
-						el.body.appendChild(make("div", { class: "aur-mega-sub", text: sub.heading }));
-					}
-					var subGrid = make("div", { class: "aur-grid" });
-					sub.rows.forEach(function (row) {
-						subGrid.appendChild(renderItem(row, seq++, options));
-					});
-					el.body.appendChild(subGrid);
-				});
-			});
-
-			el.body.scrollTop = 0;
-			alignBody(items.length);
-			armCursor();
-			return;
-		}
-
 		var grid = make("div", { class: "aur-grid" });
 		items.slice(0, 300).forEach(function (item, i) {
 			grid.appendChild(renderItem(item, i, options));
@@ -1813,22 +1401,15 @@
 				options.action = {
 					label: "Clear",
 					run: function () {
-						askFirst(
-							"Remove all " + active.items.length + " pinned " + plural(active.items.length, "entry", "entries") +
-								" from " + active.label + "? The pages themselves are untouched.",
-							function () {
-								write(
-									KEY.pins,
-									pins().filter(function (item) {
-										return (item.group || DEFAULT_PIN_GROUP.id) !== active.pinGroup;
-									})
-								);
-								setCounts();
-								syncPinButton();
-								paintPinStars();
-								renderGroups("pinned");
-							}
+						write(
+							KEY.pins,
+							pins().filter(function (item) {
+								return (item.group || DEFAULT_PIN_GROUP.id) !== active.pinGroup;
+							})
 						);
+						setCounts();
+						syncPinButton();
+						renderGroups("pinned");
 					},
 				};
 			}
@@ -1838,25 +1419,12 @@
 				options.action = {
 					label: "Clear",
 					run: function () {
-						askFirst(
-							"Clear all " + active.items.length + " recently visited " +
-								plural(active.items.length, "page", "pages") + "? This cannot be undone.",
-							function () {
-								write(KEY.recent, []);
-								setCounts();
-								renderGroups("recent");
-							}
-						);
+						write(KEY.recent, []);
+						setCounts();
+						renderGroups("recent");
 					},
 				};
 			}
-		}
-
-		// Module menus carry area/section structure. Show it at rest; a live
-		// filter falls back to the flat grid the matches read best in.
-		if (active.sections && active.sections.length && !String(state.megaQuery || "").trim()) {
-			options.sections = active.sections;
-			options.landing = active.landing;
 		}
 
 		renderItems(active.label, active.items, options);
@@ -1902,6 +1470,60 @@
 		if (el.megaSearch) el.megaSearch.focus();
 	}
 
+	/* How many entries a tab still has under the standing filter. Used when the
+	   open tab is empty so we can point at the tabs that do still match, instead
+	   of looking like the thing does not exist. */
+	function countFiltered(tabId, query) {
+		var groups = filterGroups(groupsFor(tabId), query);
+		if (tabId === "workspaces") {
+			var all = groups.filter(function (group) {
+				return group.key === "__all";
+			})[0];
+			return all ? all.items.length : 0;
+		}
+		var total = 0;
+		groups.forEach(function (group) {
+			if (group.key === "__all") return;
+			total += (group.items || []).length;
+		});
+		return total;
+	}
+
+	function elsewhereHits(query, exceptTab) {
+		var needle = String(query || "").trim();
+		if (!needle) return [];
+		return TABS.filter(function (tab) {
+			return tab.id !== exceptTab && tab.id !== "pinned" && tab.id !== "recent";
+		})
+			.map(function (tab) {
+				return { id: tab.id, label: tab.label, count: countFiltered(tab.id, needle) };
+			})
+			.filter(function (hit) {
+				return hit.count > 0;
+			});
+	}
+
+	function renderElsewhere(query, exceptTab) {
+		var hits = elsewhereHits(query, exceptTab);
+		if (!hits.length || !el.body) return;
+
+		var row = make("div", { class: "aur-elsewhere" }, [
+			make("div", { class: "aur-elsewhere-label", text: "Found in other tabs" }),
+		]);
+		hits.forEach(function (hit) {
+			var button = make("button", {
+				class: "aur-elsewhere-chip",
+				type: "button",
+				text: hit.label + " \u00b7 " + hit.count,
+			});
+			button.addEventListener("click", function () {
+				openTab(hit.id);
+			});
+			row.appendChild(button);
+		});
+		el.body.appendChild(row);
+	}
+
 	/* The filter survives a tab change, so the panel has to say so: without a
 	   standing notice a tab narrowed by an earlier search just looks empty. */
 	function updateFilterBar(query, groups) {
@@ -1927,13 +1549,27 @@
 			return n + " " + (n === 1 ? one : many);
 		};
 
-		el.filterText.textContent = items
+		if (items) {
+			el.filterText.textContent =
+				"Filtered by \u201c" +
+				needle +
+				"\u201d \u00b7 " +
+				plural(items, "match", "matches") +
+				" in " +
+				plural(shown, "group", "groups");
+			return;
+		}
+
+		var elsew = elsewhereHits(needle, state.activeTab);
+		el.filterText.textContent = elsew.length
 			? "Filtered by \u201c" +
 			  needle +
-			  "\u201d \u00b7 " +
-			  plural(items, "match", "matches") +
-			  " in " +
-			  plural(shown, "group", "groups")
+			  "\u201d \u00b7 nothing here \u00b7 see " +
+			  elsew
+					.map(function (hit) {
+						return hit.label;
+					})
+					.join(", ")
 			: "Filtered by \u201c" + needle + "\u201d \u00b7 nothing in this tab";
 	}
 
@@ -1980,6 +1616,7 @@
 					text: query ? 'Nothing in this tab matches "' + query + '".' : "Nothing here you have access to.",
 				})
 			);
+			if (query) renderElsewhere(query, tabId);
 			armCursor();
 			return;
 		}
@@ -2149,6 +1786,7 @@
 
 		if (currentLayout() === "columns") {
 			renderColumns(tabId, groups);
+			paintKbZone();
 			return;
 		}
 
@@ -2185,9 +1823,13 @@
 		if (tabId === "pinned" && !query) el.groups.appendChild(newShelfRow());
 
 		if (groups.length) selectGroup(tabId, groups[0].key);
-		else if (query)
-			renderItems("No match", [], { empty: 'Nothing in this tab matches "' + query.trim() + '".' });
-		else renderItems("Nothing available", []);
+		else if (query) {
+			renderItems("No match", [], {
+				empty: 'Nothing in this tab matches "' + query.trim() + '".',
+			});
+			renderElsewhere(query, tabId);
+		} else renderItems("Nothing available", []);
+		paintKbZone();
 	}
 
 	/* ---------------------------------------------------------------------
@@ -2587,6 +2229,7 @@
 	}
 
 	function openMega() {
+		var fresh = !el.mega.classList.contains("aur-visible");
 		el.mega.classList.add("aur-visible");
 		positionMega();
 		if (el.bar) el.bar.classList.add("aur-bar-lifted");
@@ -2599,10 +2242,14 @@
 
 		positionScrim();
 
-		/* The keyboard needs somewhere to live while the panel is open. Focus
-		   rests in the filter field and the selection is painted onto a row, so
-		   typing and the arrows are both live from the moment it appears. */
+		/* A fresh open stands on the bar — that is where the click or the
+		   shortcut just was, and every other floor is reached from it. Focus
+		   still rests in the filter field and the selection is painted rather
+		   than held, so typing and the arrows are both live at once. */
+		if (fresh) state.kbZone = "bar";
 		if (el.megaSearch) el.megaSearch.focus({ preventScroll: true });
+		paintKbZone();
+		if (fresh) armCursor();
 	}
 
 	function closeMega() {
@@ -2611,7 +2258,9 @@
 		clearTimeout(hover.tabTimer);
 		hideHints();
 		setCursor(null);
-		el.mega.classList.remove("aur-visible");
+		state.kbZone = "bar";
+		if (el.bar) el.bar.classList.remove("aur-kb-bar");
+		el.mega.classList.remove("aur-visible", "aur-kb-bar", "aur-kb-groups", "aur-kb-items");
 		if (el.bar) el.bar.classList.remove("aur-bar-lifted");
 		state.searching = false;
 		state.cursor = -1;
@@ -2629,7 +2278,6 @@
 			el.scrim.remove();
 			el.scrim = null;
 		}
-		if (el.navBtns) paintNavActive();
 	}
 
 	function openTab(tabId) {
@@ -2643,6 +2291,7 @@
 
 		renderGroups(tabId);
 		openMega();
+		paintKbZone();
 	}
 
 	function toggleTab(tabId) {
@@ -2664,19 +2313,105 @@
 	var rowSeq = 0;
 
 	// Rows the keyboard can land on. "+N more" counts as one: arriving at the
-	// foot of a capped group and pressing Enter is how the rest of it opens.
+	// foot of a capped group and pressing Enter is how the rest of it opens. So
+	// do the "found in other tabs" chips, which are the only thing to go into
+	// when the filter has emptied this tab.
 	function navRows() {
 		if (!el.body) return [];
-		return Array.prototype.slice.call(el.body.querySelectorAll(".aur-item, .aur-col-more"));
+		return Array.prototype.slice.call(el.body.querySelectorAll(".aur-item, .aur-col-more, .aur-elsewhere-chip"));
 	}
 
-	function cursorRow() {
-		return el.body ? el.body.querySelector(".aur-cursor") : null;
+	/* Every render ends by restoring the pinned keyboard cell, or by arming the
+	   first row. The pin is how arrowing onto a tab or group survives the redraw
+	   that opening that tab or group triggers. */
+	function armCursor() {
+		var pin = state.pinCursor;
+		state.pinCursor = null;
+
+		// Rebuilding the panel while it is shut must not paint a ring onto a bar
+		// tab, which stays on screen after the menu itself has gone.
+		if (!megaOpen()) return setCursor(null);
+
+		/* Standing on the bar or the rail is a place of its own: a redraw must
+		   leave you there rather than falling through to the first row, which
+		   would highlight an item you never navigated to. */
+		if (!pin && state.kbZone === "bar") pin = { kind: "tab", key: state.activeTab };
+		if (!pin && state.kbZone === "groups" && state.activeKey) pin = { kind: "group", key: state.activeKey };
+
+		if (pin && pin.kind === "tab" && el.tabNodes && el.tabNodes[pin.key]) {
+			setCursor(el.tabNodes[pin.key], false);
+			if (state.hints) paintHints();
+			return;
+		}
+		if (pin && pin.kind === "group") {
+			var match = (state.groups || []).filter(function (group) {
+				return group.key === pin.key && group.node;
+			})[0];
+			if (match) {
+				setCursor(match.node, false);
+				if (state.hints) paintHints();
+				return;
+			}
+		}
+
+		setCursor(navRows()[0] || null, false);
+		if (state.hints) paintHints();
+	}
+
+	function tabIds() {
+		return TABS.map(function (tab) {
+			return tab.id;
+		}).filter(function (id) {
+			return el.tabNodes && el.tabNodes[id];
+		});
+	}
+
+	/* Three floors, never one plane: the bar, the group rail, and the items.
+	   A direction key is answered by the floor you are standing on, so Left and
+	   Right along the bar only ever walk tabs — the panel below cannot catch
+	   the cursor, and nothing down there lights up until you ask for it with
+	   Down. */
+	function groupCells() {
+		if (currentLayout() === "columns") return [];
+		return (state.groups || [])
+			.map(function (group) {
+				return group.node;
+			})
+			.filter(Boolean);
+	}
+
+	function paintKbZone() {
+		var zone = state.kbZone || "items";
+		Object.keys(el.tabNodes || {}).forEach(function (id) {
+			el.tabNodes[id].classList.toggle("aur-kb", zone === "bar" && id === state.activeTab);
+		});
+		(state.groups || []).forEach(function (group) {
+			if (group.node) group.node.classList.toggle("aur-kb", zone === "groups" && group.key === state.activeKey);
+		});
+		if (el.mega) {
+			el.mega.classList.toggle("aur-kb-bar", zone === "bar");
+			el.mega.classList.toggle("aur-kb-groups", zone === "groups");
+			el.mega.classList.toggle("aur-kb-items", zone === "items");
+		}
+		if (el.bar) el.bar.classList.toggle("aur-kb-bar", zone === "bar");
+	}
+
+	function setKbZone(zone) {
+		state.kbZone = zone;
+		paintKbZone();
+	}
+
+	function cellKind(node) {
+		if (!node) return "items";
+		if (node.classList.contains("aur-tab")) return "bar";
+		if (node.classList.contains("aur-group")) return "groups";
+		return "items";
 	}
 
 	function setCursor(row, scroll) {
-		var previous = cursorRow();
-		if (previous) previous.classList.remove("aur-cursor");
+		document.querySelectorAll(".aur-cursor").forEach(function (node) {
+			node.classList.remove("aur-cursor");
+		});
 
 		if (!row) {
 			if (el.megaSearch) el.megaSearch.removeAttribute("aria-activedescendant");
@@ -2686,27 +2421,72 @@
 		if (!row.id) row.id = "aur-row-" + ++rowSeq;
 		row.classList.add("aur-cursor");
 		if (el.megaSearch) el.megaSearch.setAttribute("aria-activedescendant", row.id);
-		if (scroll !== false) row.scrollIntoView({ block: "nearest", inline: "nearest" });
+		setKbZone(cellKind(row));
+
+		/* A tab is always brought into view, even on the silent restore after a
+		   redraw: the strip scrolls, and a cursor sitting outside the frame is
+		   the one thing worse than no cursor at all. */
+		if (cellKind(row) === "bar") revealTab(row);
+		else if (scroll !== false) row.scrollIntoView({ block: "nearest", inline: "nearest" });
 	}
 
-	/* Every render ends here, so the first row is always armed: Enter has an
-	   obvious target from the moment the panel opens, and the panel reads as
-	   ready for the keyboard rather than waiting to be aimed at. */
-	function armCursor() {
-		setCursor(navRows()[0] || null, false);
-		if (state.hints) paintHints();
+	function cursorCell() {
+		return document.querySelector(".aur-tab.aur-cursor, .aur-group.aur-cursor, .aur-mega-body .aur-cursor");
 	}
 
-	/* Both layouts are two-dimensional and ragged — a filled grid in one, lanes
-	   of unequal height in the other — so a direction key cannot be index
-	   arithmetic over the DOM. Take the nearest row that genuinely lies the way
-	   the key points, preferring the ones squarely in line with this one. */
-	function stepCursor(dir) {
+	function cursorRow() {
+		return el.body
+			? el.body.querySelector(".aur-item.aur-cursor, .aur-col-more.aur-cursor, .aur-elsewhere-chip.aur-cursor")
+			: null;
+	}
+
+	function landOn(node) {
+		if (!node) return false;
+
+		if (node.classList.contains("aur-tab")) {
+			var tabId = node.getAttribute("data-tab");
+			state.pinCursor = { kind: "tab", key: tabId };
+			if (tabId && tabId !== state.activeTab) openTab(tabId);
+			else {
+				state.pinCursor = null;
+				setCursor(node);
+			}
+			return true;
+		}
+
+		if (node.classList.contains("aur-group")) {
+			var group = (state.groups || []).filter(function (entry) {
+				return entry.node === node;
+			})[0];
+			if (!group) return false;
+			state.pinCursor = { kind: "group", key: group.key };
+			if (group.key !== state.activeKey) selectGroup(state.activeTab, group.key);
+			else {
+				state.pinCursor = null;
+				setCursor(node);
+			}
+			return true;
+		}
+
+		setCursor(node);
+		return true;
+	}
+
+	/* Only the items are ragged enough to need geometry — a filled grid in one
+	   layout, lanes of unequal height in the other — so a direction key there
+	   cannot be index arithmetic over the DOM. Take the nearest row that
+	   genuinely lies the way the key points, preferring rows squarely in line
+	   with this one. Returns false at the edge, which is what lets the caller
+	   hand the press on to the rail. */
+	function stepItems(dir) {
 		var rows = navRows();
-		if (!rows.length) return;
+		if (!rows.length) return false;
 
 		var current = cursorRow();
-		if (!current) return setCursor(rows[0]);
+		if (!current) {
+			setCursor(rows[0]);
+			return true;
+		}
 
 		var from = current.getBoundingClientRect();
 		var cx = from.left + from.width / 2;
@@ -2735,58 +2515,108 @@
 			}
 		});
 
-		/* Nothing that way. Running off the side of a row continues along the
-		   reading order, which is what the eye does anyway; running off the top
-		   or bottom stays put rather than jumping the width of the panel. */
-		if (!best && (dir === "left" || dir === "right")) {
-			best = rows[rows.indexOf(current) + (dir === "right" ? 1 : -1)];
-		}
-
-		if (best) setCursor(best);
+		if (!best) return false;
+		setCursor(best);
+		return true;
 	}
 
-	/* Tab moves by subject rather than by control while the panel is open: one
-	   press per group, which is the unit both layouts are organised around. */
+	function toBar() {
+		var node = el.tabNodes && el.tabNodes[state.activeTab];
+		if (!node) return false;
+		setCursor(node);
+		return true;
+	}
+
+	/* The rail is where Down off the bar lands and where Left out of the items
+	   comes back to, so it has to be reachable without disturbing what is on
+	   show: only an untouched tab needs its first group choosing. */
+	function enterRail() {
+		var cells = groupCells();
+		if (!cells.length) return false;
+
+		var active = (state.groups || []).filter(function (group) {
+			return group.key === state.activeKey && group.node;
+		})[0];
+		if (active) {
+			setCursor(active.node);
+			return true;
+		}
+
+		state.pinCursor = { kind: "group", key: state.groups[0].key };
+		selectGroup(state.activeTab, state.groups[0].key);
+		return true;
+	}
+
+	function enterItems() {
+		var rows = navRows();
+		if (!rows.length) return false;
+		setCursor(rows[0]);
+		return true;
+	}
+
 	function stepGroup(delta) {
-		if (currentLayout() === "columns") {
-			var cols = Array.prototype.slice.call(el.body.querySelectorAll(".aur-col"));
-			if (!cols.length) return;
+		var cells = groupCells();
+		if (!cells.length) return delta < 0 ? toBar() : false;
 
-			var current = cursorRow();
-			var owner = current && current.closest ? current.closest(".aur-col") : null;
-			var at = owner ? cols.indexOf(owner) : -1;
-			var next = cols[(at + delta + cols.length) % cols.length] || cols[0];
+		var index = cells.indexOf(cursorCell());
+		if (index < 0) return enterRail();
 
-			// Bring the heading into view as well, so the group being entered
-			// announces itself instead of the cursor arriving somewhere unnamed.
-			var head = next.querySelector(".aur-col-head");
-			if (head) head.scrollIntoView({ block: "nearest" });
-			setCursor(next.querySelector(".aur-item, .aur-col-more"));
-			return;
-		}
-
-		var groups = state.groups || [];
-		if (groups.length < 2) return;
-
-		var keys = groups.map(function (group) {
-			return group.key;
-		});
-		var index = keys.indexOf(state.activeKey);
-		if (index < 0) index = 0;
-
-		selectGroup(state.activeTab, keys[(index + delta + keys.length) % keys.length]);
-		if (state.activeNode) state.activeNode.scrollIntoView({ block: "nearest" });
+		var next = index + delta;
+		// Off the top of the rail is the way back to the bar; off the bottom is
+		// simply the end of the list.
+		if (next < 0) return toBar();
+		if (next >= cells.length) return false;
+		return landOn(cells[next]);
 	}
 
-	// A whole subject at a time, and the standing filter is deliberately kept:
-	// clicking a tab already behaves that way.
+	function navKey(dir) {
+		var zone = state.kbZone || "items";
+
+		if (zone === "bar") {
+			if (dir === "left") return stepTab(-1);
+			if (dir === "right") return stepTab(1);
+			if (dir === "down") return enterFromBar();
+			return false;
+		}
+
+		if (zone === "groups") {
+			if (dir === "up") return stepGroup(-1);
+			if (dir === "down") return stepGroup(1);
+			if (dir === "right") return enterItems();
+			// The rail is already the leftmost column of the panel.
+			return false;
+		}
+
+		if (stepItems(dir)) return true;
+		if (dir === "left") return enterRail();
+		// The column layout has no rail, so the bar is what lies above.
+		if (dir === "up") return enterRail() || toBar();
+		return false;
+	}
+
+	/* Tab walks the high-level bar in its own order — Pinned, Workspaces,
+	   Modules, and so on — and stops at both ends rather than wrapping, so the
+	   row has a felt beginning and end. Left and Right do the same while the
+	   cursor is on the bar. */
 	function stepTab(delta) {
-		var ids = Object.keys(el.tabNodes || {});
-		if (ids.length < 2) return;
+		var ids = tabIds();
+		if (ids.length < 2) return false;
 
 		var index = ids.indexOf(state.activeTab);
 		if (index < 0) index = 0;
-		openTab(ids[(index + delta + ids.length) % ids.length]);
+		var next = index + delta;
+		if (next < 0 || next >= ids.length) return false;
+
+		// Pinned to the tab, or the redraw that opening it triggers would drop
+		// the cursor onto the first item and light up a row nobody asked for.
+		state.pinCursor = { kind: "tab", key: ids[next] };
+		setKbZone("bar");
+		openTab(ids[next]);
+		return true;
+	}
+
+	function enterFromBar() {
+		return enterRail() || enterItems();
 	}
 
 	// A screenful, then land on whatever is now at the top edge.
@@ -2804,7 +2634,6 @@
 			}
 			return false;
 		});
-
 		// Scrolled to, not merely marked: the row at the edge is usually half cut
 		// off by the jump, and a selection you cannot fully see is no selection.
 		if (landed) setCursor(landed);
@@ -3108,10 +2937,6 @@
 					closeSelect();
 					closed = true;
 				}
-				if (nav.drop) {
-					closeNavDrop();
-					closed = true;
-				}
 				if (el.pop) {
 					closePop();
 					closed = true;
@@ -3179,57 +3004,66 @@
 				return;
 			}
 
-			// Ctrl/Cmd with a horizontal arrow changes the whole subject, so the
-			// plain arrows are free to walk the rows.
-			if ((event.metaKey || event.ctrlKey) && (event.key === "ArrowRight" || event.key === "ArrowLeft")) {
-				event.preventDefault();
-				stepTab(event.key === "ArrowRight" ? 1 : -1);
-				return;
-			}
-
+			// Bar, rail, items: each answers the arrows in its own terms.
 			var DIRS = { ArrowDown: "down", ArrowUp: "up", ArrowRight: "right", ArrowLeft: "left" };
 			if (DIRS[event.key]) {
-				/* Horizontal keys are shared with the caret, or a typo in the
-				   filter could not be reached without the mouse. The caret gets
-				   them while it still has somewhere to go; at either end of the
-				   text they pass to the rows. */
-				if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-					var field = event.target === el.megaSearch ? el.megaSearch : null;
-					var at = field ? field.selectionStart : null;
-					var spread = field && field.selectionStart !== field.selectionEnd;
-					if (field && (spread || (event.key === "ArrowLeft" ? at > 0 : at < field.value.length))) return;
-				}
-
 				event.preventDefault();
-				stepCursor(DIRS[event.key]);
+				navKey(DIRS[event.key]);
 				return;
 			}
 
+			// Tab only walks the high-level bar (Pinned → Workspaces → …).
 			if (event.key === "Tab") {
 				event.preventDefault();
-				stepGroup(event.shiftKey ? -1 : 1);
+				stepTab(event.shiftKey ? -1 : 1);
 				return;
 			}
 
 			if (event.key === "Home" || event.key === "End") {
-				var rows = navRows();
-				if (!rows.length) return;
 				event.preventDefault();
-				setCursor(event.key === "Home" ? rows[0] : rows[rows.length - 1]);
+				if (state.kbZone === "bar") {
+					var ids = tabIds();
+					if (!ids.length) return;
+					state.pinCursor = { kind: "tab", key: event.key === "Home" ? ids[0] : ids[ids.length - 1] };
+					setKbZone("bar");
+					openTab(state.pinCursor.key);
+					return;
+				}
+				if (state.kbZone === "groups") {
+					var railCells = groupCells();
+					if (!railCells.length) return;
+					landOn(event.key === "Home" ? railCells[0] : railCells[railCells.length - 1]);
+					return;
+				}
+				var itemRows = navRows();
+				if (!itemRows.length) return;
+				setCursor(event.key === "Home" ? itemRows[0] : itemRows[itemRows.length - 1]);
 				return;
 			}
 
 			if (event.key === "PageDown" || event.key === "PageUp") {
 				event.preventDefault();
+				if (state.kbZone !== "items") {
+					state.pinCursor = null;
+					setKbZone("items");
+					armCursor();
+				}
 				pageCursor(event.key === "PageDown" ? 1 : -1);
 				return;
 			}
 
 			if (event.key === "Enter" || event.code === "Enter" || event.key === "NumpadEnter") {
 				event.preventDefault();
-				// Stop other desk handlers from eating Cmd/Ctrl+Enter (which is
-				// otherwise a common "submit" chord) before we open the new tab.
 				if (event.metaKey || event.ctrlKey) event.stopPropagation();
+
+				if (state.kbZone === "bar") {
+					enterFromBar();
+					return;
+				}
+				if (state.kbZone === "groups") {
+					enterItems();
+					return;
+				}
 				openCursor(event.metaKey || event.ctrlKey);
 			}
 		}, true);
@@ -3243,7 +3077,7 @@
 	/* Open the mega menu ready for typing. Used by / so the panel is on screen
 	   before the first character of the filter, not after it. */
 	function openQuickMenu() {
-		if (!megaOpen()) openTab(state.activeTab || "workspaces");
+		if (!megaOpen() || state.activeTab !== "pinned") openTab("pinned");
 		if (el.megaSearch) {
 			el.megaSearch.focus();
 			el.megaSearch.select();
@@ -3262,31 +3096,6 @@
 			el.pop.remove();
 			el.pop = null;
 		}
-	}
-
-	/* The appearance panel always hangs from the theme button on the right.
-	   The brand pill can also open it (on a site with no Kaiten Home), and
-	   hanging from the brand put the panel on the far left — which is what
-	   every screenshot of "the popup went left" actually was, including in
-	   a fresh incognito window. */
-	function themeButton() {
-		return document.querySelector(".aur-theme-btn");
-	}
-
-	function reopenSettings() {
-		/* Switching shell rebuilds the bar and closes the panel. Open a fresh
-		   one on the theme button so the choices never disappear mid-change
-		   and never jump to the company mark.
-
-		   Deferred a tick so the click that triggered the switch finishes
-		   bubbling first: the old outside-click listener then sees the panel
-		   already gone and retires itself, rather than shutting the freshly
-		   opened one. */
-		setTimeout(function () {
-			if (el.pop) return;
-			var anchor = themeButton();
-			if (anchor) openSettings(anchor);
-		}, 0);
 	}
 
 	/* Every popover closes when a click lands outside it, and contains() alone
@@ -3342,7 +3151,6 @@
 
 	function openSettings(anchor) {
 		if (el.pop) return closePop();
-		anchor = themeButton() || anchor;
 
 		// The tone row belongs to the chosen theme, so both are rebuilt together
 		// and the row simply disappears for a theme that offers no tones.
@@ -3352,6 +3160,8 @@
 		var editor = make("div", { class: "aur-mixer" });
 		var skins = make("div", { class: "aur-skins" });
 
+		// Density rides on the skin layer, and Default deliberately has none: it
+		// is stock Frappe with only the bar added, spacing included.
 		var density = make("div", { class: "aur-seg" });
 		var densityLabel = make("div", { class: "aur-pop-label", text: "Density" });
 		var densityRow = make("div", { class: "aur-pop-row" }, [density]);
@@ -3394,6 +3204,7 @@
 
 		var renderSkins = function () {
 			var active = currentSkin();
+			densityLabel.hidden = densityRow.hidden = active === "default";
 			skins.innerHTML = "";
 
 			SKINS.forEach(function (skin) {
@@ -3436,7 +3247,10 @@
 		renderSkins();
 		renderTones();
 
-		DENSITIES.forEach(function (option) {
+		[
+			{ id: "cozy", label: "Cozy" },
+			{ id: "compact", label: "Compact" },
+		].forEach(function (option) {
 			var button = make("button", { class: currentDensity() === option.id ? "aur-on" : "", type: "button", text: option.label });
 			button.addEventListener("click", function () {
 				setDensity(option.id);
@@ -3448,174 +3262,27 @@
 			density.appendChild(button);
 		});
 
-		/* The look of a module view: "Standard" opens a module as a dropdown,
-		   "Workspace grid" as the launcher. This is offered only for a custom
-		   content profile — the default bar and the command bar don't use it — so
-		   the label and row are hidden until such a profile is chosen. */
-		var lookSeg = make("div", { class: "aur-seg" });
-		function renderLookSeg() {
-			lookSeg.textContent = "";
-			NAV_VIEWS.forEach(function (option) {
-				var label = option.id === "dropdown" ? "Standard" : "Workspace grid";
-				var button = make("button", {
-					class: currentNavView() === option.id ? "aur-on" : "",
-					type: "button",
-					title: option.note,
-					text: label,
-				});
-				button.addEventListener("click", function () {
-					setNavView(option.id);
-					Array.prototype.forEach.call(lookSeg.children, function (node) {
-						node.classList.remove("aur-on");
-					});
-					button.classList.add("aur-on");
-				});
-				lookSeg.appendChild(button);
-			});
-		}
-		renderLookSeg();
-		var lookLabel = make("div", { class: "aur-pop-label", text: "Look" });
-		var lookRow = make("div", { class: "aur-pop-row" }, [lookSeg]);
-
 		var refresh = make("div", { class: "aur-seg" });
 		var refreshBtn = make("button", { type: "button", text: "Rebuild menu cache" });
 		refreshBtn.addEventListener("click", function () {
 			loadMenu(1);
-			loadShellNav(1);
 			closePop();
 		});
 		refresh.appendChild(refreshBtn);
 
-		// Only someone who can edit the records is shown the way into them.
-		var customise = null;
-		if (canWrite("Kaiten Nav Menu")) {
-			customise = make("div", { class: "aur-seg" });
-			var customiseBtn = make("button", {
-				type: "button",
-				title: "Build the bar for this business: rename menus, regroup links, set who sees what",
-				text: "Customise menu\u2026",
-			});
-			customiseBtn.addEventListener("click", function () {
-				closePop();
-				openNavBuilder();
-			});
-			customise.appendChild(customiseBtn);
-		}
-
-		// Content is *what* the bar shows, offered as cards the way the shells
-		// were: "Command bar", the default "Module nav" (every unconfigured menu),
-		// and one card per Active profile (that profile's menus only). Painted
-		// from the cached list first, then refreshed once the server answers.
-		var contentCards = make("div", { class: "aur-shells aur-content-cards" });
-
-		function currentContentCard() {
-			if (currentShell() === "command") return "command";
-			return currentContent();
-		}
-
-		function isCustomContent() {
-			return currentShell() === "module" && currentContent() !== "standard";
-		}
-
-		function updateLook() {
-			// The look (Standard vs Workspace grid) belongs to any Kaiten-menu
-			// content — Module nav and every custom profile alike — so it shows
-			// for the whole module shell and hides only for the command bar.
-			var show = currentShell() === "module";
-			lookLabel.style.display = show ? "" : "none";
-			lookRow.style.display = show ? "" : "none";
-			renderLookSeg();
-		}
-
-		function selectContentCard(id) {
-			if (id === currentContentCard()) return;
-			var wasOpen = Boolean(el.pop);
-			if (id === "command") {
-				// Content only: keep Theme, Colour, Look, density as they are.
-				setShell("command");
-				if (wasOpen) reopenSettings();
-				return;
-			}
-			// Module nav or a named profile — swap which menus load, never the
-			// paint. Look (Standard / Workspace grid) stays on KEY.navView.
-			localStorage.setItem(KEY.content, id);
-			schedulePush();
-			if (currentShell() !== "module") {
-				setShell("module");
-				if (wasOpen) reopenSettings();
-				return;
-			}
-			applyPrefs();
-			loadShellNav(1);
-			renderContentCards();
-			updateLook();
-		}
-
-		function renderContentCards() {
-			contentCards.textContent = "";
-			var options = [
-				{ name: "command", label: "Command bar", note: "Tabs, mega menu, jump", shell: "command" },
-				{ name: "standard", label: "Module nav", note: "Default menus", shell: "module" },
-			];
-			contentConfigs.forEach(function (config) {
-				options.push({ name: config.name, label: config.label, note: "Custom profile", shell: "module" });
-			});
-			var current = currentContentCard();
-			options.forEach(function (option) {
-				var card = make(
-					"button",
-					{ class: "aur-skin aur-shell" + (option.name === current ? " aur-on" : ""), type: "button", title: option.note },
-					[
-						shellPreview(option.shell),
-						make("span", { class: "aur-skin-name", text: option.label }),
-						make("span", { class: "aur-skin-note", text: option.note }),
-					]
-				);
-				card.addEventListener("click", function () {
-					selectContentCard(option.name);
-				});
-				contentCards.appendChild(card);
-			});
-		}
-		renderContentCards();
-		updateLook();
-		loadMenuConfigs(function () {
-			if (el.pop) {
-				renderContentCards();
-				updateLook();
-			}
-		});
-
 		el.pop = make("div", { class: "aur-pop" }, [
 			make("div", { class: "aur-pop-label", text: "Appearance" }),
 			make("div", { class: "aur-pop-row" }, [appearanceSeg()]),
-
-			// Content is *what* the bar shows: the command bar, the default module
-			// nav, or one of the Active custom profiles.
-			make("div", { class: "aur-pop-label", text: "Content" }),
-			make("div", { class: "aur-pop-row" }, [contentCards]),
-
-			// Theme is *how* it is painted: the colour skins carried from before.
 			make("div", { class: "aur-pop-label", text: "Theme" }),
 			make("div", { class: "aur-pop-row" }, [skins]),
 			toneLabel,
 			toneRow,
 			editor,
-
-			// Look sits directly below the theme and only for a custom profile —
-			// updateLook() hides it otherwise.
-			lookLabel,
-			lookRow,
-
 			densityLabel,
 			densityRow,
-
-			// Editing and cache actions live at the foot, out of the way of the
-			// everyday content and theme choices above.
 			make("div", { class: "aur-pop-label", text: "Menu" }),
 			make("div", { class: "aur-pop-row" }, [refresh]),
-			customise ? make("div", { class: "aur-pop-row" }, [customise]) : null,
-		].filter(Boolean));
+		]);
 
 		document.body.appendChild(el.pop);
 
@@ -3624,38 +3291,10 @@
 		   a single click. It follows its anchor instead, so a look can be tried
 		   on, adjusted and compared without reopening anything. */
 		el.popPlace = function () {
-			// Switching between two profiles of the same shell redraws the bar
-			// without closing the panel, which leaves this holding a node that is
-			// no longer in the document — and a detached node measures as zero,
-			// which would slide the panel into the top-left corner on the next
-			// resize. Take the replacement instead.
-			if (!anchor.isConnected) {
-				var again = themeButton();
-				if (!again) return;
-				anchor = again;
-			}
 			var box = anchor.getBoundingClientRect();
-			if (isNarrow()) {
-				el.pop.classList.add("is-sheet");
-				el.pop.style.top = Math.max(Math.round(box.bottom) + 8, chromeBottom() + 8) + "px";
-				el.pop.style.left = "8px";
-				el.pop.style.right = "8px";
-				el.pop.style.width = "auto";
-				el.pop.style.maxHeight = Math.max(220, window.innerHeight - chromeBottom() - 24) + "px";
-				return;
-			}
-			el.pop.classList.remove("is-sheet");
-			el.pop.style.right = "";
-			el.pop.style.width = "";
 			var width = el.pop.offsetWidth || 300;
-			var top = Math.round(box.bottom + 8);
-			el.pop.style.top = top + "px";
+			el.pop.style.top = Math.round(box.bottom + 8) + "px";
 			el.pop.style.left = Math.round(clamp(box.right - width, 10, window.innerWidth - width - 10)) + "px";
-			// The panel now carries content, look, theme and more, so on a short
-			// screen it would run off the bottom. Cap it to the space below the
-			// bar and let it scroll rather than hide its last rows.
-			el.pop.style.maxHeight = Math.max(220, window.innerHeight - top - 12) + "px";
-			el.pop.style.overflowY = "auto";
 		};
 		el.popPlace();
 
@@ -3671,12 +3310,7 @@
 	   list is re-anchored to the viewport, which no ancestor can clip.
 	   ------------------------------------------------------------------ */
 
-	var POPUP_SELECTOR = [
-		".awesomplete > ul:not([hidden])",
-		"ul.aur-unclipped:not([hidden])",
-		".datepicker.active",
-		".autocomplete-results:not([hidden])",
-	].join(", ");
+	var POPUP_SELECTOR = ".awesomplete > ul:not([hidden]), .datepicker.active, .autocomplete-results:not([hidden])";
 
 	function clippedBy(node) {
 		var parent = node.parentElement;
@@ -3689,7 +3323,7 @@
 	}
 
 	function anchorOf(list) {
-		var host = list._aurHome || list.parentElement;
+		var host = list.parentElement;
 		if (!host) return null;
 		return host.querySelector("input, textarea, .control-input") || host;
 	}
@@ -3699,161 +3333,67 @@
 	   painted a second list beside the palette, because the modal carries a
 	   transform mid-animation and the offset maths below reads it wrong. */
 	function isCommandPalette(list) {
-		var host = list._aurHome || list.parentElement;
-		return Boolean(host && host.querySelector && host.querySelector("#navbar-search"));
-	}
-
-	function keepListFocus(event) {
-		event.preventDefault();
+		var host = list.parentElement;
+		return Boolean(host && host.querySelector("#navbar-search"));
 	}
 
 	function reclip(list) {
 		if (!list.dataset.aurUnclipped) return;
-		list.removeEventListener("mousedown", keepListFocus, true);
-		var home = list._aurHome;
-		var next = list._aurNext;
-		if (home && home.isConnected) {
-			if (next && next.parentNode === home) home.insertBefore(list, next);
-			else home.appendChild(list);
-		}
 		delete list.dataset.aurUnclipped;
-		delete list._aurHome;
-		delete list._aurNext;
-		delete list._aurAnchor;
 		list.classList.remove("aur-unclipped");
-		["position", "width", "minWidth", "maxHeight", "left", "top", "bottom", "right", "zIndex", "overflowY", "background", "backgroundColor"].forEach(function (prop) {
+		["position", "width", "minWidth", "maxHeight", "left", "top", "bottom"].forEach(function (prop) {
 			list.style[prop] = "";
 		});
 	}
 
-	function popoverFill() {
-		// Hard hex only. Theme tokens in v17 dark are the same as the page
-		// and the grid editor, which is why "Insert Below" showed through
-		// a list that thought it had a background.
-		return root.getAttribute("data-theme") === "dark" ? "#252838" : "#ffffff";
-	}
-
-	function paintPopover(node) {
-		var fill = popoverFill();
-		if (!node || !node.style) return;
-		node.style.setProperty("background", fill, "important");
-		node.style.setProperty("background-color", fill, "important");
-		node.style.setProperty("opacity", "1", "important");
-	}
-
-	/* Stock Desk: max-height min(60vh, 300px), open below the field, overlap
-	   whatever is under it. Do not shrink to the footer gap — that is why
-	   Link To in a grid editor only showed three rows. */
-	function stockListHeight() {
-		return Math.round(Math.min(window.innerHeight * 0.6, 300));
-	}
-
-	function placeStockList(node, rect, opts) {
-		opts = opts || {};
-		var minWidth = opts.minWidth || 250;
-		var cap = stockListHeight();
-		var width = Math.max(Math.round(rect.width), minWidth);
-		var left = Math.round(rect.left);
-		if (left + width > window.innerWidth - 8) {
-			left = Math.max(8, window.innerWidth - width - 8);
-		}
-
-		// Width first, then measure: how tall the content is depends on how
-		// wide it may wrap.
-		node.style.position = "fixed";
-		node.style.zIndex = "2000";
-		node.style.width = width + "px";
-		node.style.minWidth = minWidth + "px";
-		node.style.bottom = "auto";
-		node.style.right = "auto";
-		node.style.left = left + "px";
-
-		/* Flip on what the list actually needs, not on the 300px cap. A field
-		   near the bottom with two rows in it (a link with no matches, showing
-		   only "Create a new ..." ) has room below and must open there; sizing
-		   the decision on the cap is what threw that popup up over the form. */
-		if (!opts.skipHeight) node.style.maxHeight = "";
-		var natural = Math.max(node.scrollHeight || 0, node.offsetHeight || 0, 40);
-		var wanted = opts.skipHeight ? natural : Math.min(cap, natural);
-
-		var below = window.innerHeight - rect.bottom - 8;
-		var above = rect.top - 8;
-		var flip = below < wanted && above > below;
-		var room = flip ? above : below;
-		var height = Math.min(wanted, Math.max(room, Math.min(wanted, 180)));
-
-		if (!opts.skipHeight) {
-			node.style.maxHeight = height + "px";
-			node.style.overflowY = natural > height ? "auto" : "hidden";
-		}
-		node.style.top = flip
-			? Math.round(Math.max(8, rect.top - height - 4)) + "px"
-			: Math.round(rect.bottom + 2) + "px";
-	}
-
 	function unclip(list) {
-		if (list.hidden || getComputedStyle(list).display === "none") return;
+		if (!list.offsetParent && getComputedStyle(list).display === "none") return;
 
 		if (isCommandPalette(list)) {
 			reclip(list);
 			return;
 		}
 
-		if (!list.querySelector("li, [role='option'], .datepicker--cell, .datepicker--content")) {
-			if (list.dataset.aurUnclipped) reclip(list);
-			return;
-		}
-
-		var anchor = list._aurAnchor || anchorOf(list);
+		var anchor = anchorOf(list);
 		if (!anchor) return;
 
 		if (!list.dataset.aurUnclipped) {
-			// Date pickers already paint themselves; only rescue them when a
-			// parent clips. Link lists always leave the field — stock paint
-			// dies the moment the ul is not a child of .awesomplete, and
-			// Default-skin --bg-color is the same token as the page.
-			if (list.classList.contains("datepicker") && !clippedBy(list)) return;
-			list._aurHome = list.parentElement;
-			list._aurNext = list.nextSibling;
-			list._aurAnchor = anchor;
-			list.addEventListener("mousedown", keepListFocus, true);
-			if (!list._aurWheelStop) {
-				list._aurWheelStop = function (event) {
-					event.stopPropagation();
-				};
-				list.addEventListener("wheel", list._aurWheelStop, { passive: true });
-			}
-			document.body.appendChild(list);
+			if (!clippedBy(list)) return;
 			list.dataset.aurUnclipped = "1";
 			list.classList.add("aur-unclipped");
 		}
 
-		// Enter can leave a previous copy of the same field parked on body.
-		document.querySelectorAll(".aur-unclipped").forEach(function (other) {
-			if (other === list) return;
-			if (other._aurAnchor === anchor) {
-				other.hidden = true;
-				reclip(other);
-			}
-		});
-		if (el.selectPop) closeSelect();
-
-		paintPopover(list);
-
 		var rect = anchor.getBoundingClientRect();
-		if (!rect.width && !rect.height) return;
+		var below = window.innerHeight - rect.bottom - 12;
+		var above = rect.top - 12;
+		var flip = below < 190 && above > below;
 
-		placeStockList(list, rect, {
-			minWidth: 250,
-			skipHeight: list.classList.contains("datepicker"),
-		});
+		list.style.position = "fixed";
+		list.style.width = Math.round(rect.width) + "px";
+		list.style.minWidth = "0";
+		list.style.maxHeight = Math.round(clamp(flip ? above : below, 140, 360)) + "px";
+		list.style.bottom = "auto";
+
+		/* Fixed is not always relative to the viewport: a transformed ancestor
+		   (a dialog mid-animation, say) becomes the containing block instead.
+		   Parking the list at 0,0 and reading back where that landed gives the
+		   offset to work from, whatever the ancestor turns out to be. */
+		list.style.left = "0px";
+		list.style.top = "0px";
+		var origin = list.getBoundingClientRect();
+
+		var left = clamp(rect.left, 8, Math.max(8, window.innerWidth - rect.width - 8));
+		var top = flip ? rect.top - 6 - Math.min(above, 360) : rect.bottom + 6;
+
+		list.style.left = Math.round(left - origin.left) + "px";
+		list.style.top = Math.round(top - origin.top) + "px";
 	}
 
 	function watchPopups() {
 		var sweep = function () {
 			// A list that has closed keeps its fixed coordinates otherwise, and
 			// reappears in last-time's position before the next sweep moves it.
-			document.querySelectorAll("ul.aur-unclipped[hidden], .autocomplete-results[hidden].aur-unclipped, .datepicker.aur-unclipped:not(.active)").forEach(reclip);
+			document.querySelectorAll(".awesomplete > ul[hidden].aur-unclipped, .autocomplete-results[hidden].aur-unclipped").forEach(reclip);
 			document.querySelectorAll(POPUP_SELECTOR).forEach(unclip);
 		};
 
@@ -3863,25 +3403,9 @@
 		document.addEventListener("scroll", sweep, true);
 		window.addEventListener("resize", sweep);
 
-		document.addEventListener(
-			"mousedown",
-			function (event) {
-				document.querySelectorAll(".aur-unclipped").forEach(function (list) {
-					if (list.contains(event.target)) return;
-					var anchor = list._aurAnchor;
-					if (anchor && (anchor === event.target || (anchor.contains && anchor.contains(event.target)))) return;
-					list.hidden = true;
-					reclip(list);
-				});
-			},
-			true
-		);
-
-		// childList: Awesomplete can empty the ul without toggling hidden,
-		// which left a tall blank box on the body after a field switch.
+		// Awesomplete opens and closes by toggling hidden; the datepicker by class.
 		new MutationObserver(sweep).observe(document.body, {
 			subtree: true,
-			childList: true,
 			attributes: true,
 			attributeFilter: ["hidden", "class", "aria-expanded"],
 		});
@@ -3899,13 +3423,10 @@
 	}
 
 	function openSelect(select) {
-		if (el.selectPop && el.selectPop._aurSelect === select) return;
 		closeSelect();
 
 		var options = Array.prototype.slice.call(select.options);
 		var pop = make("div", { class: "aur-select-pop" });
-		pop._aurSelect = select;
-		paintPopover(pop);
 
 		if (!options.length) pop.appendChild(make("div", { class: "aur-select-empty", text: "No options" }));
 
@@ -3927,61 +3448,21 @@
 
 		document.body.appendChild(pop);
 
-		placeStockList(pop, select.getBoundingClientRect(), { minWidth: 190 });
+		var rect = select.getBoundingClientRect();
+		var width = Math.max(rect.width, 190);
+		pop.style.minWidth = Math.round(width) + "px";
+		pop.style.left = Math.round(clamp(rect.left, 8, window.innerWidth - width - 8)) + "px";
 
-		// Wheel must stay on this list. If it reaches the dialog/page scroller,
-		// the capture scroll listener used to tear the pop down mid-gesture.
-		pop.addEventListener(
-			"wheel",
-			function (event) {
-				event.stopPropagation();
-			},
-			{ passive: true }
-		);
+		var below = window.innerHeight - rect.bottom;
+		if (below < pop.offsetHeight + 16 && rect.top > below) {
+			pop.style.top = Math.round(Math.max(8, rect.top - pop.offsetHeight - 6)) + "px";
+		} else {
+			pop.style.top = Math.round(rect.bottom + 6) + "px";
+		}
 
 		el.selectPop = pop;
 		var selected = pop.querySelector(".aur-selected");
-		if (selected) {
-			selected.classList.add("aur-cursor");
-			selected.scrollIntoView({ block: "nearest" });
-		}
-	}
-
-	function selectOptions() {
-		return el.selectPop ? el.selectPop.querySelectorAll(".aur-select-opt") : [];
-	}
-
-	function moveSelectCursor(delta) {
-		var opts = selectOptions();
-		if (!opts.length) return;
-		var i = 0;
-		for (; i < opts.length; i++) if (opts[i].classList.contains("aur-cursor")) break;
-		if (i >= opts.length) {
-			for (i = 0; i < opts.length; i++) if (opts[i].classList.contains("aur-selected")) break;
-		}
-		if (i >= opts.length) i = 0;
-		else i = (i + delta + opts.length) % opts.length;
-		Array.prototype.forEach.call(opts, function (row) {
-			row.classList.remove("aur-cursor");
-		});
-		opts[i].classList.add("aur-cursor");
-		opts[i].scrollIntoView({ block: "nearest" });
-	}
-
-	function commitSelectCursor() {
-		if (!el.selectPop) return false;
-		var row = el.selectPop.querySelector(".aur-cursor") || el.selectPop.querySelector(".aur-selected");
-		if (!row) return false;
-		row.click();
-		return true;
-	}
-
-	function onPageScroll(event) {
-		if (!el.selectPop) return;
-		var target = event.target;
-		if (target === el.selectPop) return;
-		if (target && target.closest && target.closest(".aur-select-pop")) return;
-		closeSelect();
+		if (selected) selected.scrollIntoView({ block: "nearest" });
 	}
 
 	function skinSelects() {
@@ -4005,178 +3486,83 @@
 			true
 		);
 
-		document.addEventListener("scroll", onPageScroll, true);
+		document.addEventListener("scroll", closeSelect, true);
 		window.addEventListener("resize", closeSelect);
-
-		// mousedown only covers the mouse. Enter / Space / arrows open the
-		// native OS list as well, which is the doubled "Approve / Revise" menu.
-		document.addEventListener(
-			"keydown",
-			function (event) {
-				var target = event.target;
-				var select = target && target.closest ? target.closest("select") : null;
-				var key = event.key;
-				var popOpen = Boolean(el.selectPop);
-
-				if (popOpen && (key === "Escape" || key === "Tab")) {
-					closeSelect();
-					return;
-				}
-
-				if (popOpen && (key === "ArrowDown" || key === "ArrowUp")) {
-					event.preventDefault();
-					moveSelectCursor(key === "ArrowDown" ? 1 : -1);
-					return;
-				}
-
-				if (popOpen && (key === "Enter" || key === " " || key === "Spacebar")) {
-					event.preventDefault();
-					if (!commitSelectCursor()) closeSelect();
-					return;
-				}
-
-				if (!select || select.multiple || select.disabled || select.size > 1 || select.closest(".aur-native")) return;
-
-				if (key === "Enter" || key === " " || key === "Spacebar" || key === "ArrowDown" || key === "ArrowUp" || key === "F4") {
-					event.preventDefault();
-					openSelect(select);
-					if (key === "ArrowUp") moveSelectCursor(-1);
-					if (key === "ArrowDown" || key === "F4") moveSelectCursor(0);
-				}
-			},
-			true
-		);
 	}
 
 	/* ---------------------------------------------------------------------
 	   Bar
+	   ---------------------------------------------------------------------
+	   The tab strip runs out of room long before it runs out of tabs — a narrow
+	   window, or a wide brand and search box, and Insights onward sit outside
+	   it. Scrolling alone does not help, because a row cut off at the frame
+	   reads as a row that has ended. So each end says what lies past it, and
+	   arrowing along the strip brings the tab you land on into view.
 	   ------------------------------------------------------------------ */
 
-	/* Brand, jump-search and the right-hand tools are the same chrome in both
-	   shells. Content only swaps the middle slot (command tabs vs module
-	   menus). Building them once is what keeps the two bars from drifting. */
-	function brandInfo() {
-		try {
-			var info = window.frappe && frappe.boot && frappe.boot.kaiten_company;
-			if (info && info.name) {
-				return { name: String(info.name), logo: String(info.logo || "") };
-			}
-		} catch (e) {}
-		var name = brandName();
-		try {
-			var company = companyName();
-			if (company) name = company;
-		} catch (e) {}
-		var logo = "";
-		try {
-			logo = (window.frappe && frappe.boot && frappe.boot.app_logo_url) || "";
-		} catch (e) {}
-		return { name: name, logo: logo };
+	function scrollNav(dir) {
+		if (!el.nav) return;
+		var step = Math.max(150, el.nav.clientWidth * 0.6);
+		el.nav.scrollTo({ left: el.nav.scrollLeft + dir * step, behavior: "smooth" });
 	}
 
-	function buildSharedBrand() {
-		var info = brandInfo();
-		var mark = info.logo
-			? make("img", { class: "aur-brand-logo", src: info.logo, alt: "" })
-			: make("span", { class: "aur-brand-dot" });
-		if (info.logo) {
-			mark.addEventListener("error", function () {
-				if (mark.parentNode) mark.replaceWith(make("span", { class: "aur-brand-dot" }));
-			});
-		}
-		/* The company mark reads as the way home, and on a site that has a Kaiten
-		   Home that is what it does. Where there is no such page it stays the
-		   handle for the appearance panel rather than pointing at nothing — the
-		   ◕ button in the bar opens that panel either way, so nothing is lost
-		   when the mark is spent on the more obvious errand. */
-		var home = kaitenHomeAvailable();
-		var brand = make(
+	function navMore(side) {
+		var button = make(
 			"button",
 			{
-				class: "aur-brand",
+				class: "aur-nav-more aur-nav-more-" + side,
 				type: "button",
-				title: info.name + (home ? " \u2014 home" : " \u2014 theme and appearance"),
+				tabindex: "-1",
+				"aria-label": side === "left" ? "Earlier tabs" : "More tabs",
+				title: side === "left" ? "Earlier tabs" : "More tabs",
 			},
-			[mark, make("span", { class: "aur-brand-label", text: info.name })]
+			[iconNode("chevron-" + side, "aur-nav-more-glyph")]
 		);
-		brand.addEventListener("click", function (event) {
+		button.addEventListener("click", function (event) {
 			event.stopPropagation();
-			if (kaitenHomeAvailable()) goKaitenHome();
-			else openSettings(brand);
+			scrollNav(side === "left" ? -1 : 1);
 		});
-		return brand;
+		return button;
 	}
 
-	function buildSharedSearch() {
-		el.search = make("input", {
-			class: "aur-search",
-			type: "search",
-			placeholder: "Jump to anything",
-			"aria-label": "Search the desk",
-		});
-		el.search.addEventListener("input", function () {
-			renderSearch(el.search.value);
-		});
-		el.search.addEventListener("focus", function () {
-			if (el.search.value.trim()) renderSearch(el.search.value);
-		});
-		return make("div", { class: "aur-search-wrap" }, [
-			make("span", { class: "aur-search-icon", text: "\u2315" }),
-			el.search,
-			make("span", { class: "aur-search-kbd", text: "/" }),
-		]);
+	function paintNavOverflow() {
+		if (!el.nav || !el.navWrap) return;
+		var slack = el.nav.scrollWidth - el.nav.clientWidth;
+		el.navWrap.classList.toggle("aur-more-left", el.nav.scrollLeft > 2);
+		el.navWrap.classList.toggle("aur-more-right", slack > 2 && el.nav.scrollLeft < slack - 2);
 	}
 
-	function buildSharedTools() {
-		el.pinBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Pin this page", text: "\u2605" });
-		el.pinBtn.addEventListener("click", function (event) {
-			event.stopPropagation();
-			var desc = currentDesc();
-			if (desc) togglePin(desc, el.pinBtn);
-		});
+	/* Land a tab clear of both ends, with room to spare, so its neighbour still
+	   peeks out — that sliver is what says the row carries on. */
+	function revealTab(node) {
+		if (!el.nav || !node) return;
 
-		// Named, because the panel it opens has to find it again after a content
-		// switch rebuilds the bar — see themeButton().
-		var paletteBtn = make("button", {
-			class: "aur-icon-btn aur-theme-btn",
-			type: "button",
-			title: "Theme, colour and density",
-			text: "\u25D5",
-		});
-		paletteBtn.addEventListener("click", function (event) {
-			event.stopPropagation();
-			openSettings(paletteBtn);
-		});
+		var peek = 58;
+		var left = node.offsetLeft - peek;
+		var right = node.offsetLeft + node.offsetWidth + peek;
+		var target = el.nav.scrollLeft;
 
-		var themeBtn = make("button", { class: "aur-icon-btn aur-appearance knav-appearance", type: "button" });
-		el.paintThemeBtn = function () {
-			var meta = appearanceMeta(currentAppearance());
-			themeBtn.textContent = meta.glyph;
-			themeBtn.setAttribute("title", meta.label + " \u2014 click for " + appearanceMeta(meta.next).label.toLowerCase());
-		};
-		themeBtn.addEventListener("click", function (event) {
-			event.stopPropagation();
-			setAppearance(nextAppearance());
-		});
-		el.paintThemeBtn();
+		if (left < target) target = left;
+		else if (right > target + el.nav.clientWidth) target = right - el.nav.clientWidth;
 
-		var fullBtn = make("button", { class: "aur-icon-btn aur-fullscreen", type: "button", title: "Toggle fullscreen", text: "\u26F6" });
-		fullBtn.addEventListener("click", toggleFullscreen);
-
-		return {
-			searchWrap: buildSharedSearch(),
-			pinBtn: el.pinBtn,
-			paletteBtn: paletteBtn,
-			themeBtn: themeBtn,
-			fullBtn: fullBtn,
-			notifBtn: makeNotifBtn(),
-			userBtn: makeUserBtn(),
-		};
+		var max = Math.max(0, el.nav.scrollWidth - el.nav.clientWidth);
+		target = Math.max(0, Math.min(target, max));
+		if (Math.abs(target - el.nav.scrollLeft) > 1) el.nav.scrollTo({ left: target, behavior: "smooth" });
+		paintNavOverflow();
 	}
 
 	function buildBar(anchor) {
-		var brand = buildSharedBrand();
+		var brand = make("button", { class: "aur-brand", type: "button", title: "Theme and appearance" }, [
+			make("span", { class: "aur-brand-dot" }),
+			make("span", { text: brandName() }),
+		]);
+		brand.addEventListener("click", function (event) {
+			event.stopPropagation();
+			openSettings(brand);
+		});
+
 		var nav = make("nav", { class: "aur-nav" });
+		el.nav = nav;
 		el.tabNodes = {};
 
 		TABS.forEach(function (tab) {
@@ -4209,31 +3595,63 @@
 			nav.appendChild(node);
 		});
 
-		var tools = buildSharedTools();
+		el.navWrap = make("div", { class: "aur-nav-wrap" }, [navMore("left"), nav, navMore("right")]);
+		nav.addEventListener("scroll", paintNavOverflow);
+		window.addEventListener("resize", paintNavOverflow);
 
-		el.bar = make("div", { class: "aur-bar" }, [
-			make("div", { class: "aur-bar-progress" }),
-			make("div", { class: "aur-bar-inner" }, [
-				brand,
-				nav,
-				make("div", { class: "aur-bar-right" }, [
-					tools.searchWrap,
-					tools.pinBtn,
-					tools.paletteBtn,
-					tools.themeBtn,
-					tools.fullBtn,
-					tools.notifBtn,
-					tools.userBtn,
-				].filter(Boolean)),
-			]),
+		el.search = make("input", {
+			class: "aur-search",
+			type: "search",
+			placeholder: "Jump to anything",
+			"aria-label": "Search the desk",
+		});
+		el.search.addEventListener("input", function () {
+			renderSearch(el.search.value);
+		});
+		el.search.addEventListener("focus", function () {
+			if (el.search.value.trim()) renderSearch(el.search.value);
+		});
+
+		var searchWrap = make("div", { class: "aur-search-wrap" }, [
+			make("span", { class: "aur-search-icon", text: "\u2315" }),
+			el.search,
+			make("span", { class: "aur-search-kbd", text: "/" }),
 		]);
 
-		mountBar(anchor);
-	}
+		el.pinBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Pin this page", text: "\u2605" });
+		el.pinBtn.addEventListener("click", function (event) {
+			event.stopPropagation();
+			var desc = currentDesc();
+			if (!desc) return;
+			togglePin(desc, el.pinBtn);
+		});
 
-	/* The mega panel is chrome both shells share: each positions it under its
-	   own bar, so it is built once and knows nothing about which bar that is. */
-	function buildMega() {
+		var paletteBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Theme, colour and density", text: "\u25D5" });
+		paletteBtn.addEventListener("click", function (event) {
+			event.stopPropagation();
+			openSettings(paletteBtn);
+		});
+
+		// The shortcut for light and dark: it moves straight to the next
+		// appearance instead of opening Frappe's three-card dialog. The panel
+		// offers the same three as a direct choice.
+		var themeBtn = make("button", { class: "aur-icon-btn", type: "button" });
+		el.paintThemeBtn = function () {
+			var meta = appearanceMeta(currentAppearance());
+			themeBtn.textContent = meta.glyph;
+			themeBtn.setAttribute("title", meta.label + " — click for " + appearanceMeta(meta.next).label.toLowerCase());
+		};
+		themeBtn.addEventListener("click", function (event) {
+			// Changing the look is never a reason to dismiss the panel that
+			// changes the look, even when the click landed outside it.
+			event.stopPropagation();
+			setAppearance(nextAppearance());
+		});
+		el.paintThemeBtn();
+
+		var fullBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Toggle fullscreen", text: "\u26F6" });
+		fullBtn.addEventListener("click", toggleFullscreen);
+
 		el.groups = make("div", { class: "aur-mega-groups" });
 		el.body = make("div", { class: "aur-mega-body" });
 
@@ -4318,8 +3736,9 @@
 		   accident, so the panel says what it answers to along its own foot. */
 		el.footLive = make("span", { class: "aur-foot-live" });
 		el.foot = make("div", { class: "aur-mega-foot" }, [
-			footKey("\u2191\u2193\u2190\u2192", "move"),
-			footKey("Tab", "group"),
+			footKey("\u2190\u2192", "tabs"),
+			footKey("\u2193", "go in"),
+			footKey("\u2191\u2193", "move"),
 			footKey(ALT_LABEL, "then letter"),
 			footKey("\u21b5", "open"),
 			footKey(META_LABEL + "\u21b5", "new tab"),
@@ -4329,10 +3748,10 @@
 
 		el.mega = make("div", { class: "aur-mega" }, [
 			make("div", { class: "aur-mega-search" }, [
-				layoutSeg,
 				iconNode("search", "aur-mega-search-icon"),
 				el.megaSearch,
 				el.megaClear,
+				layoutSeg,
 				megaClose,
 			]),
 			el.filterBar,
@@ -4354,67 +3773,26 @@
 			clearTimeout(hover.timer);
 		});
 
-		// The panel lives on <body> so no ancestor can clip or re-stack it.
-		document.body.appendChild(el.mega);
-	}
+		el.bar = make("div", { class: "aur-bar" }, [
+			make("div", { class: "aur-bar-progress" }),
+			make("div", { class: "aur-bar-inner" }, [
+				brand,
+				el.navWrap,
+				make("div", { class: "aur-bar-right" }, [searchWrap, el.pinBtn, paletteBtn, themeBtn, fullBtn]),
+			]),
+		]);
 
-	/* v17 puts the content in .main-section (no navbar); older desks have a
-	   navbar to sit under. Either way the bar spans the content column. */
-	function mountBar(anchor) {
+		// v17 puts the content in .main-section (no navbar); older desks have a
+		// navbar to sit under. Either way the bar spans the content column.
 		if (anchor.classList.contains("main-section")) anchor.insertBefore(el.bar, anchor.firstChild);
 		else anchor.insertAdjacentElement("afterend", el.bar);
 
-		document.documentElement.classList.add("kaiten-bar-on");
-	}
+		// The panel lives on <body> so no ancestor can clip or re-stack it.
+		document.body.appendChild(el.mega);
 
-	/* Everything the desk sticks below the page head — the form tab strip, a
-	   list's heading row, the form rail — is positioned off a token that only
-	   matches the head on a stock desk. The stylesheet works off the real
-	   height instead, and this is where that height comes from. A head can wrap
-	   onto a second row when the window narrows or a document grows another
-	   action, so it is measured rather than assumed. */
-	function measureChrome() {
-		var root = document.documentElement;
+		paintNavOverflow();
 
-		// The desk keeps one .page-head per visited route and hides all but the
-		// current one, so the first match is not necessarily the live one.
-		var head = null;
-		var heads = document.querySelectorAll(".page-head");
-		for (var i = 0; i < heads.length; i++) {
-			if (heads[i].offsetHeight) {
-				head = heads[i];
-				break;
-			}
-		}
-
-		setPx(root, "--kpage-head-h", head && head.offsetHeight);
-
-		var tabs = document.querySelector(".form-tabs-list");
-		setPx(root, "--kform-tabs-h", tabs && tabs.offsetHeight);
-	}
-
-	/* Writing an unchanged value still costs a style recalculation, and this
-	   runs on a timer. */
-	function setPx(node, name, value) {
-		var next = value ? Math.round(value) + "px" : "";
-		if (node.style.getPropertyValue(name) === next) return;
-		if (next) node.style.setProperty(name, next);
-		else node.style.removeProperty(name);
-	}
-
-	function trackChrome() {
-		measureChrome();
-		// Routes, saves and permission banners all resize the head without any
-		// event worth listening for, so it is re-read on a slow tick.
-		setInterval(measureChrome, 600);
-	}
-
-	function bindChromeResize() {
 		window.addEventListener("resize", function () {
-			measureChrome();
-			applySideCollapsed();
-			fitNavMenus();
-			placeNavDrop();
 			// A popover that knows how to place itself is repositioned; the rest
 			// are transient and closing them is the honest answer.
 			if (el.popPlace) el.popPlace();
@@ -4438,11 +3816,6 @@
 		if (!el.tabNodes) return;
 
 		TABS.forEach(function (tab) {
-			// The module-nav shell registers only the two tabs it surfaces, so a
-			// missing node means that shell simply does not show this count.
-			var host = el.tabNodes[tab.id];
-			if (!host) return;
-
 			var groups = groupsFor(tab.id);
 			var total = 0;
 
@@ -4454,9 +3827,13 @@
 				});
 			}
 
-			var node = host.querySelector(".aur-tab-count");
+			var node = el.tabNodes[tab.id].querySelector(".aur-tab-count");
 			if (node) node.textContent = String(total);
 		});
+
+		// Real counts are wider than the "…" they replace, so the strip may only
+		// start overflowing once the menu has loaded.
+		paintNavOverflow();
 	}
 
 	/* ---------------------------------------------------------------------
@@ -4545,84 +3922,7 @@
 	}
 
 	function currentDensity() {
-		var stored = localStorage.getItem(KEY.density);
-		if (stored === "comfortable") return "normal";
-		for (var i = 0; i < DENSITIES.length; i++) {
-			if (DENSITIES[i].id === stored) return stored;
-		}
-		return "cozy";
-	}
-
-	function knownId(list, id) {
-		for (var i = 0; i < list.length; i++) {
-			if (list[i].id === id) return true;
-		}
-		return false;
-	}
-
-	function currentShell() {
-		var stored = localStorage.getItem(KEY.shell);
-		return knownId(SHELLS, stored) ? stored : "command";
-	}
-
-	function currentPages() {
-		var stored = localStorage.getItem(KEY.pages);
-		return knownId(PAGE_STYLES, stored) ? stored : "standard";
-	}
-
-	function currentNavView() {
-		var stored = localStorage.getItem(KEY.navView);
-		return knownId(NAV_VIEWS, stored) ? stored : "dropdown";
-	}
-
-	// The Active content profiles offered next to "Standard", filled in from the
-	// server. Kept here so the settings panel can paint the picker before the
-	// round trip returns and refresh it once it does.
-	var contentConfigs = [];
-
-	function currentContent() {
-		return localStorage.getItem(KEY.content) || "standard";
-	}
-
-	function loadMenuConfigs(done) {
-		if (!window.frappe || !frappe.xcall) return;
-		frappe
-			.xcall("kaiten_erp_ui_themes.api.get_menu_configs")
-			.then(function (rows) {
-				contentConfigs = Array.isArray(rows) ? rows : [];
-				if (typeof done === "function") done();
-			})
-			.catch(function () {
-				contentConfigs = [];
-			});
-	}
-
-	function setNavView(id) {
-		if (!knownId(NAV_VIEWS, id) || id === currentNavView()) return;
-		localStorage.setItem(KEY.navView, id);
-		applyPrefs();
-		schedulePush();
-		// An open menu was drawn in the old presentation, so drop it; the next
-		// click rebuilds it in the chosen one.
-		closeNavDrop();
-		// The sidebar is laid out differently per look — flat list for Standard,
-		// area pills for the grid — so redraw it to match the new choice.
-		renderSide();
-	}
-
-	function setShell(id) {
-		if (!knownId(SHELLS, id) || id === currentShell()) return;
-		localStorage.setItem(KEY.shell, id);
-		applyPrefs();
-		schedulePush();
-		remountShell();
-	}
-
-	function setPages(id) {
-		if (!knownId(PAGE_STYLES, id)) return;
-		localStorage.setItem(KEY.pages, id);
-		applyPrefs();
-		schedulePush();
+		return localStorage.getItem(KEY.density) || "cozy";
 	}
 
 	/* A mixed tone has no stylesheet to live in, so its stops are written onto
@@ -4670,9 +3970,6 @@
 
 		root.setAttribute("data-aur-accent", accent);
 		root.setAttribute("data-aur-density", currentDensity());
-		root.setAttribute("data-kaiten-shell", currentShell());
-		root.setAttribute("data-kaiten-nav-view", currentNavView());
-		root.setAttribute("data-kaiten-pages", currentPages());
 		paintCustom(accent.indexOf(CUSTOM_PREFIX) === 0 ? paletteById(accent) : null);
 	}
 
@@ -4694,7 +3991,6 @@
 	}
 
 	function setDensity(id) {
-		if (id !== "normal" && id !== "cozy" && id !== "compact") return;
 		localStorage.setItem(KEY.density, id);
 		applyPrefs();
 		schedulePush();
@@ -4780,444 +4076,6 @@
 		else document.documentElement.requestFullscreen();
 	}
 
-	function userLabel() {
-		try {
-			if (frappe.get_fullname) return frappe.get_fullname() || "Account";
-			return (frappe.boot.user && frappe.boot.user.full_name) || (frappe.session && frappe.session.user) || "Account";
-		} catch (e) {
-			return "Account";
-		}
-	}
-
-	function userInitials(name) {
-		var parts = String(name || "")
-			.trim()
-			.split(/\s+/)
-			.filter(Boolean);
-		if (!parts.length) return "U";
-		if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-		return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-	}
-
-	function paintUserBtn(btn) {
-		var label = userLabel();
-		btn.setAttribute("title", label);
-		btn.setAttribute("aria-label", label + " — account menu");
-		btn.textContent = "";
-		try {
-			if (typeof frappe.avatar === "function" && frappe.session && frappe.session.user) {
-				var wrap = document.createElement("span");
-				wrap.className = "aur-user-face";
-				wrap.innerHTML = frappe.avatar(frappe.session.user, "avatar-small");
-				if (wrap.querySelector(".avatar")) {
-					btn.appendChild(wrap);
-					return;
-				}
-			}
-		} catch (e) {}
-		btn.appendChild(make("span", { class: "aur-user-initials", text: userInitials(label) }));
-	}
-
-	function runSafe(fn) {
-		return function () {
-			try {
-				fn();
-			} catch (e) {
-				console.warn("kaiten user menu", e);
-			}
-		};
-	}
-
-	/* Mirrors frappe.app.sidebar.create_user_menu so Profile / Theme / About /
-	   Logout stay the site's Navbar Settings list, not a second invented menu. */
-	function notificationsEnabled() {
-		try {
-			return Boolean(frappe.boot && frappe.boot.desk_settings && frappe.boot.desk_settings.notifications);
-		} catch (e) {
-			return false;
-		}
-	}
-
-	function ensureStockNotifications() {
-		try {
-			if (frappe.app && frappe.app.sidebar && !frappe.app.sidebar.notifications) {
-				frappe.app.sidebar.setup_notifications();
-			}
-		} catch (e) {}
-	}
-
-	function stockNotifDropdown() {
-		ensureStockNotifications();
-		var $dd = $(".body-sidebar .dropdown-notifications").has(".notifications-list");
-		if (!$dd.length) $dd = $(".dropdown-notifications").has(".notifications-list").first();
-		if (!$dd.length) return $();
-		// header.navbar and the collapsed sidebar are display:none on this desk —
-		// a position:fixed child inside them never paints. Park the panel on body.
-		if ($dd.parent()[0] !== document.body) {
-			$dd.appendTo(document.body);
-			$dd.addClass("kaiten-notif-float");
-		}
-		return $dd;
-	}
-
-	function placeNotifPanel($dd, anchor) {
-		var list = $dd.find(".notifications-list").get(0);
-		if (!list || !anchor) return;
-		var box = anchor.getBoundingClientRect();
-		var width = list.offsetWidth || 360;
-		var left = Math.round(clamp(box.right - width, 10, window.innerWidth - width - 10));
-		var top = Math.round(box.bottom + 8);
-		list.style.setProperty("position", "fixed", "important");
-		list.style.setProperty("top", top + "px", "important");
-		list.style.setProperty("left", left + "px", "important");
-		list.style.setProperty("right", "auto", "important");
-	}
-
-	function toggleStockNotifications(anchor) {
-		try {
-			var $dropdown = stockNotifDropdown();
-			if (!$dropdown.length) return;
-			$dropdown.toggleClass("hidden");
-			if (!$dropdown.hasClass("hidden")) {
-				$dropdown.trigger("show.bs.dropdown");
-				placeNotifPanel($dropdown, anchor);
-			}
-			$(".dropdown-background-tasks").addClass("hidden");
-		} catch (e) {
-			console.warn("kaiten notifications", e);
-		}
-	}
-
-	function makeNotifBtn() {
-		if (!notificationsEnabled()) return null;
-		var btn = make("button", {
-			class: "aur-icon-btn aur-notif-btn sidebar-notification notifications-icon",
-			type: "button",
-			title: "Notifications",
-			"aria-label": "Notifications",
-		});
-		btn.appendChild(iconNode("bell", ""));
-		var badge = make("span", { class: "notification-count hidden" });
-		btn.appendChild(badge);
-		try {
-			var unread = Number((frappe.boot && frappe.boot.notification_unread_count) || 0);
-			if (unread > 0) {
-				badge.textContent = unread > 99 ? "99+" : String(unread);
-				badge.classList.remove("hidden");
-			}
-		} catch (e) {}
-		btn.addEventListener("click", function (event) {
-			event.preventDefault();
-			event.stopPropagation();
-			toggleStockNotifications(btn);
-		});
-		return btn;
-	}
-
-	/* Same account menu as the stock sidebar avatar (Settings, Navbar Settings
-	   items, Logout). Own class so kaiten_hrms does not steal the click. The
-	   stock menu is not always built yet, so attaching is retried for a while. */
-	function makeUserBtn() {
-		var btn = make("button", {
-			class: "aur-user-btn",
-			type: "button",
-			title: "Account",
-			"aria-label": "Account menu",
-			"aria-haspopup": "menu",
-		});
-		paintUserBtn(btn);
-
-		if (!attachStockUserMenu(btn)) {
-			var tries = 0;
-			var poll = setInterval(function () {
-				tries += 1;
-				if (attachStockUserMenu(btn) || tries > 40) clearInterval(poll);
-			}, 250);
-		}
-
-		return btn;
-	}
-
-	function goStandardDesk() {
-		try {
-			if (typeof kaiten_desk !== "undefined" && kaiten_desk.goStandard) {
-				kaiten_desk.goStandard();
-				return;
-			}
-		} catch (e) {}
-		window.location.assign("/desk");
-	}
-
-	/* kaiten_hrms boot always sets kaiten_desk when that app is installed.
-	   Theme stays optional — no Kaiten Home items without it. */
-	function kaitenHrmsPresent() {
-		try {
-			return Boolean(frappe.boot && frappe.boot.kaiten_desk);
-		} catch (e) {
-			return false;
-		}
-	}
-
-	function kaitenMenuPortals() {
-		try {
-			var boot = (frappe.boot && frappe.boot.kaiten_desk) || {};
-			return Array.isArray(boot.menu_portals) ? boot.menu_portals : [];
-		} catch (e) {
-			return [];
-		}
-	}
-
-	/* Kaiten Home is another app's page, so the theme cannot assume it. Both the
-	   desk-side helper and the boot payload are written by the app that owns it,
-	   and either one being present means the page is there to open. */
-	function kaitenHomeAvailable() {
-		try {
-			if (typeof kaiten_desk !== "undefined" && kaiten_desk) return true;
-		} catch (e) {}
-		try {
-			if (window.frappe && frappe.boot && frappe.boot.kaiten_desk) return true;
-		} catch (e) {}
-		/* prergesp (and any kaiten_erp site) has a Home page without kaiten_desk.
-		   The brand used to treat that as "no home" and open the appearance
-		   panel under the company name — the left-hand popup in every screenshot. */
-		try {
-			var boot = window.frappe && frappe.boot;
-			if (boot && boot.page_info && boot.page_info["kaiten-home"]) return true;
-			var allowed = (boot && boot.allowed_pages) || [];
-			if (allowed.indexOf && allowed.indexOf("kaiten-home") >= 0) return true;
-		} catch (e) {}
-		return false;
-	}
-
-	/* Home as it was left. Choosing an area again is its own errand, and the
-	   navbar keeps an entry for it. */
-	function goKaitenHome() {
-		try {
-			if (typeof kaiten_desk !== "undefined" && kaiten_desk.showKaitenHome) {
-				kaiten_desk.showKaitenHome();
-				return;
-			}
-		} catch (e) {}
-		window.location.assign("/desk/kaiten-home");
-	}
-
-	function goKaitenChooseArea() {
-		try {
-			if (typeof kaiten_desk !== "undefined") {
-				kaiten_desk.clearArea();
-				if (kaiten_desk.showKaitenHome) {
-					kaiten_desk.showKaitenHome();
-					return;
-				}
-			}
-		} catch (e) {}
-		window.location.assign("/desk/kaiten-home");
-	}
-
-	function goKaitenPortal(portal) {
-		try {
-			if (typeof kaiten_desk !== "undefined" && kaiten_desk.setDeskArea) {
-				kaiten_desk.setDeskArea(portal, false);
-				return;
-			}
-		} catch (e) {}
-		try {
-			sessionStorage.setItem("kaiten_home_portal:" + (frappe.session.user || ""), portal);
-		} catch (e2) {}
-		window.location.assign("/desk/kaiten-home");
-	}
-
-	function kaitenHomeMenuHead() {
-		var portals = kaitenMenuPortals();
-		var items = [
-			{
-				name: "kaiten-choose-area",
-				label: __("Home (choose area)"),
-				icon: "home",
-				onClick: runSafe(goKaitenChooseArea),
-			},
-			{
-				name: "kaiten-all-modules",
-				label: __("All Modules"),
-				icon: "grid",
-				onClick: runSafe(goStandardDesk),
-			},
-		];
-		if (portals.indexOf("jewellery") >= 0) {
-			items.push({
-				name: "kaiten-jewellery",
-				label: __("Kaiten Home — Jewellery"),
-				icon: "star",
-				onClick: runSafe(function () {
-					goKaitenPortal("jewellery");
-				}),
-			});
-		}
-		if (portals.indexOf("hr") >= 0) {
-			items.push({
-				name: "kaiten-hr",
-				label: __("Kaiten Home — HR"),
-				icon: "users",
-				onClick: runSafe(function () {
-					goKaitenPortal("hr");
-				}),
-			});
-		}
-		items.push({ is_divider: true });
-		return items;
-	}
-
-	function extraHas(extras, needle) {
-		return extras.some(function (item) {
-			var hay = String(item.item_label || item.label || "") + " " + String(item.action || "");
-			return hay.toLowerCase().indexOf(needle) >= 0;
-		});
-	}
-
-	function stockUserMenuItems() {
-		var extras = [];
-		try {
-			extras = (frappe.boot.navbar_settings && frappe.boot.navbar_settings.settings_dropdown) || [];
-		} catch (e) {
-			extras = [];
-		}
-
-		var classic = [];
-		if (!extraHas(extras, "profile")) {
-			classic.push({
-				name: "edit-profile",
-				label: __("Edit Profile"),
-				icon: "edit",
-				onClick: runSafe(function () {
-					if (frappe.ui.toolbar && frappe.ui.toolbar.route_to_user) frappe.ui.toolbar.route_to_user();
-					else frappe.set_route("Form", "User", frappe.session.user);
-				}),
-			});
-		}
-		if (!extraHas(extras, "theme")) {
-			classic.push({
-				name: "toggle-theme",
-				label: __("Toggle Theme"),
-				icon: "moon",
-				onClick: runSafe(function () {
-					setAppearance(nextAppearance());
-				}),
-			});
-		}
-		if (!extraHas(extras, "about")) {
-			classic.push({
-				name: "about",
-				label: __("About"),
-				icon: "info",
-				onClick: runSafe(function () {
-					frappe.ui.toolbar.show_about();
-				}),
-			});
-		}
-
-		var head = [];
-		if (kaitenHrmsPresent()) {
-			head = kaitenHomeMenuHead();
-		} else if (!extraHas(extras, "home") && !extraHas(extras, "desk")) {
-			head.push({
-				name: "home",
-				label: __("Home"),
-				icon: "home",
-				onClick: runSafe(goStandardDesk),
-			});
-		}
-
-		return head
-			.concat([
-				{
-					name: "settings",
-					label: __("Settings"),
-					icon: "settings",
-					onClick: runSafe(function () {
-						frappe
-							.require("user_settings_dialog.bundle.js")
-							.then(function () {
-								frappe.ui.show_user_settings("profile");
-							})
-							.catch(function () {
-								if (frappe.ui.toolbar && frappe.ui.toolbar.route_to_user) frappe.ui.toolbar.route_to_user();
-							});
-					}),
-				},
-				{
-					name: "workspace-selector",
-					label: __("Manage Dock"),
-					icon: "monitor",
-					onClick: runSafe(function () {
-						new frappe.ui.DockManager();
-					}),
-				},
-				{
-					name: "reload",
-					label: __("Reload"),
-					icon: "rotate-ccw",
-					onClick: runSafe(function () {
-						frappe.ui.toolbar.clear_cache();
-					}),
-				},
-			])
-			.concat(classic)
-			.concat(
-				extras.map(function (item) {
-					return Object.assign({}, item, { label: item.item_label || item.label });
-				})
-			)
-			.concat([
-				{ is_divider: true },
-				{
-					name: "logout",
-					label: __("Logout"),
-					icon: "log-out",
-					onClick: runSafe(function () {
-						frappe.app.logout();
-					}),
-				},
-			]);
-	}
-
-	function attachStockUserMenu(btn) {
-		if (!btn || btn.dataset.aurUserMenu === "1") return true;
-		if (!window.frappe || !frappe.ui || !frappe.ui.create_menu || !window.$) return false;
-
-		frappe.ui.create_menu({
-			parent: $(btn),
-			open_on_top: false,
-			open_on_left: true,
-			menu_items: stockUserMenuItems(),
-			onShow: function () {
-				btn.classList.add("aur-user-open");
-				try {
-					closePop();
-				} catch (e) {}
-				requestAnimationFrame(function () {
-					var menu = document.querySelector(".frappe-menu.context-menu");
-					if (!menu || menu.style.display === "none") return;
-					var box = btn.getBoundingClientRect();
-					var width = menu.offsetWidth || 200;
-					var height = menu.offsetHeight || 160;
-					var left = Math.round(clamp(box.right - width, 10, window.innerWidth - width - 10));
-					var top = Math.round(box.bottom + 6);
-					if (top + height > window.innerHeight - 10) top = Math.max(10, Math.round(box.top - height - 6));
-					menu.style.left = left + "px";
-					menu.style.top = top + "px";
-				});
-			},
-			onHide: function () {
-				btn.classList.remove("aur-user-open");
-			},
-			onItemClick: function () {
-				btn.classList.remove("aur-user-open");
-			},
-		});
-		btn.dataset.aurUserMenu = "1";
-		return true;
-	}
-
 	/* ---------------------------------------------------------------------
 	   Motion
 	   ------------------------------------------------------------------ */
@@ -5228,14 +4086,6 @@
 			function (event) {
 				var target = event.target.closest(".btn, .es-button, .aur-item, .aur-tab, .aur-icon-btn, .dock-item");
 				if (!target) return;
-				// Nested v17 menus live inside the button. A blend ripple on
-				// that parent paints through the open list.
-				if (
-					target.matches(".dropdown-toggle, [data-toggle='dropdown']") ||
-					target.querySelector(":scope > .dropdown-menu")
-				) {
-					return;
-				}
 
 				var rect = target.getBoundingClientRect();
 				var size = Math.max(rect.width, rect.height);
@@ -5365,1434 +4215,6 @@
 	}
 
 	/* ---------------------------------------------------------------------
-	   Module-nav shell
-	   ---------------------------------------------------------------------
-	   The arrangement most ERP users already know: one menu per top-level
-	   workspace across the top, each opening columns of entries, and a sidebar
-	   scoped to whichever module the current page belongs to.
-
-	   None of it is invented. A Workspace's own links table is already a run of
-	   rows where a "Card Break" starts a titled group and the rows after it
-	   belong to it, which is exactly the column shape this shell needs — so the
-	   bar is a reading of the desk's own structure and comes out right on any
-	   app rather than only the one it was designed against.
-
-	   Pinned, Recent, search, notifications and the account menu are the same
-	   implementations the command bar uses, opened from the same panel. A shell
-	   decides what is on screen; it does not fork behaviour.
-	   ------------------------------------------------------------------ */
-
-	var nav = {
-		menus: [],
-		byKey: {},
-		active: "",
-		// Which area of each menu the rail is showing, remembered per menu so
-		// stepping back into a module returns to where you were in it.
-		area: {},
-		source: "auto",
-		overflow: [],
-		drop: null,
-		dropFor: "",
-		dropBtn: null,
-		// Phone drawer is session-only. The desktop collapse flag is a
-		// preference; folding the rail on a 390px screen is not.
-		drawerOpen: false,
-	};
-
-	function isNarrow() {
-		return window.matchMedia("(max-width: 767px)").matches;
-	}
-
-	function applyNarrow() {
-		root.classList.toggle("kaiten-narrow", isNarrow());
-	}
-
-	var NAV_KEY_PREFIX = { Report: "rep:", Page: "page:", Dashboard: "dash:", Workspace: "ws:" };
-	var NAV_ID_PREFIX = { Report: "report:", Page: "page:", Dashboard: "dashboard:", Workspace: "ws:" };
-	var NAV_SUB = { Report: "Report", Page: "Page", Dashboard: "Dashboard", Workspace: "Workspace", URL: "Link" };
-
-	function navTargetKey(type, target) {
-		if (type === "Workspace") return "ws:" + slugify(target);
-		return (NAV_KEY_PREFIX[type] || "dt:") + target;
-	}
-
-	function itemMatchesRoute(item, here) {
-		if (!item) return false;
-		if (item.key && here && item.key === here) return true;
-		if (item.key && here && slugify(item.key) === slugify(here)) return true;
-
-		var itemTail = item.key ? item.key.split(":").slice(1).join(":") : "";
-		var hereTail = here ? String(here).split(":").slice(1).join(":") : "";
-		if (itemTail && hereTail && slugify(itemTail) === slugify(hereTail)) return true;
-
-		var mine = (item.route || []).map(String);
-		if (!mine.length) return false;
-
-		var now = [];
-		try {
-			now = (frappe.get_route() || []).map(String);
-		} catch (e) {}
-		if (!now.length) return false;
-
-		// A one-element route is the whole address — a Page or workspace slug —
-		// so the head is all there is to compare.
-		if (mine.length === 1 || now.length === 1) {
-			return mine.length === now.length && slugify(mine[0]) === slugify(now[0]);
-		}
-
-		// Anything longer names its target after the head, and the head alone is
-		// shared by every entry of that kind: matching on it would mark every
-		// list in the sidebar active the moment any list was open.
-		return slugify(mine[0]) === slugify(now[0]) && slugify(mine[1]) === slugify(now[1]);
-	}
-
-	function itemKind(entry) {
-		if (entry.kind === "report" || entry.kind === "setup") return entry.kind;
-		if (entry.type === "Report") return "report";
-		if (/Settings$/.test(entry.label || "")) return "setup";
-		return entry.kind || "operate";
-	}
-
-	function areaIsMixed(items) {
-		var seen = {};
-		(items || []).forEach(function (item) {
-			seen[item.kind || "operate"] = true;
-		});
-		return Object.keys(seen).length > 1;
-	}
-
-	function eachKind(items, mixed, write) {
-		[
-			{ kind: "operate", label: "" },
-			{ kind: "report", label: "Reports" },
-			{ kind: "setup", label: "Setup" },
-		].forEach(function (bucket) {
-			var rows = (items || []).filter(function (item) {
-				return (item.kind || "operate") === bucket.kind;
-			});
-			if (!rows.length) return;
-			write(bucket, rows, mixed && bucket.label);
-		});
-	}
-
-	function navItem(entry) {
-		var kind = itemKind(entry);
-
-		// An external link has no route and no place on screen to be "current",
-		// so it carries a url instead of a key and opens in its own tab.
-		if (entry.type === "URL") {
-			return {
-				id: "url:" + entry.url,
-				key: "",
-				label: entry.label,
-				sub: "Link",
-				hue: hue(entry.url || entry.label),
-				icon: resolveIcon(entry.icon, entry.label, "link"),
-				act: "url",
-				url: entry.url,
-				kind: kind,
-			};
-		}
-
-		return {
-			id: (NAV_ID_PREFIX[entry.type] || "list:") + entry.to,
-			key: navTargetKey(entry.type, entry.to),
-			label: entry.label,
-			sub: kind === "report" ? "Report" : NAV_SUB[entry.type] || "List",
-			hue: hue(entry.to),
-			icon: resolveIcon(entry.icon, entry.label, kind === "report" ? "report" : ""),
-			act: "route",
-			route: entry.route,
-			kind: kind,
-		};
-	}
-
-	/* Where the menu's own name points. A configured menu says so outright; a
-	   workspace-derived one is named after the workspace it came from, so the
-	   slug of that name is the answer. */
-	function routeFromDeclared(declared) {
-		if (!declared) return null;
-		if (hasRoute(declared)) return declared.route;
-		var type = declared.type;
-		var to = declared.to;
-		if (!to) return null;
-		// Only targets the client can form without a server round-trip.
-		if (type === "Workspace") return [slugify(to)];
-		if (type === "DocType") return ["List", to];
-		if (type === "Dashboard") return ["dashboard-view", to];
-		return null;
-	}
-
-	/* The first place a module should open. Configured menus must not fall back
-	   to their record name: after hash autoname that slug is not a Page. */
-	function overviewItem(menu, declared) {
-		var route = routeFromDeclared(declared);
-		if (!route && nav.source === "auto" && menu.name) {
-			route = [slugify(menu.name)];
-		}
-		if (!route) return null;
-
-		var item = navItem({
-			type: (declared && declared.type) || "Workspace",
-			to: (declared && declared.to) || menu.name,
-			label: menu.label + " overview",
-			route: route,
-			kind: "operate",
-		});
-		item.icon = menu.icon;
-		return item;
-	}
-
-	/* Where a menu opens when its own name is clicked. Overview is optional:
-	   a URL-only menu (every item an external link, no Overview Link To) has
-	   none, and must still be openable rather than dead. */
-	function menuLanding(menu) {
-		if (!menu) return null;
-		if (hasRoute(menu.overview)) return menu.overview;
-
-		var found = null;
-		(menu.columns || []).forEach(function (column) {
-			(column.items || []).forEach(function (item) {
-				if (found) return;
-				if (hasRoute(item) || (item && item.act === "url" && item.url)) found = item;
-			});
-		});
-		return found;
-	}
-
-	/* One index from every entry to the menu that holds it, so both the bar and
-	   the sidebar can tell which module the current page belongs to. First
-	   mention wins: a doctype reached from two modules belongs to the earlier,
-	   which is the order the desk itself lists them in. */
-	function buildNavModel(payload) {
-		// Which mode produced this, so the builder can say so and the bar can
-		// stay honest about whether it maintains itself.
-		nav.source = payload.source || "auto";
-
-		/* One malformed menu must not cost the site its whole bar. Each record
-		   is built on its own, and a record that throws is dropped instead of
-		   aborting the loop — the bar then renders every menu that is fine. */
-		nav.menus = (payload.menus || [])
-			.map(function (menu) {
-				try {
-					var built = {
-						name: menu.name,
-						label: menu.label,
-						module: menu.module || "",
-						slug: slugify(menu.name),
-						icon: resolveIcon(menu.icon, menu.label, menu.module),
-						hue: hue(menu.name),
-						columns: (menu.columns || []).map(function (column) {
-							return {
-								title: column.title || menu.label,
-								items: (column.items || []).map(navItem),
-							};
-						}),
-					};
-					// Optional by design: URL-only menus send overview: null.
-					built.overview = overviewItem(built, menu.overview) || null;
-					return built;
-				} catch (e) {
-					console.warn("Kaiten: skipped a nav menu that could not be built", menu && menu.name, e);
-					return null;
-				}
-			})
-			.filter(Boolean);
-
-		nav.byKey = {};
-		nav.menus.forEach(function (menu) {
-			function remember(item) {
-				if (!item || !item.key) return;
-				if (!nav.byKey[item.key]) nav.byKey[item.key] = menu.name;
-				// Pages are keyed as page:<Page.name> but the desk route is a
-				// single slug. Index both so the sidebar can highlight them.
-				if (item.key.indexOf("page:") === 0) {
-					var raw = item.key.slice(5);
-					var slug = slugify(raw);
-					if (!nav.byKey["page:" + slug]) nav.byKey["page:" + slug] = menu.name;
-					if (!nav.byKey["ws:" + slug]) nav.byKey["ws:" + slug] = menu.name;
-					if (!nav.byKey["ws:" + raw]) nav.byKey["ws:" + raw] = menu.name;
-				}
-			}
-			remember(menu.overview);
-			menu.columns.forEach(function (column) {
-				column.items.forEach(remember);
-			});
-		});
-	}
-
-	function menuByName(name) {
-		for (var i = 0; i < nav.menus.length; i++) {
-			if (nav.menus[i].name === name) return nav.menus[i];
-		}
-		return null;
-	}
-
-	/* Whatever is on screen, keyed the same way the entries are. */
-	function routeTargetKey() {
-		var route = [];
-		try {
-			route = frappe.get_route() || [];
-		} catch (e) {}
-		if (!route.length) return "";
-
-		var head = String(route[0] || "");
-		if (head === "query-report") return "rep:" + route[1];
-		if (head === "List" && route[2] === "Report") return "rep:" + route[3];
-		if (head === "List" || head === "Form" || head === "Tree" || head === "print") return "dt:" + route[1];
-		if (head === "dashboard-view" || head === "Dashboard") return "dash:" + (route[1] || "");
-
-		// A workspace arrives as ["Workspaces", "Buying"] even though its URL is
-		// /desk/buying, so the name has to be read off the second element.
-		if (head === "Workspaces") return "ws:" + slugify(route[1] || "");
-
-		// Custom Page: ["gem-rate-approval"]. Nav keys are page:<Page.name>.
-		var slug = slugify(head);
-		var candidates = ["page:" + head, "page:" + slug, "ws:" + slug, "ws:" + head];
-		for (var i = 0; i < candidates.length; i++) {
-			if (nav.byKey && nav.byKey[candidates[i]]) return candidates[i];
-		}
-
-		if (nav.menus) {
-			for (var m = 0; m < nav.menus.length; m++) {
-				var menu = nav.menus[m];
-				var pool = [];
-				if (menu.overview) pool.push(menu.overview);
-				(menu.columns || []).forEach(function (column) {
-					(column.items || []).forEach(function (item) {
-						pool.push(item);
-					});
-				});
-				for (var j = 0; j < pool.length; j++) {
-					var item = pool[j];
-					if (!item || !item.key) continue;
-					var first = item.route && item.route[0] ? String(item.route[0]) : "";
-					if (first === head || slugify(first) === slug) return item.key;
-				}
-			}
-		}
-
-		return "ws:" + slug;
-	}
-
-	function activeMenuName() {
-		var found = nav.byKey[routeTargetKey()];
-		if (found) return found;
-
-		// A page no menu claims — a dashboard, a custom page, a form of a
-		// doctype nobody linked — must not blank the sidebar, so whichever
-		// module was last in view stays put.
-		return nav.active && menuByName(nav.active) ? nav.active : "";
-	}
-
-	function paintNavActive() {
-		if (!el.navBtns) return;
-		var active = activeMenuName();
-		var openName = nav.dropFor || (moduleMegaOpen() ? state.activeKey : "");
-		Object.keys(el.navBtns).forEach(function (name) {
-			el.navBtns[name].classList.toggle("is-active", name === active);
-			el.navBtns[name].classList.toggle("aur-open", Boolean(openName) && name === openName);
-		});
-	}
-
-	/* ---- the dropdown ---- */
-
-	function closeNavDrop() {
-		if (nav.drop) {
-			nav.drop.remove();
-			nav.drop = null;
-		}
-		if (nav.dropBtn) nav.dropBtn.classList.remove("is-open", "aur-open");
-		nav.dropBtn = null;
-		nav.dropFor = "";
-	}
-
-	/* Anything that hangs below the chrome needs one answer for where the chrome
-	   ends, and on a phone that is a two-row bar with a rate ticker under it —
-	   not the height of whichever button was clicked. */
-	function chromeBottom() {
-		var bottom = 0;
-		[el.navBar, el.bar, el.rateBar].forEach(function (node) {
-			if (!node || !node.getBoundingClientRect) return;
-			var box = node.getBoundingClientRect();
-			if (box.height && box.bottom > bottom) bottom = box.bottom;
-		});
-		return Math.round(bottom);
-	}
-
-	function placeNavDrop() {
-		if (!nav.drop || !nav.dropBtn || !el.navBar) return;
-
-		var bar = el.navBar.getBoundingClientRect();
-
-		if (isNarrow()) {
-			var sheetTop = Math.max(Math.round(bar.bottom), chromeBottom());
-			nav.drop.classList.add("is-sheet");
-			nav.drop.style.top = sheetTop + "px";
-			nav.drop.style.left = "0px";
-			nav.drop.style.right = "0px";
-			nav.drop.style.width = "100%";
-			nav.drop.style.maxWidth = "100%";
-			nav.drop.style.maxHeight = Math.max(200, window.innerHeight - sheetTop) + "px";
-			return;
-		}
-
-		nav.drop.classList.remove("is-sheet");
-
-		var box = nav.dropBtn.getBoundingClientRect();
-		var width = nav.drop.offsetWidth || 520;
-		nav.drop.style.right = "";
-		nav.drop.style.width = "";
-		nav.drop.style.maxWidth = "";
-		nav.drop.style.top = Math.round(bar.bottom + 6) + "px";
-		nav.drop.style.left = Math.round(clamp(box.left - 12, 10, Math.max(10, window.innerWidth - width - 10))) + "px";
-		nav.drop.style.maxHeight = Math.max(220, window.innerHeight - bar.bottom - 24) + "px";
-	}
-
-	function pinStar(item, extraClass) {
-		var star = make("button", {
-			class: "knav-star" + (extraClass ? " " + extraClass : "") + (isPinned(item.id) ? " is-on" : ""),
-			type: "button",
-			title: "Pin this entry",
-			"aria-label": "Pin " + item.label,
-			"data-pin-id": item.id,
-			text: "\u2605",
-		});
-		star.addEventListener("click", function (event) {
-			event.preventDefault();
-			event.stopPropagation();
-			togglePin(item, star);
-		});
-		return star;
-	}
-
-	function paintPinStars() {
-		Array.prototype.forEach.call(document.querySelectorAll("[data-pin-id]"), function (star) {
-			star.classList.toggle("is-on", isPinned(star.getAttribute("data-pin-id")));
-		});
-	}
-
-	function navLink(item) {
-		var node = make("a", { class: "knav-link", href: hrefFor(item), title: item.label }, [
-			iconNode(item.icon, "knav-link-glyph"),
-			make("span", { class: "knav-link-label", text: item.label }),
-			pinStar(item),
-		]);
-
-		node.addEventListener("click", function (event) {
-			// Modified clicks stay the browser's, so an entry opens in a new tab
-			// like any other link.
-			if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
-			event.preventDefault();
-			closeNavDrop();
-			runItem(item);
-		});
-
-		return node;
-	}
-
-	function openNavDrop(menu, btn) {
-		closeNavDrop();
-		closeMobileDrawer();
-		if (!menu.columns.length) return;
-
-		var cols = make("div", { class: "knav-drop-cols" });
-
-		menu.columns.forEach(function (column, index) {
-			var parts = [make("div", { class: "knav-col-title", text: column.title })];
-
-			// The workspace itself is reachable from the menu that represents it,
-			// which is where a user goes looking for the module's own dashboard.
-			if (index === 0 && menu.name !== "__more") {
-				var landing = menuLanding(menu);
-				var already = landing && (column.items || []).some(function (item) {
-					return (landing.id && item.id === landing.id) || (landing.key && item.key === landing.key);
-				});
-				if (landing && !already) parts.push(navLink(landing));
-			}
-
-			eachKind(column.items, areaIsMixed(column.items), function (bucket, rows, heading) {
-				if (heading) parts.push(make("div", { class: "knav-sub", text: heading }));
-				rows.forEach(function (item) {
-					parts.push(navLink(item));
-				});
-			});
-
-			cols.appendChild(make("div", { class: "knav-col" }, parts));
-		});
-
-		nav.drop = make("div", { class: "knav-drop" }, [cols]);
-		document.body.appendChild(nav.drop);
-
-		/* The lane count is set here rather than left to auto-fill, which cannot
-		   work out a width for a panel that is itself sized to its contents: it
-		   collapsed every menu to two narrow columns and made them scroll. */
-		var lanes = Math.max(1, Math.min(menu.columns.length, 6, Math.floor((window.innerWidth - 40) / 212)));
-		nav.drop.style.setProperty("--knav-cols", String(lanes));
-
-		nav.dropFor = menu.name;
-		nav.dropBtn = btn;
-		btn.classList.add("is-open", "aur-open");
-		placeNavDrop();
-	}
-
-	/* ---------------------------------------------------------------------
-	   The workspace-grid presentation
-
-	   The grid view is the command bar's mega menu, shown from the module bar
-	   with the module content as its data (the "shellnav" source in groupsFor).
-	   Reusing that panel is what makes the tiles, the "New" chip, the filter
-	   and the whole keyboard match the command menu exactly, rather than a
-	   look-alike built beside it.
-	   ------------------------------------------------------------------ */
-
-	function moduleMegaOpen() {
-		return megaOpen() && state.activeTab === "shellnav";
-	}
-
-	function openModuleMega(menu, btn) {
-		closeNavDrop();
-		closeMobileDrawer();
-		if (!nav.menus.length) return;
-
-		// openTab renders the rail from groupsFor("shellnav"), opens the panel
-		// under whichever bar is mounted and selects the first group; the
-		// clicked module is then brought to the front.
-		openTab("shellnav");
-		if (menu && menuByName(menu.name)) selectGroup("shellnav", menu.name);
-		paintNavActive();
-	}
-
-	/* The menu behind a button is looked up when it is opened rather than closed
-	   over, because the overflow button's contents depend on how many of the
-	   others currently fit. */
-	function navMenuButton(name, label, icon, getMenu) {
-		var btn = make("button", { class: "aur-tab knav-menu", type: "button", title: label }, [
-			iconNode(icon, "aur-tab-glyph knav-menu-glyph"),
-			make("span", { class: "knav-menu-label", text: label }),
-		]);
-
-		// The overflow button always drops a list — the mega already lists every
-		// module in its rail, so routing __more through the mega would just select
-		// the first module rather than showing the overflow set.
-		var isOverflow = name === "__more";
-
-		var open = function () {
-			var menu = getMenu();
-			if (!menu) return;
-			if (!isOverflow && currentNavView() === "grid") openModuleMega(menu, btn);
-			else openNavDrop(menu, btn);
-		};
-
-		btn.addEventListener("click", function (event) {
-			event.stopPropagation();
-
-			// In the grid the mega already lists every module down its rail, so a
-			// top button re-focuses its module rather than opening a second
-			// panel — and clicking the module already shown closes it.
-			if (!isOverflow && currentNavView() === "grid" && moduleMegaOpen()) {
-				var menu = getMenu();
-				if (menu && state.activeKey === menu.name) return closeMega();
-				if (menu) return selectGroup("shellnav", menu.name);
-			}
-
-			if (nav.dropFor === name) closeNavDrop();
-			else open();
-		});
-
-		// Once one menu is open, sweeping the bar swaps what is underneath, the
-		// way a desktop menu bar does. Nothing opens on hover from closed.
-		btn.addEventListener("mouseenter", function () {
-			if (isNarrow()) return;
-			if (!isOverflow && currentNavView() === "grid" && moduleMegaOpen()) {
-				var menu = getMenu();
-				if (menu && state.activeKey !== menu.name) {
-					selectGroup("shellnav", menu.name);
-					paintNavActive();
-				}
-				return;
-			}
-			if (nav.drop && nav.dropFor !== name) open();
-		});
-
-		return btn;
-	}
-
-	/* Sites routinely carry forty-odd workspaces and a bar cannot show them all,
-	   so whatever did not fit folds into one menu of plain workspace links. */
-	function overflowMenu() {
-		var menus = nav.overflow
-			.map(menuByName)
-			.filter(function (menu) {
-				return Boolean(menu);
-			});
-
-		if (!menus.length) return null;
-
-		var columns = [];
-		var size = 12;
-
-		for (var i = 0; i < menus.length; i += size) {
-			columns.push({
-				title: columns.length ? "\u00a0" : "More modules",
-				items: menus.slice(i, i + size).map(menuLanding).filter(Boolean),
-			});
-		}
-
-		return { name: "__more", label: "More", module: "", slug: "", columns: columns, overview: null };
-	}
-
-	function renderNavMenus() {
-		if (!el.navMenus) return;
-
-		el.navMenus.innerHTML = "";
-		el.navBtns = {};
-		nav.overflow = [];
-
-		nav.menus.forEach(function (menu) {
-			var btn = navMenuButton(menu.name, menu.label, menu.icon, function () {
-				return menu;
-			});
-			el.navBtns[menu.name] = btn;
-			el.navMenus.appendChild(btn);
-		});
-
-		var more = navMenuButton("__more", "More", resolveIcon("ellipsis", "more", ""), overflowMenu);
-		more.classList.add("knav-more");
-		el.navBtns.__more = more;
-		el.navMenus.appendChild(more);
-
-		fitNavMenus();
-		paintNavActive();
-	}
-
-	/* How many menus the bar shows is a question about pixels, not a number
-	   picked in advance: the labels are the site's own and a fixed count either
-	   left the bar half empty or ran it off the edge, where the strip clips and
-	   the rest vanished with nothing to say they were there. */
-	function fitNavMenus() {
-		if (!el.navMenus || !el.navBtns) return;
-
-		var more = el.navBtns.__more;
-		var entries = nav.menus
-			.map(function (menu) {
-				return { name: menu.name, node: el.navBtns[menu.name] };
-			})
-			.filter(function (entry) {
-				return Boolean(entry.node);
-			});
-
-		// Measured with everything showing, or each pass would measure a bar the
-		// previous pass had already trimmed and the strip would creep inward.
-		entries.forEach(function (entry) {
-			entry.node.hidden = false;
-		});
-		if (more) more.hidden = false;
-
-		/* On a phone the strip is a row of its own and scrolls sideways, so
-		   every module stays reachable by swiping and there is nothing for an
-		   overflow menu to hold. */
-		if (isNarrow()) {
-			nav.overflow = [];
-			if (more) more.hidden = true;
-			return;
-		}
-
-		var available = el.navMenus.clientWidth;
-		if (!available) return;
-
-		entries.forEach(function (entry) {
-			entry.width = entry.node.offsetWidth + 2;
-		});
-
-		var reserve = more ? more.offsetWidth + 2 : 0;
-		var budget = available - reserve;
-
-		/* The module you are in keeps its place whatever else fits. It carries
-		   the "you are here" rule, and a site whose workspace order puts it late
-		   would otherwise hide the one menu the user most needs to see. */
-		var active = activeMenuName();
-		var held = null;
-		entries.forEach(function (entry) {
-			if (entry.name === active) held = entry;
-		});
-		if (held) budget -= held.width;
-
-		var used = 0;
-		var overflow = [];
-
-		entries.forEach(function (entry) {
-			if (entry === held) return;
-
-			// Once one has dropped out, the rest follow: keeping a later, shorter
-			// label would reorder the bar against the desk's own sequence.
-			if (overflow.length || used + entry.width > budget) {
-				overflow.push(entry.name);
-				entry.node.hidden = true;
-				return;
-			}
-
-			used += entry.width;
-		});
-
-		nav.overflow = overflow;
-		if (more) more.hidden = !overflow.length;
-	}
-
-	/* ---- the context sidebar ---- */
-
-	function sideCollapsed() {
-		return localStorage.getItem(KEY.navSide) === "1";
-	}
-
-	function applySideCollapsed() {
-		applyNarrow();
-
-		if (isNarrow()) {
-			var open = !!nav.drawerOpen && root.classList.contains("kaiten-side-on");
-			if (el.side) el.side.classList.toggle("is-collapsed", !open);
-			root.classList.toggle("kaiten-side-collapsed", !open);
-			root.classList.toggle("kaiten-drawer-open", open);
-			if (el.sideScrim) el.sideScrim.hidden = !open;
-			if (el.sideToggle) {
-				el.sideToggle.hidden = !root.classList.contains("kaiten-side-on");
-				el.sideToggle.setAttribute("aria-expanded", open ? "true" : "false");
-			}
-			return;
-		}
-
-		root.classList.remove("kaiten-drawer-open");
-		if (el.sideScrim) el.sideScrim.hidden = true;
-		if (el.sideToggle) el.sideToggle.hidden = true;
-
-		var on = sideCollapsed();
-		if (el.side) el.side.classList.toggle("is-collapsed", on);
-		root.classList.toggle("kaiten-side-collapsed", on);
-	}
-
-	function setSideCollapsed(on) {
-		if (isNarrow()) {
-			nav.drawerOpen = !on;
-			applySideCollapsed();
-			return;
-		}
-		localStorage.setItem(KEY.navSide, on ? "1" : "0");
-		applySideCollapsed();
-		schedulePush();
-	}
-
-	function closeMobileDrawer() {
-		if (!isNarrow() || !nav.drawerOpen) return;
-		nav.drawerOpen = false;
-		applySideCollapsed();
-	}
-
-	function sideLink(item, active) {
-		// The same coloured tile the grid cards carry, so the rail and the
-		// launcher read as one system. The hue rides on the row as --h, exactly
-		// as it does on a mega item.
-		var node = make(
-			"a",
-			{ class: "kside-item" + (active ? " is-active" : ""), href: hrefFor(item), title: item.label, "--h": String(item.hue) },
-			[
-				make("span", { class: "kside-item-icon" }, [iconNode(item.icon, "kside-item-glyph")]),
-				make("span", { class: "kside-item-label", text: item.label }),
-				pinStar(item),
-			]
-		);
-
-		node.addEventListener("click", function (event) {
-			if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
-			event.preventDefault();
-			closeMobileDrawer();
-			runItem(item);
-		});
-
-		return node;
-	}
-
-	function buildSide() {
-		el.sideIcon = make("span", { class: "kside-head-icon" });
-		el.sideTitle = make("span", { class: "kside-title" });
-
-		var head = make("button", { class: "kside-head", type: "button", title: "Open this module" }, [el.sideIcon, el.sideTitle]);
-		el.sideHead = head;
-		head.addEventListener("click", function () {
-			var menu = menuByName(activeMenuName());
-			var landing = menuLanding(menu);
-			if (landing) runItem(landing);
-		});
-
-		var collapse = make("button", {
-			class: "kside-collapse",
-			type: "button",
-			title: "Collapse sidebar",
-			"aria-label": "Collapse sidebar",
-			text: "\u2039",
-		});
-		collapse.addEventListener("click", function (event) {
-			event.stopPropagation();
-			setSideCollapsed(!sideCollapsed());
-		});
-
-		el.sidePin = make("span", { class: "kside-pin-slot" });
-		el.sideBody = make("div", { class: "kside-body" });
-		el.side = make("aside", { class: "kside", "aria-label": "Module navigation" }, [
-			make("div", { class: "kside-top" }, [head, el.sidePin, collapse]),
-			el.sideBody,
-		]);
-
-		el.sideScrim = make("button", {
-			class: "kside-scrim",
-			type: "button",
-			hidden: "hidden",
-			"aria-label": "Close module menu",
-		});
-		el.sideScrim.addEventListener("click", function () {
-			closeMobileDrawer();
-		});
-		document.body.appendChild(el.sideScrim);
-
-		mountSide();
-		applySideCollapsed();
-	}
-
-	/* The desk's own sidebar sits in a flex row and reserves its width in flow.
-	   Taking that slot means the page beside it needs no offset at all, which is
-	   the difference between a rail that behaves and one that overlaps content
-	   on every layout the desk has. Only if that row is missing does the panel
-	   float, and then the offset is put back by hand. */
-	function mountSide() {
-		var host = document.querySelector(".body-sidebar-container");
-		if (host && host.parentNode) {
-			host.parentNode.insertBefore(el.side, host);
-			return;
-		}
-
-		var body = document.getElementById("body");
-		if (body && body.parentNode) {
-			el.side.classList.add("kside-floating");
-			body.classList.add("kside-pushed");
-			body.parentNode.insertBefore(el.side, body);
-			return;
-		}
-
-		el.side.classList.add("kside-floating");
-		document.body.appendChild(el.side);
-	}
-
-	function renderSide() {
-		if (!el.sideBody) return;
-
-		var menu = menuByName(activeMenuName());
-		root.classList.toggle("kaiten-side-on", Boolean(menu));
-
-		if (!menu) {
-			el.sideBody.innerHTML = "";
-			el.sideTitle.textContent = "";
-			el.sideIcon.textContent = "";
-			if (el.sidePin) el.sidePin.innerHTML = "";
-			nav.drawerOpen = false;
-			applySideCollapsed();
-			return;
-		}
-
-		// Named for the workspace it opens, which also keeps it distinct from the
-		// group below that Frappe often gives the same name as the module.
-		el.sideTitle.textContent = menu.label + " overview";
-		if (el.sideHead) el.sideHead.style.setProperty("--h", String(menu.hue != null ? menu.hue : hue(menu.label)));
-		el.sideIcon.textContent = "";
-		el.sideIcon.appendChild(iconNode(menu.icon, "kside-head-glyph"));
-		if (el.sidePin) {
-			el.sidePin.innerHTML = "";
-			if (menu.overview && hasRoute(menu.overview)) el.sidePin.appendChild(pinStar(menu.overview, "kside-head-star"));
-		}
-
-		var here = routeTargetKey();
-		el.sideBody.innerHTML = "";
-
-		// Standard look lays every area out in full, each under its own title —
-		// the classic ERP sidebar — instead of the grid's pills-and-one-area.
-		if (currentNavView() === "dropdown") {
-			menu.columns.forEach(function (column) {
-				el.sideBody.appendChild(make("div", { class: "kside-area", text: column.title }));
-				eachKind(column.items, areaIsMixed(column.items), function (bucket, rows, heading) {
-					if (heading) el.sideBody.appendChild(make("div", { class: "kside-sub", text: heading }));
-					var list = make("div", { class: "kside-items" });
-					rows.forEach(function (item) {
-						list.appendChild(sideLink(item, itemMatchesRoute(item, here)));
-					});
-					el.sideBody.appendChild(list);
-				});
-			});
-			paintNavActive();
-			applySideCollapsed();
-			return;
-		}
-
-		// One area at a time. A module here can carry eight groups of nine links,
-		// and an accordion of all of them is a rail nobody reads to the bottom.
-		// The pills name every area in two or three rows; the list below shows
-		// only the one in hand.
-		var holder = menu.columns.findIndex(function (column) {
-			return column.items.some(function (item) {
-				return itemMatchesRoute(item, here);
-			});
-		});
-
-		/* Which area to show is a negotiation between the route and the user.
-		   Landing on a page opens the area holding it, but browsing the pills
-		   afterwards has to stick — so the pick is remembered against the route
-		   it was made on, and only a move to a different page hands the choice
-		   back to the route. */
-		var picked = nav.area[menu.name];
-		var chosen;
-		if (picked && picked.route === here) chosen = picked.index;
-		else if (holder > -1) chosen = holder;
-		else if (picked) chosen = picked.index;
-		else chosen = 0;
-
-		if (chosen >= menu.columns.length) chosen = 0;
-		nav.area[menu.name] = { index: chosen, route: here };
-
-		if (menu.columns.length > 1) {
-			var pills = make("div", { class: "kside-pills" });
-			menu.columns.forEach(function (column, index) {
-				var pill = make("button", {
-					class: "kside-pill" + (index === chosen ? " is-on" : ""),
-					type: "button",
-					title: column.title + " \u2014 " + column.items.length + " page(s)",
-					text: column.title,
-					"--h": String(hue(column.title)),
-				});
-				pill.addEventListener("click", function () {
-					nav.area[menu.name] = { index: index, route: routeTargetKey() };
-					renderSide();
-				});
-				pills.appendChild(pill);
-			});
-
-			el.sideBody.appendChild(make("div", { class: "kside-label", text: "Areas" }));
-			el.sideBody.appendChild(pills);
-		}
-
-		var column = menu.columns[chosen];
-		if (!column) {
-			paintNavActive();
-			return;
-		}
-
-		el.sideBody.appendChild(make("div", { class: "kside-area", text: column.title }));
-
-		// Reports and setup sit under their own headings, the way an ERP sidebar
-		// separates what you work in from what you configure. A heading is only
-		// drawn when the area is mixed — an all-reports menu does not need a
-		// Reports line above every list.
-		eachKind(column.items, areaIsMixed(column.items), function (bucket, rows, heading) {
-			if (heading) el.sideBody.appendChild(make("div", { class: "kside-sub", text: heading }));
-
-			var list = make("div", { class: "kside-items" });
-			rows.forEach(function (item) {
-				list.appendChild(sideLink(item, itemMatchesRoute(item, here)));
-			});
-			el.sideBody.appendChild(list);
-		});
-
-		paintNavActive();
-		applySideCollapsed();
-	}
-
-	/* Called on every route change, in both shells: the command bar ignores it
-	   because it has no sidebar to re-scope. */
-	function syncNavToRoute() {
-		if (!el.navMenus) return;
-
-		var name = activeMenuName();
-		if (name) nav.active = name;
-
-		closeNavDrop();
-		closeMobileDrawer();
-
-		// The bar holds a place for whichever module is active, so which of the
-		// others fit has to be settled again every time that changes — otherwise
-		// navigating within the desk leaves the new module hidden behind More.
-		fitNavMenus();
-		renderSide();
-	}
-
-	/* ---- the bar ---- */
-
-	function companyName() {
-		try {
-			var company = (frappe.boot && frappe.boot.sysdefaults && frappe.boot.sysdefaults.company) || "";
-			return String(company).trim();
-		} catch (e) {
-			return "";
-		}
-	}
-
-	function navTabBtn(id, label, icon) {
-		var btn = make("button", { class: "aur-tab knav-tab", type: "button", title: label }, [
-			iconNode(icon, "aur-tab-glyph knav-tab-glyph"),
-			make("span", { class: "knav-tab-label", text: label }),
-			make("span", { class: "aur-tab-count", text: "\u2026" }),
-		]);
-
-		btn.addEventListener("click", function (event) {
-			event.stopPropagation();
-			closeNavDrop();
-			toggleTab(id);
-		});
-
-		el.tabNodes[id] = btn;
-		return btn;
-	}
-
-	/* ---------------------------------------------------------------------
-	   Nav builder
-	   ---------------------------------------------------------------------
-	   The bar can be described by Kaiten Nav Menu records instead of derived
-	   from Workspaces. Editing those is ordinary desk work, so this does not
-	   reimplement a form — it explains which mode the site is in, offers the
-	   one action that is awkward from a list view (writing the first draft from
-	   the menu that already exists), and hands over to the list.
-	   ------------------------------------------------------------------ */
-
-	function navBuilderLine(label, value) {
-		return make("div", { class: "knb-line" }, [
-			make("span", { class: "knb-line-label", text: label }),
-			make("span", { class: "knb-line-value", text: value }),
-		]);
-	}
-
-	function openNavBuilder() {
-		if (!window.frappe || !frappe.ui || !frappe.ui.Dialog) {
-			frappe.set_route("List", "Kaiten Nav Menu");
-			return;
-		}
-
-		var configured = nav.source === "config";
-
-		var dialog = new frappe.ui.Dialog({
-			title: "Customise the menu",
-			size: "large",
-			fields: [{ fieldtype: "HTML", fieldname: "body" }],
-		});
-
-		var body = make("div", { class: "knb" });
-
-		body.appendChild(
-			make("p", {
-				class: "knb-note",
-				text: configured
-					? "This site's bar is built from Kaiten Nav Menu records. Edit them to rename menus, regroup links, or limit a menu to certain roles."
-					: "This site's bar is derived from its Workspaces, so it follows the site on its own. Write it into records to take control of the order, the wording and the grouping.",
-			})
-		);
-
-		body.appendChild(
-			make("div", { class: "knb-stats" }, [
-				navBuilderLine("Source", configured ? "Kaiten Nav Menu records" : "Workspaces (automatic)"),
-				navBuilderLine("Menus on the bar", String((nav.menus || []).length)),
-				navBuilderLine(
-					"Links you can reach",
-					String(
-						(nav.menus || []).reduce(function (sum, menu) {
-							return (
-								sum +
-								menu.columns.reduce(function (inner, column) {
-									return inner + column.items.length;
-								}, 0)
-							);
-						}, 0)
-					)
-				),
-			])
-		);
-
-		var actions = make("div", { class: "knb-actions" });
-
-		var draft = make("button", {
-			class: "btn btn-primary btn-sm",
-			type: "button",
-			text: configured ? "Rewrite from Workspaces" : "Write the first draft from Workspaces",
-		});
-		draft.addEventListener("click", function () {
-			var warn = configured
-				? "Replace every Kaiten Nav Menu record with a fresh copy of the Workspace menu? Any editing you have done is lost."
-				: "Create one Kaiten Nav Menu record per Workspace menu, ready to edit?";
-
-			frappe.confirm(warn, function () {
-				draft.disabled = true;
-				frappe
-					.xcall("kaiten_erp_ui_themes.api.generate_nav_from_workspaces", { overwrite: 1 })
-					.then(function (result) {
-						frappe.show_alert({
-							message: "Wrote " + result.menus + " menus. Edit them, then reload.",
-							indicator: "green",
-						});
-						dialog.hide();
-						loadShellNav(1);
-					})
-					.catch(function () {
-						draft.disabled = false;
-					});
-			});
-		});
-		actions.appendChild(draft);
-
-		var presets = make("div", { class: "knb-presets" });
-		body.appendChild(
-			make("p", {
-				class: "knb-note knb-note-tight",
-				text: "Or start from a trade preset. It writes the same records, already grouped the way that business talks.",
-			})
-		);
-		body.appendChild(presets);
-
-		frappe.xcall("kaiten_erp_ui_themes.api.list_presets").then(function (list) {
-			(list || []).forEach(function (preset) {
-				var btn = make("button", {
-					class: "btn btn-default btn-sm",
-					type: "button",
-					text: "Use " + preset.label + " preset (" + preset.menus + " menus)",
-				});
-				btn.addEventListener("click", function () {
-					frappe.confirm(
-						"Replace the current bar with the " + preset.label + " preset? Any editing you have done is lost. Links this site does not have are skipped.",
-						function () {
-							btn.disabled = true;
-							frappe
-								.xcall("kaiten_erp_ui_themes.api.install_preset", { name: preset.name, overwrite: 1 })
-								.then(function (result) {
-									frappe.show_alert({
-										message: "Installed " + result.menus + " menus" + (result.skipped ? " (" + result.skipped + " links this site does not have were skipped)" : "") + ".",
-										indicator: "green",
-									});
-									dialog.hide();
-									loadShellNav(1);
-								})
-								.catch(function () {
-									btn.disabled = false;
-								});
-						}
-					);
-				});
-				presets.appendChild(btn);
-			});
-		});
-
-		var edit = make("button", { class: "btn btn-default btn-sm", type: "button", text: "Open the menu list" });
-		edit.addEventListener("click", function () {
-			dialog.hide();
-			frappe.set_route("List", "Kaiten Nav Menu");
-		});
-		actions.appendChild(edit);
-
-		if (configured) {
-			// Drift is the one real cost of a hand-built bar, so it is one click
-			// away rather than something to remember to look for.
-			var check = make("button", { class: "btn btn-default btn-sm", type: "button", text: "Check for new links" });
-			check.addEventListener("click", function () {
-				check.disabled = true;
-				frappe
-					.xcall("kaiten_erp_ui_themes.api.nav_drift")
-					.then(function (result) {
-						check.disabled = false;
-						var missing = result.missing || [];
-						if (!missing.length) {
-							frappe.show_alert({ message: "Nothing missing. The menu covers the whole site.", indicator: "green" });
-							return;
-						}
-						frappe.msgprint({
-							title: "Not on your bar yet",
-							message:
-								"<p>" +
-								missing.length +
-								" link(s) exist on this site but are not in your menu:</p><ul>" +
-								missing
-									.slice(0, 40)
-									.map(function (row) {
-										return "<li><b>" + frappe.utils.escape_html(row.label || row.to) + "</b> \u2014 " + frappe.utils.escape_html(row.workspace || "") + "</li>";
-									})
-									.join("") +
-								"</ul>" +
-								(missing.length > 40 ? "<p>\u2026and " + (missing.length - 40) + " more.</p>" : ""),
-						});
-					})
-					.catch(function () {
-						check.disabled = false;
-					});
-			});
-			actions.appendChild(check);
-		}
-
-		body.appendChild(actions);
-		dialog.fields_dict.body.$wrapper.append(body);
-		dialog.show();
-	}
-
-	/* ---------------------------------------------------------------------
-	   Rate ticker
-	   ---------------------------------------------------------------------
-	   A strip under the bar carrying the day's metal rates. It is optional in
-	   the strictest sense: the feed is empty on any site without a rate
-	   sheet, and an empty feed draws nothing and reserves no height, so this
-	   costs a non-jewellery desk one cached call and no pixels.
-	   ------------------------------------------------------------------ */
-
-	// Rates move during the day but not by the second.
-	var RATE_POLL_MS = 5 * 60 * 1000;
-
-	function rateGlyphKind(label) {
-		var text = String(label || "").toLowerCase();
-		if (text.indexOf("gold") > -1) return "gold";
-		if (text.indexOf("silver") > -1) return "silver";
-		if (text.indexOf("platinum") > -1) return "platinum";
-		return "neutral";
-	}
-
-	function rateMoney(value) {
-		// The global format_currency returns plain text. frappe.format with a
-		// Currency fieldtype wraps the number in a right-aligned div, which would
-		// land in the strip as markup.
-		//
-		// Whole rupees only: a rate board is read at a glance, and eleven metals
-		// each carrying ".00" costs a lot of strip for no information.
-		try {
-			return window.format_currency(value, frappe.boot.sysdefaults.currency, 0);
-		} catch (e) {
-			return String(Math.round(Number(value) || 0));
-		}
-	}
-
-	function rateTick(item) {
-		var change = Number(item.change) || 0;
-		var dir = change > 0 ? "up" : change < 0 ? "down" : "flat";
-		var arrow = change > 0 ? "\u25B2" : change < 0 ? "\u25BC" : "\u2014";
-
-		var nodes = [
-			make("span", { class: "krate-dot krate-" + rateGlyphKind(item.label) }),
-			make("span", { class: "krate-metal", text: item.label || "" }),
-			make("span", { class: "krate-value", text: rateMoney(item.rate) }),
-		];
-
-		// A flat row says so with a dash and no number: "+₹0" reads as a
-		// measurement when it actually means nothing moved.
-		nodes.push(
-			make("span", { class: "krate-change krate-" + dir }, [
-				make("span", { class: "krate-arrow", text: arrow }),
-				change ? make("span", { text: rateMoney(Math.abs(change)) }) : null,
-			].filter(Boolean))
-		);
-
-		return make("span", { class: "krate-tick" }, nodes);
-	}
-
-	function renderRates(payload) {
-		if (!el.rateTrack) return;
-
-		var items = (payload && payload.items) || [];
-		el.rateTrack.textContent = "";
-
-		if (!items.length) {
-			root.classList.remove("kaiten-rate-on");
-			return;
-		}
-
-		items.forEach(function (item) {
-			el.rateTrack.appendChild(rateTick(item));
-		});
-
-		if (payload.rate_date) {
-			el.rateBar.setAttribute("title", "Rates as of " + payload.rate_date);
-		}
-
-		root.classList.add("kaiten-rate-on");
-	}
-
-	function loadRates(refresh) {
-		if (!window.frappe || !frappe.xcall) return;
-
-		frappe
-			.xcall("kaiten_erp_ui_themes.api.get_rate_ticker", refresh ? { refresh: 1 } : {})
-			.then(renderRates)
-			.catch(function () {
-				// A missing feed is the normal case, not a fault worth logging.
-				root.classList.remove("kaiten-rate-on");
-			});
-	}
-
-	function buildRateBar() {
-		el.rateTrack = make("div", { class: "krate-track" });
-		el.rateBar = make("div", { class: "krate", role: "status", "aria-live": "polite" }, [
-			make("span", { class: "krate-live" }, [
-				make("span", { class: "krate-pulse" }),
-				make("span", { text: "Live" }),
-			]),
-			make("div", { class: "krate-viewport" }, [el.rateTrack]),
-		]);
-
-		if (el.rateTimer) clearInterval(el.rateTimer);
-		el.rateTimer = setInterval(function () {
-			loadRates(1);
-		}, RATE_POLL_MS);
-
-		return el.rateBar;
-	}
-
-	function buildModuleNav(anchor) {
-		var brand = buildSharedBrand();
-
-		el.navMenus = make("nav", { class: "knav-menus aur-nav", "aria-label": "Modules" });
-
-		el.sideToggle = make("button", {
-			class: "knav-side-toggle",
-			type: "button",
-			hidden: "hidden",
-			title: "Open module menu",
-			"aria-label": "Open module menu",
-			"aria-expanded": "false",
-			text: "\u2630",
-		});
-		el.sideToggle.addEventListener("click", function (event) {
-			event.stopPropagation();
-			setSideCollapsed(nav.drawerOpen);
-		});
-
-		el.tabNodes = {};
-		var pinnedBtn = navTabBtn("pinned", "Pinned", "star");
-		var recentBtn = navTabBtn("recent", "Recent", "history");
-		var tools = buildSharedTools();
-
-		el.navBar = make("div", { class: "knav aur-bar" }, [
-			make("div", { class: "aur-bar-progress" }),
-			make("div", { class: "knav-inner aur-bar-inner" }, [
-				el.sideToggle,
-				brand,
-				el.navMenus,
-				make("div", { class: "knav-right aur-bar-right" }, [
-					tools.searchWrap,
-					pinnedBtn,
-					recentBtn,
-					tools.pinBtn,
-					tools.paletteBtn,
-					tools.themeBtn,
-					tools.fullBtn,
-					tools.notifBtn,
-					tools.userBtn,
-				].filter(Boolean)),
-			]),
-			buildRateBar(),
-		]);
-
-		el.bar = el.navBar;
-		mountBar(anchor);
-		root.classList.add("kaiten-nav-on");
-
-		buildSide();
-		renderNavMenus();
-		renderSide();
-		loadRates(0);
-	}
-
-	function loadShellNav(refresh) {
-		if (!window.frappe || !frappe.xcall) return;
-
-		var args = { profile: currentContent() };
-		if (refresh) args.refresh = 1;
-
-		frappe
-			.xcall("kaiten_erp_ui_themes.api.get_shell_nav", args)
-			.then(function (payload) {
-				// The bar is drawn even if the model was only partly built, so
-				// one bad record can never leave the site with no navigation.
-				try {
-					buildNavModel(payload);
-				} catch (error) {
-					console.warn("Kaiten: could not build the module menu model", error);
-				}
-				renderNavMenus();
-				syncNavToRoute();
-				renderSide();
-			})
-			.catch(function (error) {
-				console.warn("Kaiten: could not load the module menu", error);
-			});
-	}
-
-	/* ---------------------------------------------------------------------
-	   Mounting a shell
-	   ---------------------------------------------------------------------
-	   The mega panel and the document-level listeners are built once. Only the
-	   bar and the sidebar belong to a shell, so only those are torn down when
-	   the choice changes — no reload, and no duplicated handlers.
-	   ------------------------------------------------------------------ */
-
-	function mountShell(anchor) {
-		if (!el.mega) buildMega();
-
-		if (currentShell() === "module") buildModuleNav(anchor);
-		else buildBar(anchor);
-
-		setCounts();
-		syncPinButton();
-	}
-
-	function unmountShell() {
-		closeNavDrop();
-		closePop();
-		closeMega();
-
-		if (el.bar && el.bar.parentNode) el.bar.parentNode.removeChild(el.bar);
-		if (el.side && el.side.parentNode) el.side.parentNode.removeChild(el.side);
-		if (el.sideScrim && el.sideScrim.parentNode) el.sideScrim.parentNode.removeChild(el.sideScrim);
-
-		var pushed = document.getElementById("body");
-		if (pushed) pushed.classList.remove("kside-pushed");
-
-		// The ticker polls on a timer of its own, which would otherwise outlive
-		// the bar it belongs to and keep calling after a switch to command.
-		if (el.rateTimer) clearInterval(el.rateTimer);
-		el.rateTimer = null;
-		el.rateBar = null;
-		el.rateTrack = null;
-
-		el.bar = null;
-		el.navBar = null;
-		el.navMenus = null;
-		el.navBtns = null;
-		el.side = null;
-		el.sideScrim = null;
-		el.sideToggle = null;
-		el.sideBody = null;
-		el.sideTitle = null;
-		el.sideIcon = null;
-		el.pinBtn = null;
-		el.search = null;
-		el.paintThemeBtn = null;
-		el.tabNodes = {};
-
-		root.classList.remove("kaiten-bar-on", "kaiten-nav-on", "kaiten-side-on", "kaiten-side-collapsed", "kaiten-rate-on", "kaiten-narrow", "kaiten-drawer-open");
-	}
-
-	function remountShell() {
-		if (!el.anchor) return;
-		unmountShell();
-		mountShell(el.anchor);
-		if (currentShell() === "module") loadShellNav(0);
-	}
-
-	function bindNavDismiss() {
-		document.addEventListener("click", function (event) {
-			if (!nav.drop) return;
-			if (nav.drop.contains(event.target)) return;
-			if (el.navMenus && el.navMenus.contains(event.target)) return;
-			closeNavDrop();
-		});
-	}
-
-	/* ---------------------------------------------------------------------
 	   Boot
 	   ------------------------------------------------------------------ */
 
@@ -6802,9 +4224,6 @@
 			.then(function (menu) {
 				buildModel(menu);
 				setCounts();
-				// The star reads its id off this model, so until the model is
-				// here it can only guess at one. Ask it again now.
-				syncPinButton();
 				if (megaOpen() && state.activeTab) renderGroups(state.activeTab);
 			})
 			.catch(function (error) {
@@ -6950,12 +4369,6 @@
 	}
 
 	function adoptPrefs(data, rev) {
-		// The bar was already built from whatever this browser knew before the
-		// server answered. If the answer names a different shell, the attribute
-		// alone is not enough — the wrong bar is already on screen and has to be
-		// swapped for the one the user actually chose elsewhere.
-		var had = currentShell();
-
 		// Writing through the normal helpers would schedule a push straight back,
 		// so the flag keeps this one-way.
 		SYNC.applying = true;
@@ -6968,14 +4381,7 @@
 				if (value && typeof value === "object" && !Array.isArray(value)) write(KEY[name], value);
 			});
 			SYNC_FLAGS.forEach(function (name) {
-				if (typeof data[name] !== "string" || data[name] === "") return;
-				var value = data[name];
-				// v1 stored stock spacing as "cozy". After the rewrite that id
-				// means the mid setting, so a stale server copy must not undo it.
-				if (name === "density" && value === "cozy" && localStorage.getItem(KEY.densityRev) === "3" && localStorage.getItem(KEY.density) === "normal") {
-					value = "normal";
-				}
-				localStorage.setItem(KEY[name], value);
+				if (typeof data[name] === "string" && data[name] !== "") localStorage.setItem(KEY[name], data[name]);
 			});
 			localStorage.setItem(KEY.rev, String(rev));
 			SYNC.rev = rev;
@@ -6985,14 +4391,6 @@
 
 		applyPrefs();
 		applyLayout();
-
-		// Remounting rebuilds the bar and refreshes the counts and pin state with
-		// it, so the rest of this only applies when the shell stayed put.
-		if (currentShell() !== had) {
-			remountShell();
-			return;
-		}
-
 		setCounts();
 		syncPinButton();
 		if (megaOpen()) renderGroups(state.activeTab || "workspaces");
@@ -7039,12 +4437,7 @@
 		var anchor = document.querySelector(".main-section") || document.querySelector("header.navbar");
 		if (!anchor || !window.frappe || !frappe.xcall) return false;
 
-		el.anchor = anchor;
-		mountShell(anchor);
-		trackChrome();
-		bindFormTabs();
-		bindChromeResize();
-		bindNavDismiss();
+		buildBar(anchor);
 		watchSidebar();
 		bindKeys();
 		bindRipple();
@@ -7057,16 +4450,10 @@
 		pullPrefs();
 		backfillTitles();
 		loadMenu(0);
-		if (currentShell() === "module") loadShellNav(0);
 		return true;
 	}
 
 	adoptLegacy();
-	if (adoptDensityV3()) {
-		try {
-			localStorage.setItem(KEY.rev, String((Number(localStorage.getItem(KEY.rev)) || 0) + 1));
-		} catch (e) {}
-	}
 	applyPrefs();
 
 	var attempts = 0;
