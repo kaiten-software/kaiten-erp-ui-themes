@@ -1,10 +1,10 @@
 /* =========================================================================
-   Halo — soft futurist, floating glass, inflated corners
+   Halo — vivid futurist glass, glowing fields, inflated corners
    -------------------------------------------------------------------------
-   A skin layered on kaiten.css. Milk-lilac atmosphere, cards that hover on
-   wide soft shadows, corners blown out to 24–32px, and frosted panels that
-   blur what sits behind them. Accent is a vivid violet; status colour lives
-   on thin edge bars and pill badges, never as a mesh.
+   A skin layered on kaiten.css. Lilac atmosphere with a faint tech grid,
+   cards that float on coloured bloom, corners blown out to 24–32px, and
+   frosted panels. Forms get uppercase labels, tinted fields, and a neon
+   focus ring — personality lives on the form surface, not just the chrome.
 
    Every rule carries [data-kaiten-skin="halo"], so nothing here can reach
    another skin. Where a base rule already matches at the same specificity,
@@ -27,24 +27,26 @@
 	--aur-r-lg: 28px;
 	--aur-r-xl: 34px;
 
-	/* Surfaces — opaque white cards on a lilac mist. */
+	/* Surfaces — bright glass on a richer lilac field. */
 	--aur-surface: #ffffff;
-	--aur-surface-2: #f5f6ff;
-	--aur-sheet: rgba(255, 255, 255, 0.78);
+	--aur-surface-2: #eef0ff;
+	--aur-sheet: rgba(255, 255, 255, 0.82);
 	--aur-row-tint: transparent;
 
-	--aur-line: rgba(76, 60, 140, 0.07);
-	--aur-line-strong: rgba(76, 60, 140, 0.14);
-	--aur-ink: #1e1638;
-	--aur-ink-soft: #8a84a3;
+	--aur-line: rgba(76, 60, 140, 0.11);
+	--aur-line-strong: rgba(76, 60, 140, 0.22);
+	--aur-ink: #150f2c;
+	--aur-ink-soft: #6b6490;
 
-	/* Depth — neumorphic float: soft, wide, barely tinted. */
-	--aur-shadow-sm: 0 8px 20px -10px rgba(76, 60, 140, 0.18);
-	--aur-shadow: 0 18px 40px -18px rgba(76, 60, 140, 0.28), 0 4px 12px -6px rgba(76, 60, 140, 0.12);
-	--aur-shadow-lg: 0 28px 56px -22px rgba(76, 60, 140, 0.34), 0 8px 18px -8px rgba(76, 60, 140, 0.14);
-	--aur-glow: 0 0 0 4px color-mix(in oklab, var(--aur-accent) 18%, transparent);
+	/* Depth — more lift, a hint of coloured bloom under cards. */
+	--aur-shadow-sm: 0 10px 24px -12px rgba(76, 60, 140, 0.28);
+	--aur-shadow: 0 22px 48px -18px rgba(76, 60, 140, 0.38), 0 6px 16px -8px rgba(124, 58, 237, 0.18);
+	--aur-shadow-lg: 0 32px 64px -20px rgba(76, 60, 140, 0.45), 0 10px 24px -10px rgba(124, 58, 237, 0.22);
+	--aur-glow: 0 0 0 3px color-mix(in oklab, var(--aur-accent) 28%, transparent),
+		0 0 24px -4px color-mix(in oklab, var(--aur-accent) 45%, transparent);
 
 	/* Motion — floaty, never snappy. */
+	--aur-ease: cubic-bezier(0.22, 1, 0.36, 1);
 	--aur-ease-back: cubic-bezier(0.22, 1, 0.36, 1);
 	--aur-fast: 0.18s;
 	--aur-mid: 0.34s;
@@ -56,22 +58,24 @@
 	--aur-accent: #7c3aed;
 	--aur-grad: linear-gradient(135deg, #6d28d9 0%, #7c3aed 42%, #a78bfa 100%);
 	--aur-grad-cool: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
-	--aur-grad-soft: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(167, 139, 250, 0.07));
-	--aur-mesh-a: rgba(124, 58, 237, 0.16);
-	--aur-mesh-b: rgba(167, 139, 250, 0.14);
-	--aur-mesh-c: rgba(196, 181, 253, 0.18);
-	--aur-mesh-d: rgba(233, 213, 255, 0.22);
+	--aur-grad-soft: linear-gradient(135deg, rgba(124, 58, 237, 0.14), rgba(167, 139, 250, 0.1));
+	--aur-mesh-a: rgba(124, 58, 237, 0.28);
+	--aur-mesh-b: rgba(167, 139, 250, 0.22);
+	--aur-mesh-c: rgba(244, 114, 182, 0.16);
+	--aur-mesh-d: rgba(96, 165, 250, 0.18);
 
 	--halo-solid: #7c3aed;
 	--halo-solid-hover: #6d28d9;
-	--halo-glass: rgba(255, 255, 255, 0.55);
-	--halo-page: #f5f6ff;
-	--halo-page-2: color-mix(in oklab, var(--aur-accent) 8%, #eef0ff);
+	--halo-glass: rgba(255, 255, 255, 0.62);
+	--halo-page: #ebe8ff;
+	--halo-page-2: color-mix(in oklab, var(--aur-accent) 16%, #e4e7ff);
+	--halo-field: color-mix(in oklab, var(--aur-accent) 7%, #f4f5ff);
 
 	background:
-		radial-gradient(70rem 40rem at 8% -10%, color-mix(in oklab, var(--aur-accent) 10%, transparent), transparent 60%),
-		radial-gradient(50rem 36rem at 100% 110%, color-mix(in oklab, var(--aur-accent) 8%, transparent), transparent 55%),
-		linear-gradient(180deg, var(--halo-page) 0%, var(--halo-page-2) 100%);
+		radial-gradient(58rem 36rem at 6% -8%, color-mix(in oklab, var(--aur-accent) 22%, transparent), transparent 58%),
+		radial-gradient(48rem 32rem at 100% 108%, color-mix(in oklab, #f472b6 18%, transparent), transparent 55%),
+		radial-gradient(36rem 28rem at 70% 20%, color-mix(in oklab, #60a5fa 12%, transparent), transparent 50%),
+		linear-gradient(165deg, var(--halo-page) 0%, var(--halo-page-2) 100%);
 }
 
 /* -------------------------------------------------------------------------
@@ -174,13 +178,25 @@
 .aurora-on[data-kaiten-skin="halo"] body::before {
 	inset: -12vh -8vw;
 	background:
-		radial-gradient(48rem 32rem at 6% 0%, var(--aur-mesh-d), transparent 62%),
+		radial-gradient(48rem 32rem at 6% 0%, var(--aur-mesh-a), transparent 62%),
 		radial-gradient(40rem 28rem at 96% 100%, var(--aur-mesh-c), transparent 60%),
-		radial-gradient(28rem 22rem at 70% 8%, var(--aur-mesh-b), transparent 58%);
-	filter: blur(40px);
+		radial-gradient(28rem 22rem at 70% 8%, var(--aur-mesh-b), transparent 58%),
+		radial-gradient(24rem 20rem at 30% 70%, var(--aur-mesh-d), transparent 55%);
+	filter: blur(36px);
 	transform: none;
 	animation: none;
-	opacity: 0.95;
+	opacity: 1;
+}
+
+/* A faint tech grid under the form — quiet, but it reads as futurist rather
+   than a blank pastel sheet. */
+.aurora-on[data-kaiten-skin="halo"] .layout-main-section-wrapper,
+.aurora-on[data-kaiten-skin="halo"] .page-container {
+	background-image:
+		linear-gradient(color-mix(in oklab, var(--aur-accent) 6%, transparent) 1px, transparent 1px),
+		linear-gradient(90deg, color-mix(in oklab, var(--aur-accent) 6%, transparent) 1px, transparent 1px);
+	background-size: 28px 28px;
+	background-position: -1px -1px;
 }
 
 .aurora-on.aurora-on[data-kaiten-skin="halo"] .list-row-container,
@@ -200,11 +216,14 @@
 .aurora-on[data-kaiten-skin="halo"] .form-section.card-section,
 .aurora-on[data-kaiten-skin="halo"] .dashboard-section {
 	position: relative;
-	background: var(--aur-surface);
-	border: 1px solid var(--aur-line);
+	background:
+		linear-gradient(165deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.88) 100%);
+	border: 1px solid color-mix(in oklab, var(--aur-accent) 14%, var(--aur-line));
 	border-radius: var(--aur-r-lg);
 	box-shadow: var(--aur-shadow);
 	overflow: hidden;
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
 }
 
 .aurora-on[data-kaiten-skin="halo"] .widget::before,
@@ -280,22 +299,25 @@
 
 .aurora-on[data-kaiten-skin="halo"] .page-title .title-text,
 .aurora-on[data-kaiten-skin="halo"] .page-head .title-text {
-	font-weight: 750;
-	letter-spacing: -0.035em;
-	background: none;
-	-webkit-text-fill-color: currentColor;
-	color: var(--aur-ink);
+	font-weight: 800;
+	letter-spacing: -0.04em;
+	background: var(--aur-grad);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	color: transparent;
 }
 
 .aurora-on[data-kaiten-skin="halo"] .page-head {
 	border-bottom: 0;
-	backdrop-filter: blur(16px);
-	-webkit-backdrop-filter: blur(16px);
-	background: color-mix(in oklab, var(--halo-page) 72%, transparent);
+	backdrop-filter: blur(18px) saturate(1.25);
+	-webkit-backdrop-filter: blur(18px) saturate(1.25);
+	background: color-mix(in oklab, var(--halo-page) 55%, transparent);
+	box-shadow: 0 1px 0 color-mix(in oklab, var(--aur-accent) 12%, transparent);
 }
 
 /* -------------------------------------------------------------------------
-   Controls — soft pills, violet primary
+   Controls — soft pills, vivid primary, fields with a real presence
    ---------------------------------------------------------------------- */
 
 .aurora-on[data-kaiten-skin="halo"] .btn,
@@ -341,27 +363,85 @@
 	box-shadow: var(--aur-shadow);
 }
 
+/* Labels — small caps energy so a dense form still has hierarchy. */
+.aurora-on[data-kaiten-skin="halo"] .control-label,
+.aurora-on[data-kaiten-skin="halo"] .frappe-control .control-label {
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: color-mix(in oklab, var(--aur-accent) 42%, var(--aur-ink-soft));
+	margin-bottom: 6px;
+}
+
 .aurora-on[data-kaiten-skin="halo"] .form-control,
 .aurora-on[data-kaiten-skin="halo"] .frappe-control input.form-control,
 .aurora-on[data-kaiten-skin="halo"] .frappe-control select.form-control,
 .aurora-on[data-kaiten-skin="halo"] .frappe-control textarea.form-control,
 .aurora-on[data-kaiten-skin="halo"] .like-disabled-input {
-	border-radius: var(--aur-r);
-	background: #fff;
-	border: 1px solid var(--aur-line);
-	box-shadow: inset 0 2px 6px rgba(76, 60, 140, 0.04);
+	border-radius: 14px;
+	background: linear-gradient(180deg, #ffffff 0%, var(--halo-field) 100%);
+	border: 1.5px solid color-mix(in oklab, var(--aur-accent) 16%, var(--aur-line-strong));
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.9),
+		0 6px 14px -10px color-mix(in oklab, var(--aur-accent) 35%, transparent);
+	color: var(--aur-ink);
+	font-weight: 550;
+	transition: border-color var(--aur-fast) var(--aur-ease), box-shadow var(--aur-fast) var(--aur-ease),
+		background var(--aur-fast) var(--aur-ease);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .form-control:hover,
+.aurora-on[data-kaiten-skin="halo"] .frappe-control input.form-control:hover,
+.aurora-on[data-kaiten-skin="halo"] .frappe-control select.form-control:hover {
+	border-color: color-mix(in oklab, var(--aur-accent) 38%, transparent);
 }
 
 .aurora-on[data-kaiten-skin="halo"] .form-control:focus,
-.aurora-on[data-kaiten-skin="halo"] .frappe-control input.form-control:focus {
-	border-color: color-mix(in oklab, var(--aur-accent) 45%, transparent);
-	box-shadow: var(--aur-glow), inset 0 1px 2px rgba(76, 60, 140, 0.04);
+.aurora-on[data-kaiten-skin="halo"] .frappe-control input.form-control:focus,
+.aurora-on[data-kaiten-skin="halo"] .frappe-control select.form-control:focus,
+.aurora-on[data-kaiten-skin="halo"] .frappe-control textarea.form-control:focus {
+	border-color: var(--aur-accent);
+	background: #fff;
+	box-shadow: var(--aur-glow), 0 10px 22px -12px color-mix(in oklab, var(--aur-accent) 55%, transparent);
 }
 
 .aurora-on[data-kaiten-skin="halo"] .indicator-pill.green,
 .aurora-on[data-kaiten-skin="halo"] .indicator-pill-right.green {
 	background: color-mix(in oklab, #22c55e 16%, #fff);
 	color: #15803d;
+}
+
+/* Form tab strip — a glass capsule with a filled active pill. */
+.aurora-on[data-kaiten-skin="halo"] .form-tabs-list,
+.aurora-on[data-kaiten-skin="halo"] .form-tabs {
+	background: rgba(255, 255, 255, 0.72);
+	border: 1px solid var(--aur-line);
+	border-radius: 999px;
+	padding: 4px;
+	box-shadow: var(--aur-shadow-sm);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	gap: 2px;
+}
+
+.aurora-on[data-kaiten-skin="halo"] .form-tabs-list .nav-link,
+.aurora-on[data-kaiten-skin="halo"] .form-tabs .nav-link {
+	border: 0 !important;
+	border-radius: 999px !important;
+	color: var(--aur-ink-soft);
+	font-weight: 650;
+	padding: 7px 14px;
+	background: transparent;
+}
+
+.aurora-on[data-kaiten-skin="halo"] .form-tabs-list .nav-link.active,
+.aurora-on[data-kaiten-skin="halo"] .form-tabs .nav-link.active,
+.aurora-on[data-kaiten-skin="halo"] .form-tabs-list .nav-item.show .nav-link,
+.aurora-on[data-kaiten-skin="halo"] .form-tabs .nav-link.active {
+	background: var(--aur-grad-cool) !important;
+	color: #fff !important;
+	box-shadow: 0 10px 20px -12px color-mix(in oklab, var(--aur-accent) 75%, transparent);
 }
 
 /* -------------------------------------------------------------------------
@@ -551,26 +631,38 @@
 }
 
 /* -------------------------------------------------------------------------
-   Forms & lists
+   Forms & lists — the form itself is the hero of this skin
    ---------------------------------------------------------------------- */
 
+.aurora-on[data-kaiten-skin="halo"] .form-layout,
+.aurora-on[data-kaiten-skin="halo"] .layout-main-section > .form-layout,
+.aurora-on[data-kaiten-skin="halo"] .page-body .form-layout {
+	padding: 6px 2px 18px;
+}
+
 .aurora-on[data-kaiten-skin="halo"] .form-section {
-	background: var(--aur-surface);
-	border-color: var(--aur-line);
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, color-mix(in oklab, var(--aur-accent) 4%, #fff) 100%);
+	border: 1px solid color-mix(in oklab, var(--aur-accent) 16%, var(--aur-line));
 	border-radius: var(--aur-r-lg);
 	box-shadow: var(--aur-shadow);
+	padding-top: 4px;
 }
 
 .aurora-on.aurora-on[data-kaiten-skin="halo"] .form-section .section-head {
 	color: var(--aur-ink);
-	font-weight: 700;
+	font-weight: 750;
+	letter-spacing: -0.02em;
+	font-size: 15px;
 }
 
 .aurora-on.aurora-on[data-kaiten-skin="halo"] .form-section .section-head::before {
 	background: var(--aur-grad-cool);
 	border-radius: 999px;
-	box-shadow: 0 0 0 4px color-mix(in oklab, var(--aur-accent) 14%, transparent);
-	width: 4px;
+	box-shadow:
+		0 0 0 4px color-mix(in oklab, var(--aur-accent) 18%, transparent),
+		0 0 16px color-mix(in oklab, var(--aur-accent) 40%, transparent);
+	width: 5px;
 }
 
 .aurora-on[data-kaiten-skin="halo"] .list-row-head {

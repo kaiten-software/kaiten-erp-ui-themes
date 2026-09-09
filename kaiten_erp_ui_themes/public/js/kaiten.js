@@ -146,7 +146,7 @@
 		{
 			id: "halo",
 			label: "Halo",
-			note: "Futurist glass, soft float, inflated corners",
+			note: "Futurist glass, glowing fields, inflated corners",
 			swatch: "linear-gradient(135deg,#f5f6ff 0%,#c4b5fd 40%,#7c3aed 100%)",
 			tones: HALO_TONES,
 		},
