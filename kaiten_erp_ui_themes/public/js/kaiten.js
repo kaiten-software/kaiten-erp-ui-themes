@@ -3264,17 +3264,45 @@
 		}
 	}
 
+	/* Which control the panel hangs from, as something that survives the bar
+	   being rebuilt. Every shell carries the same theme button and the same
+	   brand pill, so the class is enough to find the new one. */
+	var SETTINGS_ANCHORS = [".aur-theme-btn", ".knav-brand", ".aur-brand"];
+
+	function anchorKey(node) {
+		if (!node || !node.classList) return "";
+		for (var i = 0; i < SETTINGS_ANCHORS.length; i += 1) {
+			if (node.classList.contains(SETTINGS_ANCHORS[i].slice(1))) return SETTINGS_ANCHORS[i];
+		}
+		return "";
+	}
+
+	function settingsAnchor(prefer) {
+		var order = prefer ? [prefer].concat(SETTINGS_ANCHORS) : SETTINGS_ANCHORS;
+		for (var i = 0; i < order.length; i += 1) {
+			var found = document.querySelector(order[i]);
+			if (found) return found;
+		}
+		return null;
+	}
+
 	function reopenSettings() {
-		// Switching shell rebuilds the bar and its settings button, which closes
-		// any open panel. When the switch came from inside the panel, open a fresh
-		// one on the new button so the choices never disappear mid-change.
-		//
-		// Deferred a tick so the click that triggered the switch finishes bubbling
-		// first: the old outside-click listener then sees the panel already gone
-		// and retires itself, rather than shutting the freshly opened one.
+		/* Switching shell rebuilds the bar and its settings button, which closes
+		   any open panel. When the switch came from inside the panel, open a
+		   fresh one so the choices never disappear mid-change — and open it on
+		   the same control it was hanging from. Reaching for the brand pill
+		   instead threw the panel from the right of the bar to the left on every
+		   content switch, which reads as the panel running away from the cursor.
+
+		   Deferred a tick so the click that triggered the switch finishes
+		   bubbling first: the old outside-click listener then sees the panel
+		   already gone and retires itself, rather than shutting the freshly
+		   opened one. */
+		var want = state.popAnchor;
 		setTimeout(function () {
-			var anchor = document.querySelector(".knav-brand") || document.querySelector(".aur-brand");
-			if (anchor && !el.pop) openSettings(anchor);
+			if (el.pop) return;
+			var anchor = settingsAnchor(want);
+			if (anchor) openSettings(anchor);
 		}, 0);
 	}
 
@@ -3331,6 +3359,7 @@
 
 	function openSettings(anchor) {
 		if (el.pop) return closePop();
+		state.popAnchor = anchorKey(anchor) || state.popAnchor;
 
 		// The tone row belongs to the chosen theme, so both are rebuilt together
 		// and the row simply disappears for a theme that offers no tones.
@@ -3612,6 +3641,16 @@
 		   a single click. It follows its anchor instead, so a look can be tried
 		   on, adjusted and compared without reopening anything. */
 		el.popPlace = function () {
+			// Switching between two profiles of the same shell redraws the bar
+			// without closing the panel, which leaves this holding a node that is
+			// no longer in the document — and a detached node measures as zero,
+			// which would slide the panel into the top-left corner on the next
+			// resize. Take the replacement instead.
+			if (!anchor.isConnected) {
+				var again = settingsAnchor(state.popAnchor);
+				if (!again) return;
+				anchor = again;
+			}
 			var box = anchor.getBoundingClientRect();
 			if (isNarrow()) {
 				el.pop.classList.add("is-sheet");
@@ -4113,7 +4152,14 @@
 			if (desc) togglePin(desc, el.pinBtn);
 		});
 
-		var paletteBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Theme, colour and density", text: "\u25D5" });
+		// Named, because the panel it opens has to find it again after a content
+		// switch rebuilds the bar — see settingsAnchor().
+		var paletteBtn = make("button", {
+			class: "aur-icon-btn aur-theme-btn",
+			type: "button",
+			title: "Theme, colour and density",
+			text: "\u25D5",
+		});
 		paletteBtn.addEventListener("click", function (event) {
 			event.stopPropagation();
 			openSettings(paletteBtn);
