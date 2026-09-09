@@ -31,6 +31,10 @@ bench --site [site] clear-cache
 
 ## What it adds
 
+- **Two independent choices** — *Menu content* decides what the menu carries;
+  *Theme* decides how it is painted. Neither touches the other: switching content
+  to HRMS leaves Aurora exactly as it was, and switching Aurora to Lumen leaves
+  HRMS exactly as it was. See [Menu content](#menu-content).
 - **Themes** — *Default* is the stock desk with only the Kaiten bar; *Aurora* is
   colour at rest with an animated mesh; *Lumen* is soft light on a tinted
   gradient wash, with pill controls and ink-black actions. Each theme offers its
@@ -56,14 +60,43 @@ bench --site [site] clear-cache
   module with ninety doctypes never crowds out the other thirty-four. Switch with
   the toggle beside the menu filter; the choice is remembered per user.
 - **Login** — branded sign-in with the same accent presets as the desk.
-- **Menu API** — one call feeds the whole bar, cached per user for five minutes.
-  Every doctype, report and tool is filtered against that user's read permission,
-  and workspaces come from the same role-aware source the stock sidebar uses, so
-  the menu shows only what its reader could already reach. A user who may read
-  nothing is offered nothing.
-- **Preferences follow the user** — pins, shelves, recents, theme, colour tones,
-  mixed palettes, density and layout are stored against the user in the database,
-  so they survive a new machine, a different browser or cleared site data.
+- **Menu API** — one call feeds the whole bar, cached per user and per content
+  profile for five minutes. Every doctype, report and tool is filtered against
+  that user's read permission, and workspaces come from the same role-aware
+  source the stock sidebar uses, so the menu shows only what its reader could
+  already reach. A user who may read nothing is offered nothing.
+- **Preferences follow the user** — pins, shelves, recents, chosen menu content,
+  theme, colour tones, mixed palettes, density and layout are stored against the
+  user in the database, so they survive a new machine, a different browser or
+  cleared site data.
+
+## Menu content
+
+**Default** builds the menu from the site's own Workspaces, and follows the site
+as it grows. That is the whole behaviour unless someone opts out of it.
+
+A **content profile** replaces it with a menu written by hand. This is what lets
+one business read "Purchase / Sales / Operations" where another reads "Buying /
+Selling", and what lets eight HR workspaces collapse into a single HRMS menu.
+Three doctypes describe one:
+
+| DocType | Holds |
+| --- | --- |
+| Custom Menu Config | The profile itself — a domain name, a use case, and a status. Only an **Active** profile is offered to users. |
+| Kaiten Nav Menu | One top-level menu: its title, icon, order, the profile it belongs to, and optionally the roles that may see it. Leaving the profile empty makes the menu global, so it joins every profile. |
+| Kaiten Nav Item | The rows inside a menu, as a flat table: a **Card Break** opens a group and the **Link** rows after it belong to it, exactly the way Frappe's own Workspace Links work. |
+
+A profile only ever says what a menu *could* contain. Every link is still checked
+against the reader's permissions, the site's country, its stated dependencies and
+whether the target exists at all, so a profile can never hand someone a link they
+may not open. A profile that resolves to nothing on this site falls back to
+Default rather than leaving an empty menu.
+
+Nobody types several hundred links, so **Customise menu…** at the foot of the
+settings panel writes the first draft: name a profile, then either copy the
+site's Workspaces into it or install a preset shipped with the app. From there
+they are ordinary records to rename and regroup. **Check for new links** reports
+what the site has gained since, which is the one thing a hand-built menu gives up.
 
 ## Themes, colour and appearance
 
@@ -73,7 +106,8 @@ bar, or the ◕ button on the right.
 | Section | What it does |
 | --- | --- |
 | Appearance | Light, dark and system, one click each. This is Frappe's own setting, saved against the user; the ☀/☽/◑ button in the bar is a shortcut that steps through the same three. |
-| Theme | Default, Aurora or Lumen. Independent of the appearance: every theme has a light and a dark treatment. |
+| Menu content | Default, or any Active content profile. Changes which links the menu carries and nothing else — no value here reaches a stylesheet. |
+| Theme | Default, Aurora or Lumen. Independent of the appearance: every theme has a light and a dark treatment. Independent of the content, too: it repaints the menu without changing a single link. |
 | Colour | The tones the chosen theme offers, and any you mixed. Hidden for Default, which has none. |
 | Density | Cozy or compact. |
 

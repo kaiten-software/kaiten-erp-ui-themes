@@ -25,15 +25,31 @@
 		pinGroups: "kaiten_ui_pin_groups",
 		recent: "kaiten_ui_recent",
 		layout: "kaiten_ui_layout",
+		content: "kaiten_ui_content",
 		rev: "kaiten_ui_rev",
 	};
 
 	// Everything worth carrying between machines. Anything not listed here stays
 	// local to the browser it was set in.
 	var SYNC_KEYS = ["pins", "pinGroups", "recent", "palettes"];
-	var SYNC_FLAGS = ["accent", "density", "enabled", "layout", "skin"];
+	var SYNC_FLAGS = ["accent", "content", "density", "enabled", "layout", "skin"];
 	// Keyed objects rather than lists: which tone each skin was last left on.
 	var SYNC_MAPS = ["skinAccent"];
+
+	/* Two axes run through this file and they must never be confused, because an
+	   earlier version welded them together and picking a menu for HR silently
+	   repainted the whole desk.
+
+	   Content is *what* the menu carries. "default" derives it from the site's
+	   own Workspaces; any other value names an Active Custom Menu Config, whose
+	   Kaiten Nav Menu records supply the menus, groups and links instead. It is
+	   read only by loadMenu and buildModel.
+
+	   Style is *how* the menu is painted — the skin, its tone, the density. It is
+	   read only by applyPrefs, which writes the data attributes the stylesheets
+	   key off. Nothing in the content path appears there, and nothing in the
+	   style path reaches the server, so each choice leaves the other alone. */
+	var DEFAULT_CONTENT = "default";
 
 	// "split" keeps the master rail beside the entries; "columns" drops the rail
 	// and lays every group out at once, the way classic ERP top menus do.
@@ -118,15 +134,55 @@
 	// as "custom:<id>", so it can sit beside the built-in swatches.
 	var CUSTOM_PREFIX = "custom:";
 
-	var TABS = [
-		{ id: "pinned", label: "Pinned", icon: "star" },
+	/* The two tabs that belong to the person rather than to the content. They
+	   bracket the strip and survive a content switch, because a pin made under
+	   one profile is still that user's pin under another. */
+	var PINNED_TAB = { id: "pinned", label: "Pinned", icon: "star" };
+	var RECENT_TAB = { id: "recent", label: "Recent", icon: "history" };
+
+	/* The middle of the strip under Default content: generic ways into a site
+	   nobody has described yet. A content profile replaces exactly these five
+	   with its own menus, since a profile is that description. */
+	var SITE_TABS = [
 		{ id: "workspaces", label: "Workspaces", icon: "layers" },
 		{ id: "modules", label: "Modules", icon: "grid-3x3" },
 		{ id: "create", label: "Create", icon: "plus" },
 		{ id: "insights", label: "Insights", icon: "chart-column" },
 		{ id: "tools", label: "Tools", icon: "settings" },
-		{ id: "recent", label: "Recent", icon: "history" },
 	];
+
+	function siteTabList() {
+		return [PINNED_TAB].concat(SITE_TABS, [RECENT_TAB]);
+	}
+
+	// The strip as it stands. Read through tabs() everywhere, never as a
+	// constant, because a content switch replaces the middle of it.
+	function tabs() {
+		return state.tabList;
+	}
+
+	function tabById(id) {
+		var list = tabs();
+		for (var i = 0; i < list.length; i++) {
+			if (list[i].id === id) return list[i];
+		}
+		return null;
+	}
+
+	function isPersonalTab(id) {
+		return id === PINNED_TAB.id || id === RECENT_TAB.id;
+	}
+
+	/* Where the menu opens, and the fallback wherever a tab id is missing. Under
+	   Default that is Workspaces; under a profile it is that profile's first
+	   menu, since Workspaces no longer exists. */
+	function firstContentTab() {
+		var list = tabs();
+		for (var i = 0; i < list.length; i++) {
+			if (!isPersonalTab(list[i].id)) return list[i].id;
+		}
+		return PINNED_TAB.id;
+	}
 
 	/* Most specific first — the first match wins. */
 	var ICON_RULES = [
@@ -260,6 +316,12 @@
 
 	var state = {
 		tabs: {},
+		// Which content answered last: "auto" for the site's Workspaces, "config"
+		// for a profile. A profile that resolves to nothing falls back to auto,
+		// so this is the truth rather than what was asked for.
+		source: "auto",
+		// The strip's descriptors. Replaced wholesale when the content changes.
+		tabList: siteTabList(),
 		activeTab: null,
 		index: [],
 		cursor: -1,
@@ -374,6 +436,14 @@
 		}
 	}
 
+	function canWrite(doctype) {
+		try {
+			return (frappe.boot.user.can_write || []).indexOf(doctype) !== -1;
+		} catch (e) {
+			return false;
+		}
+	}
+
 	function clamp(value, min, max) {
 		return Math.min(Math.max(value, min), Math.max(min, max));
 	}
@@ -435,6 +505,9 @@
 
 	function hrefFor(desc) {
 		var route = desc.route || [];
+		// Only a configured link can be an outside address, and it is already an
+		// href — there is no desk route to build.
+		if (desc.act === "url") return desc.url || "#";
 		if (desc.act === "new") return prefix() + "/" + slugify(desc.doctype) + "/new";
 		if (route[0] === "List") return prefix() + "/" + slugify(route[1]);
 		if (route[0] === "Form") return prefix() + "/" + slugify(route[1]) + "/" + encodeURIComponent(route[2]);
@@ -444,6 +517,13 @@
 
 	function runItem(desc) {
 		if (!desc) return;
+
+		if (desc.act === "url") {
+			window.open(desc.url, "_blank", "noopener");
+			closeMega();
+			return;
+		}
+
 		try {
 			if (desc.act === "new") frappe.new_doc(desc.doctype);
 			else frappe.set_route.apply(frappe, desc.route);
@@ -491,6 +571,7 @@
 			act: item.act,
 			route: item.route,
 			doctype: item.doctype,
+			url: item.url,
 		};
 	}
 
@@ -959,7 +1040,7 @@
 					if (changed) write(key, next);
 				});
 
-				if (megaOpen() && !state.searching) renderGroups(state.activeTab || "workspaces");
+				if (megaOpen() && !state.searching) renderGroups(state.activeTab || firstContentTab());
 			})
 			.catch(function () {});
 	}
@@ -1139,22 +1220,172 @@
 		});
 	}
 
-	function buildModel(menu) {
-		state.tabs = {
-			workspaces: buildWorkspaces(menu),
-			modules: buildModules(menu),
-			create: buildCreate(menu),
-			insights: buildInsights(menu),
-			tools: buildTools(menu),
+	/* ---------------------------------------------------------------------
+	   Configured content
+	   ---------------------------------------------------------------------
+	   A content profile describes the menu itself, so its records map onto the
+	   three levels the renderer already draws, one for one:
+
+	     Kaiten Nav Menu   -> a tab on the strip        (Masters, Purchase, …)
+	     Card Break        -> a group in the rail       (Schemes, Reports, …)
+	     Kaiten Nav Item   -> a row under that group    (the leaves)
+
+	   Which is why Workspaces, Modules, Create, Insights and Tools go away
+	   under a profile: those five are what a site offers when nobody has said
+	   what it should offer, and a profile is that saying. Pinned and Recent stay,
+	   bracketing the profile's menus, because they belong to the user.
+
+	   Everything below produces the shapes the renderer already draws, so a
+	   profile cannot alter the layout, let alone the paint.
+	   ------------------------------------------------------------------ */
+
+	/* One configured link, in the shape a site-derived item takes.
+
+	   The id scheme is deliberately the same — "list:Sales Order", not
+	   "config:...". Pins and recents are keyed by id, so a link pinned under
+	   Default content still matches the same link under HRMS rather than
+	   quietly turning into a second entry. */
+	function configItem(link, context) {
+		var item = {
+			label: link.label,
+			// What the row opens, the same wording the site-derived rows use. The
+			// card it sits under is already the group heading beside it, so
+			// repeating it here would only say the same thing twice.
+			sub: link.type || "",
+			hue: hue(link.to || link.label),
+			icon: resolveIcon(link.icon, link.label, context),
+			search: link.label + " " + (link.to || ""),
+			act: "route",
 		};
 
-		state.index = [];
-		["workspaces", "modules", "create", "insights", "tools"].forEach(function (tabId) {
-			var tab = TABS.filter(function (entry) {
-				return entry.id === tabId;
-			})[0];
+		if (link.type === "URL") {
+			item.id = "url:" + link.url;
+			item.act = "url";
+			item.url = link.url;
+			item.sub = "Link";
+			return item;
+		}
 
-			(state.tabs[tabId] || []).forEach(function (group) {
+		if (link.type === "DocType") {
+			item.id = "list:" + link.to;
+			item.sub = link.single ? "Settings" : "List";
+			item.route = link.single ? ["Form", link.to, link.to] : ["List", link.to];
+			item.extra = !link.single && canCreate(link.to) ? { label: "New", act: "new", doctype: link.to } : null;
+			return item;
+		}
+
+		item.id = (link.type === "Report" ? "report:" : String(link.type).toLowerCase() + ":") + link.to;
+		item.route = link.route || [];
+		return item;
+	}
+
+	/* A menu's own name is a destination too — its overview — so it leads the
+	   first group rather than being reachable only through the links below it. */
+	function overviewItem(menu) {
+		if (!menu.overview || !menu.overview.route) return null;
+
+		return {
+			id: "overview:" + menu.name,
+			label: menu.label + " overview",
+			sub: menu.overview.type || "Workspace",
+			hue: hue(menu.name),
+			icon: resolveIcon(menu.icon, menu.label),
+			search: menu.label + " overview",
+			act: "route",
+			route: menu.overview.route,
+		};
+	}
+
+	// A menu's tab id. Prefixed so it can never collide with a site tab or with
+	// the personal two, whatever a menu happens to be called.
+	function menuTabId(menu) {
+		return "menu:" + menu.name;
+	}
+
+	/* One menu's rail: a group per Card Break, its rows the leaves filed under
+	   it. A menu whose links all sit before any Card Break still opens onto
+	   something, so an untitled group takes the menu's own name. */
+	function configRail(menu) {
+		var groups = [];
+
+		(menu.columns || []).forEach(function (column, index) {
+			var items = (column.items || []).map(function (link) {
+				return configItem(link, menu.label);
+			});
+			if (!items.length) return;
+
+			var label = column.title || menu.label;
+			groups.push({
+				key: menuTabId(menu) + "/" + index,
+				label: label,
+				hue: hue(label),
+				icon: resolveIcon(null, label, menu.label),
+				items: items,
+			});
+		});
+
+		var overview = overviewItem(menu);
+		if (overview && groups.length) groups[0].items.unshift(overview);
+
+		return groups;
+	}
+
+	/* The profile's menus, as tabs, in the order the records give. A menu the
+	   server sent has already lost every link its reader may not open, so
+	   anything still standing here has something behind it. */
+	function configTabs(menus) {
+		return (menus || []).map(function (menu) {
+			return {
+				id: menuTabId(menu),
+				label: menu.label,
+				icon: resolveIcon(menu.icon, menu.label),
+			};
+		});
+	}
+
+	function buildModel(menu) {
+		// Which content actually answered. A profile that resolved to nothing
+		// falls back on the server, and the panel says so rather than lying.
+		state.source = menu.source || "auto";
+
+		var previous = tabs()
+			.map(function (tab) {
+				return tab.id;
+			})
+			.join("|");
+
+		if (state.source === "config") {
+			var menuTabs = configTabs(menu.menus);
+			state.tabList = [PINNED_TAB].concat(menuTabs, [RECENT_TAB]);
+			state.tabs = {};
+			(menu.menus || []).forEach(function (entry) {
+				state.tabs[menuTabId(entry)] = configRail(entry);
+			});
+		} else {
+			state.tabList = siteTabList();
+			state.tabs = {
+				workspaces: buildWorkspaces(menu),
+				modules: buildModules(menu),
+				create: buildCreate(menu),
+				insights: buildInsights(menu),
+				tools: buildTools(menu),
+			};
+		}
+
+		// The strip is built once at boot and only redrawn when the content
+		// actually changes its shape, so a plain cache refresh costs nothing.
+		var now = tabs()
+			.map(function (tab) {
+				return tab.id;
+			})
+			.join("|");
+		if (now !== previous) paintTabs();
+
+		state.index = [];
+		tabs().forEach(function (tab) {
+			if (isPersonalTab(tab.id)) return;
+
+			(state.tabs[tab.id] || []).forEach(function (group) {
 				if (group.key === "__all") return;
 				group.items.forEach(function (item) {
 					var copy = Object.assign({}, item);
@@ -1466,7 +1697,7 @@
 	function clearMegaFilter() {
 		state.megaQuery = "";
 		if (el.megaSearch) el.megaSearch.value = "";
-		renderGroups(state.activeTab || "workspaces");
+		renderGroups(state.activeTab || firstContentTab());
 		if (el.megaSearch) el.megaSearch.focus();
 	}
 
@@ -1492,9 +1723,10 @@
 	function elsewhereHits(query, exceptTab) {
 		var needle = String(query || "").trim();
 		if (!needle) return [];
-		return TABS.filter(function (tab) {
-			return tab.id !== exceptTab && tab.id !== "pinned" && tab.id !== "recent";
-		})
+		return tabs()
+			.filter(function (tab) {
+				return tab.id !== exceptTab && !isPersonalTab(tab.id);
+			})
 			.map(function (tab) {
 				return { id: tab.id, label: tab.label, count: countFiltered(tab.id, needle) };
 			})
@@ -1596,7 +1828,7 @@
 	function setLayout(id) {
 		localStorage.setItem(KEY.layout, id === "columns" ? "columns" : "split");
 		applyLayout();
-		renderGroups(state.activeTab || "workspaces");
+		renderGroups(state.activeTab || firstContentTab());
 		if (megaOpen()) positionMega();
 		schedulePush();
 	}
@@ -2168,7 +2400,7 @@
 		var needle = query.trim().toLowerCase();
 		if (!needle) {
 			state.searching = false;
-			openTab(state.activeTab || "workspaces");
+			openTab(state.activeTab || firstContentTab());
 			return;
 		}
 
@@ -2359,11 +2591,13 @@
 	}
 
 	function tabIds() {
-		return TABS.map(function (tab) {
-			return tab.id;
-		}).filter(function (id) {
-			return el.tabNodes && el.tabNodes[id];
-		});
+		return tabs()
+			.map(function (tab) {
+				return tab.id;
+			})
+			.filter(function (id) {
+				return el.tabNodes && el.tabNodes[id];
+			});
 	}
 
 	/* Three floors, never one plane: the bar, the group rail, and the items.
@@ -3270,19 +3504,98 @@
 		});
 		refresh.appendChild(refreshBtn);
 
-		el.pop = make("div", { class: "aur-pop" }, [
-			make("div", { class: "aur-pop-label", text: "Appearance" }),
-			make("div", { class: "aur-pop-row" }, [appearanceSeg()]),
-			make("div", { class: "aur-pop-label", text: "Theme" }),
-			make("div", { class: "aur-pop-row" }, [skins]),
-			toneLabel,
-			toneRow,
-			editor,
-			densityLabel,
-			densityRow,
-			make("div", { class: "aur-pop-label", text: "Menu" }),
-			make("div", { class: "aur-pop-row" }, [refresh]),
-		]);
+		// Only someone who may edit the records is shown the way into them.
+		var customise = null;
+		if (canWrite("Kaiten Nav Menu")) {
+			customise = make("div", { class: "aur-seg" });
+			var customiseBtn = make("button", {
+				type: "button",
+				title: "Build the menu for this business: rename menus, regroup links, set who sees what",
+				text: "Customise menu\u2026",
+			});
+			customiseBtn.addEventListener("click", function () {
+				closePop();
+				openNavBuilder();
+			});
+			customise.appendChild(customiseBtn);
+		}
+
+		/* Content is *what* the menu carries: Default, meaning this site's own
+		   Workspaces, or one of the Active content profiles. These are plain
+		   cards with no preview of a look, because choosing one has no look to
+		   preview — the Theme row below is untouched by anything here. */
+		var contentCards = make("div", { class: "aur-contents" });
+
+		function renderContentCards() {
+			contentCards.textContent = "";
+
+			var options = [{ name: DEFAULT_CONTENT, label: "Default", note: "This site's own Workspaces" }];
+			contentConfigs.forEach(function (config) {
+				options.push({ name: config.name, label: config.label, note: config.note || "Content profile" });
+			});
+
+			var current = currentContent();
+			// A profile that no longer resolves has fallen back on the server, and
+			// saying so beats showing a selected card that is not what is on screen.
+			var fellBack = current !== DEFAULT_CONTENT && state.source !== "config";
+
+			options.forEach(function (option) {
+				var chosen = option.name === current;
+				var card = make(
+					"button",
+					{
+						class: "aur-content" + (chosen ? " aur-on" : ""),
+						type: "button",
+						title: chosen && fellBack ? option.label + " has no menus on this site, so Default is showing" : option.note,
+					},
+					[
+						make("span", { class: "aur-content-name", text: option.label }),
+						make("span", {
+							class: "aur-content-note",
+							text: chosen && fellBack ? "Empty here \u2014 showing Default" : option.note,
+						}),
+					]
+				);
+				card.addEventListener("click", function () {
+					setContent(option.name);
+					// The cards are the only thing that changes; the panel stays open
+					// so a profile can be tried and reverted in one sitting.
+					renderContentCards();
+				});
+				contentCards.appendChild(card);
+			});
+		}
+
+		renderContentCards();
+		loadMenuConfigs(function () {
+			if (el.pop) renderContentCards();
+		});
+
+		el.pop = make(
+			"div",
+			{ class: "aur-pop" },
+			[
+				make("div", { class: "aur-pop-label", text: "Appearance" }),
+				make("div", { class: "aur-pop-row" }, [appearanceSeg()]),
+
+				// Content first, then style. They are separate questions and the
+				// panel is the one place that has to make that obvious.
+				make("div", { class: "aur-pop-label", text: "Menu content" }),
+				make("div", { class: "aur-pop-row" }, [contentCards]),
+
+				make("div", { class: "aur-pop-label", text: "Theme" }),
+				make("div", { class: "aur-pop-row" }, [skins]),
+				toneLabel,
+				toneRow,
+				editor,
+				densityLabel,
+				densityRow,
+
+				make("div", { class: "aur-pop-label", text: "Menu" }),
+				make("div", { class: "aur-pop-row" }, [refresh]),
+				customise ? make("div", { class: "aur-pop-row" }, [customise]) : null,
+			].filter(Boolean)
+		);
 
 		document.body.appendChild(el.pop);
 
@@ -3567,37 +3880,7 @@
 
 		var nav = make("nav", { class: "aur-nav" });
 		el.nav = nav;
-		el.tabNodes = {};
-
-		TABS.forEach(function (tab) {
-			var node = make("button", { class: "aur-tab", type: "button", "data-tab": tab.id }, [
-				iconNode(tab.icon, "aur-tab-glyph"),
-				make("span", { text: tab.label }),
-				make("span", { class: "aur-tab-count", text: "\u2026" }),
-			]);
-			node.addEventListener("click", function () {
-				toggleTab(tab.id);
-			});
-
-			// Once the panel is open, sweeping the bar swaps what is underneath,
-			// so you can read across Workspaces, Modules, Create and the rest
-			// without clicking each one. Any standing filter is kept, because
-			// only closing the panel clears it.
-			node.addEventListener("mouseenter", function () {
-				if (!megaOpen()) return;
-				clearTimeout(hover.tabTimer);
-				hover.tabTimer = setTimeout(function () {
-					if (state.activeTab !== tab.id || state.searching) openTab(tab.id);
-				}, 90);
-			});
-
-			node.addEventListener("mouseleave", function () {
-				clearTimeout(hover.tabTimer);
-			});
-
-			el.tabNodes[tab.id] = node;
-			nav.appendChild(node);
-		});
+		paintTabs();
 
 		el.navWrap = make("div", { class: "aur-nav-wrap" }, [navMore("left"), nav, navMore("right")]);
 		nav.addEventListener("scroll", paintNavOverflow);
@@ -3670,7 +3953,7 @@
 		});
 		el.megaSearch.addEventListener("input", function () {
 			state.megaQuery = el.megaSearch.value;
-			renderGroups(state.activeTab || "workspaces");
+			renderGroups(state.activeTab || firstContentTab());
 		});
 
 		/* Two different jobs, so two controls. This one empties the filter and
@@ -3807,10 +4090,63 @@
 		});
 	}
 
+	/* Draws the strip from whatever tabs() currently holds. Called once from
+	   buildBar and again whenever a content switch changes the middle of it. */
+	function paintTabs() {
+		if (!el.nav) return;
+
+		var wasOpen = state.activeTab;
+		el.nav.textContent = "";
+		el.tabNodes = {};
+
+		tabs().forEach(function (tab) {
+			var node = make("button", { class: "aur-tab", type: "button", "data-tab": tab.id }, [
+				iconNode(tab.icon, "aur-tab-glyph"),
+				make("span", { text: tab.label }),
+				make("span", { class: "aur-tab-count", text: "\u2026" }),
+			]);
+			node.addEventListener("click", function () {
+				toggleTab(tab.id);
+			});
+
+			// Once the panel is open, sweeping the bar swaps what is underneath,
+			// so you can read across the whole strip without clicking each tab.
+			// Any standing filter is kept, because only closing the panel clears it.
+			node.addEventListener("mouseenter", function () {
+				if (!megaOpen()) return;
+				clearTimeout(hover.tabTimer);
+				hover.tabTimer = setTimeout(function () {
+					if (state.activeTab !== tab.id || state.searching) openTab(tab.id);
+				}, 90);
+			});
+
+			node.addEventListener("mouseleave", function () {
+				clearTimeout(hover.tabTimer);
+			});
+
+			el.tabNodes[tab.id] = node;
+			el.nav.appendChild(node);
+		});
+
+		// The tab that was open may not exist in the new strip. Rather than leave
+		// the panel showing a tab that is gone, move to the first menu of the
+		// content that just arrived.
+		if (wasOpen && !el.tabNodes[wasOpen]) {
+			state.activeTab = firstContentTab();
+			state.activeKey = null;
+			if (megaOpen()) renderGroups(state.activeTab);
+		}
+		if (state.activeTab && el.tabNodes[state.activeTab]) {
+			el.tabNodes[state.activeTab].classList.toggle("aur-open", megaOpen());
+		}
+
+		paintNavOverflow();
+	}
+
 	function setCounts() {
 		if (!el.tabNodes) return;
 
-		TABS.forEach(function (tab) {
+		tabs().forEach(function (tab) {
 			var groups = groupsFor(tab.id);
 			var total = 0;
 
@@ -3955,6 +4291,9 @@
 		root.style.setProperty("--aur-mesh-d", wash(stops[1], 14));
 	}
 
+	/* The whole of the style axis. Deliberately says nothing about content: no
+	   stylesheet may key off which menu profile is chosen, or the two would be
+	   welded back together. */
 	function applyPrefs() {
 		var skin = currentSkin();
 		var accent = currentAccent();
@@ -3966,6 +4305,51 @@
 		root.setAttribute("data-aur-accent", accent);
 		root.setAttribute("data-aur-density", currentDensity());
 		paintCustom(accent.indexOf(CUSTOM_PREFIX) === 0 ? paletteById(accent) : null);
+	}
+
+	/* ---------------------------------------------------------------------
+	   The content axis
+	   ---------------------------------------------------------------------
+	   Everything here changes which links the menu carries. Note what is
+	   missing: no call to applyPrefs, no data attribute, no class. Choosing HRMS
+	   reloads the menu and nothing else, which is the invariant the earlier
+	   version broke by carrying a shell along with every content card.
+	   ------------------------------------------------------------------ */
+
+	// Filled by the server. Cached here so the panel can paint the picker before
+	// the round trip returns, and refresh it once it does.
+	var contentConfigs = [];
+
+	function currentContent() {
+		return localStorage.getItem(KEY.content) || DEFAULT_CONTENT;
+	}
+
+	function contentLabel(id) {
+		if (id === DEFAULT_CONTENT) return "Default";
+		for (var i = 0; i < contentConfigs.length; i++) {
+			if (contentConfigs[i].name === id) return contentConfigs[i].label;
+		}
+		return id;
+	}
+
+	function loadMenuConfigs(done) {
+		if (!window.frappe || !frappe.xcall) return;
+		frappe
+			.xcall("kaiten_erp_ui_themes.api.get_menu_configs")
+			.then(function (rows) {
+				contentConfigs = Array.isArray(rows) ? rows : [];
+				if (typeof done === "function") done();
+			})
+			.catch(function () {
+				contentConfigs = [];
+			});
+	}
+
+	function setContent(id) {
+		if (id === currentContent()) return;
+		localStorage.setItem(KEY.content, id);
+		schedulePush();
+		loadMenu(1);
 	}
 
 	function setSkin(id) {
@@ -4212,12 +4596,242 @@
 	   Boot
 	   ------------------------------------------------------------------ */
 
+	/* ---------------------------------------------------------------------
+	   Building a content profile
+	   ---------------------------------------------------------------------
+	   Nobody hand-types several hundred links, so a profile starts as a copy of
+	   something: this site's Workspaces, or a preset shaped for a trade. From
+	   there it is ordinary records to rename and regroup.
+	   ------------------------------------------------------------------ */
+
+	function builderLine(label, value) {
+		return make("div", { class: "knb-line" }, [
+			make("span", { class: "knb-line-label", text: label }),
+			make("span", { class: "knb-line-value", text: value }),
+		]);
+	}
+
+	function openNavBuilder() {
+		if (!window.frappe || !frappe.ui || !frappe.ui.Dialog) {
+			frappe.set_route("List", "Kaiten Nav Menu");
+			return;
+		}
+
+		var current = currentContent();
+		var onProfile = current !== DEFAULT_CONTENT && state.source === "config";
+
+		var dialog = new frappe.ui.Dialog({
+			title: "Customise the menu",
+			size: "large",
+			fields: [
+				{ fieldtype: "HTML", fieldname: "intro" },
+				{
+					fieldtype: "Data",
+					fieldname: "profile",
+					label: "Profile name",
+					reqd: 1,
+					default: onProfile ? contentLabel(current) : "",
+					description: "The name this appears under in Menu content, such as HRMS or Jewellery.",
+				},
+				{
+					fieldtype: "Data",
+					fieldname: "use_case",
+					label: "Use case",
+					description: "What it is for — POS, HR, Operations. Shown as the card's second line.",
+				},
+				{ fieldtype: "HTML", fieldname: "body" },
+			],
+		});
+
+		dialog.fields_dict.intro.$wrapper.append(
+			'<p class="knb-note">A profile decides <b>what</b> the menu carries, and nothing else. ' +
+				"The theme, colour and density are a separate choice and stay exactly as they are.</p>"
+		);
+
+		var body = make("div", { class: "knb" });
+
+		body.appendChild(
+			make("div", { class: "knb-stats" }, [
+				builderLine("Showing", contentLabel(current) + (onProfile ? "" : " (the site's own Workspaces)")),
+				builderLine("Menus on the bar", String((state.tabs.workspaces || []).length)),
+				builderLine(
+					"Links you can reach",
+					String(
+						(state.tabs.workspaces || []).reduce(function (sum, group) {
+							return sum + group.items.length;
+						}, 0)
+					)
+				),
+			])
+		);
+
+		// Writing into a profile that already has menus replaces them, so the
+		// warning has to name the profile rather than talk about "the menu".
+		function build(action, args, describe, button) {
+			var profile = (dialog.get_value("profile") || "").trim();
+			if (!profile) {
+				frappe.msgprint("Name the profile first.");
+				return;
+			}
+
+			frappe.confirm(
+				describe(profile) + " Any menus already in this profile are replaced; other profiles are untouched.",
+				function () {
+					button.disabled = true;
+					args.profile = profile;
+					args.use_case = (dialog.get_value("use_case") || "").trim();
+					args.overwrite = 1;
+
+					frappe
+						.xcall("kaiten_erp_ui_themes.api." + action, args)
+						.then(function (result) {
+							frappe.show_alert({
+								message:
+									"Wrote " +
+									result.menus +
+									" menus into " +
+									profile +
+									(result.skipped ? " (" + result.skipped + " links this site does not have were skipped)" : "") +
+									".",
+								indicator: "green",
+							});
+							dialog.hide();
+							// Land on what was just built rather than making the user go
+							// and find it in the panel.
+							loadMenuConfigs(function () {
+								setContent(result.profile);
+							});
+						})
+						.catch(function () {
+							button.disabled = false;
+						});
+				}
+			);
+		}
+
+		var actions = make("div", { class: "knb-actions" });
+
+		var draft = make("button", { class: "btn btn-primary btn-sm", type: "button", text: "Copy this site's Workspaces" });
+		draft.addEventListener("click", function () {
+			build(
+				"generate_nav_from_workspaces",
+				{},
+				function (profile) {
+					return "Fill " + profile + " with a copy of the Workspace menu, ready to edit?";
+				},
+				draft
+			);
+		});
+		actions.appendChild(draft);
+
+		var edit = make("button", { class: "btn btn-default btn-sm", type: "button", text: "Open the menu list" });
+		edit.addEventListener("click", function () {
+			dialog.hide();
+			frappe.set_route("List", "Kaiten Nav Menu");
+		});
+		actions.appendChild(edit);
+
+		if (onProfile) {
+			// Drift is the one real cost of a hand-built menu, so it is one click
+			// away rather than something to remember to look for.
+			var check = make("button", { class: "btn btn-default btn-sm", type: "button", text: "Check for new links" });
+			check.addEventListener("click", function () {
+				check.disabled = true;
+				frappe
+					.xcall("kaiten_erp_ui_themes.api.nav_drift", { profile: current })
+					.then(function (result) {
+						check.disabled = false;
+						var missing = result.missing || [];
+						if (!missing.length) {
+							frappe.show_alert({ message: "Nothing missing. This profile covers the whole site.", indicator: "green" });
+							return;
+						}
+						frappe.msgprint({
+							title: "Not in this profile yet",
+							message:
+								"<p>" +
+								missing.length +
+								" link(s) exist on this site but are not in " +
+								frappe.utils.escape_html(contentLabel(current)) +
+								":</p><ul>" +
+								missing
+									.slice(0, 40)
+									.map(function (row) {
+										return (
+											"<li><b>" +
+											frappe.utils.escape_html(row.label || row.to) +
+											"</b> \u2014 " +
+											frappe.utils.escape_html(row.workspace || "") +
+											"</li>"
+										);
+									})
+									.join("") +
+								"</ul>" +
+								(missing.length > 40 ? "<p>\u2026and " + (missing.length - 40) + " more.</p>" : ""),
+						});
+					})
+					.catch(function () {
+						check.disabled = false;
+					});
+			});
+			actions.appendChild(check);
+		}
+
+		body.appendChild(actions);
+
+		var presets = make("div", { class: "knb-presets" });
+		body.appendChild(presets);
+
+		frappe.xcall("kaiten_erp_ui_themes.api.list_presets").then(function (list) {
+			if (!list || !list.length) return;
+
+			presets.appendChild(
+				make("p", {
+					class: "knb-note knb-note-tight",
+					text: "Or start from a trade preset. It writes the same records, already grouped the way that business talks. Links this site does not have are skipped.",
+				})
+			);
+
+			list.forEach(function (preset) {
+				var button = make("button", {
+					class: "btn btn-default btn-sm",
+					type: "button",
+					text: "Use the " + preset.label + " preset (" + preset.menus + " menus, " + preset.links + " links)",
+				});
+				button.addEventListener("click", function () {
+					// The preset knows what it is called, so an untouched name field
+					// fills itself in rather than blocking on a required field.
+					if (!(dialog.get_value("profile") || "").trim()) dialog.set_value("profile", preset.label);
+					if (preset.use_case && !(dialog.get_value("use_case") || "").trim()) dialog.set_value("use_case", preset.use_case);
+
+					build(
+						"install_preset",
+						{ name: preset.name },
+						function (profile) {
+							return "Fill " + profile + " with the " + preset.label + " preset?";
+						},
+						button
+					);
+				});
+				presets.appendChild(button);
+			});
+		});
+
+		dialog.fields_dict.body.$wrapper.append(body);
+		dialog.show();
+	}
+
 	function loadMenu(refresh) {
+		var args = { profile: currentContent() };
+		if (refresh) args.refresh = 1;
+
 		frappe
-			.xcall("kaiten_erp_ui_themes.api.get_menu", refresh ? { refresh: 1 } : {})
+			.xcall("kaiten_erp_ui_themes.api.get_menu", args)
 			.then(function (menu) {
 				buildModel(menu);
 				setCounts();
+				// A content switch replaces every group, so an open menu is redrawn
+				// on the tab the user was already reading rather than closed.
 				if (megaOpen() && state.activeTab) renderGroups(state.activeTab);
 			})
 			.catch(function (error) {
@@ -4363,6 +4977,8 @@
 	}
 
 	function adoptPrefs(data, rev) {
+		var wasContent = currentContent();
+
 		// Writing through the normal helpers would schedule a push straight back,
 		// so the flag keeps this one-way.
 		SYNC.applying = true;
@@ -4387,7 +5003,11 @@
 		applyLayout();
 		setCounts();
 		syncPinButton();
-		if (megaOpen()) renderGroups(state.activeTab || "workspaces");
+		if (megaOpen()) renderGroups(state.activeTab || firstContentTab());
+
+		// A different machine may have been left on another profile. The menu on
+		// screen was built for the old one, so it has to be fetched again.
+		if (currentContent() !== wasContent) loadMenu(0);
 	}
 
 	function pullPrefs() {
@@ -4444,6 +5064,9 @@
 		pullPrefs();
 		backfillTitles();
 		loadMenu(0);
+		// Fetched up front so the settings panel names the chosen profile the
+		// first time it opens, rather than showing a bare record id.
+		loadMenuConfigs();
 		return true;
 	}
 

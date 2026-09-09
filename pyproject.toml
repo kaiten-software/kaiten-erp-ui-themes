@@ -15,4 +15,7 @@ build-backend = "setuptools.build_meta"
 include = ["kaiten_erp_ui_themes*"]
 
 [tool.setuptools.package-data]
-kaiten_erp_ui_themes = ["public/**/*", "modules.txt", "patches.txt"]
+# Doctype definitions and their form scripts live beside their controllers, so
+# every subpackage needs its own data carried along, not just the top one.
+"*" = ["*.json", "*.js", "*.css", "*.html", "*.txt"]
+kaiten_erp_ui_themes = ["public/**/*", "presets/*.json", "modules.txt", "patches.txt"]

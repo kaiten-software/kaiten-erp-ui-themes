@@ -3306,6 +3306,59 @@ a.aur-item:focus {
 	opacity: 1;
 }
 
+/* Menu content — which links the menu carries. Related to the skin cards below
+   and deliberately not identical: no swatch, no preview, because choosing
+   content has no appearance to preview. Two columns rather than three, since a
+   profile is named by a business and needs the room to say so. */
+.aur-contents {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 7px;
+	width: 100%;
+}
+
+.aur-content {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+	padding: 7px 9px 8px;
+	border-radius: var(--aur-r);
+	border: 1px solid var(--aur-line);
+	background: var(--aur-surface-2);
+	cursor: pointer;
+	text-align: left;
+	transition: transform var(--aur-fast) var(--aur-ease-back), border-color var(--aur-fast) var(--aur-ease),
+		box-shadow var(--aur-fast) var(--aur-ease);
+}
+
+.aur-content:hover {
+	transform: translateY(-2px);
+	border-color: var(--aur-line-strong);
+	box-shadow: var(--aur-shadow-sm);
+}
+
+.aur-content.aur-on {
+	border-color: var(--aur-accent);
+	box-shadow: 0 0 0 2px color-mix(in oklab, var(--aur-accent) 26%, transparent);
+}
+
+.aur-content-name {
+	font-size: 11.5px;
+	font-weight: 700;
+	color: var(--aur-ink);
+	line-height: 1.2;
+}
+
+.aur-content-note {
+	font-size: 9.5px;
+	color: var(--aur-ink-soft);
+	line-height: 1.25;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 /* Theme — the skin cards. Their swatch is the whole preview. */
 .aur-skins {
 	display: grid;
@@ -4532,4 +4585,65 @@ a.aur-item:focus {
 		opacity: 1;
 		transform: none;
 	}
+}
+
+/* -------------------------------------------------------------------------
+   The menu builder dialog
+
+   A stock Frappe dialog, so these use the desk's own variables rather than the
+   skin tokens: it has to look native under Default as well as under a skin.
+   ---------------------------------------------------------------------- */
+
+.knb-note {
+	margin: 0 0 12px;
+	color: var(--text-muted, #6b7280);
+	font-size: 13px;
+	line-height: 1.55;
+}
+
+.knb-note-tight {
+	margin-top: 14px;
+	margin-bottom: 8px;
+}
+
+.knb-presets {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 14px;
+}
+
+.knb-stats {
+	display: grid;
+	gap: 1px;
+	margin-bottom: 14px;
+	border: 1px solid var(--border-color, #e5e7eb);
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.knb-line {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 7px 11px;
+	background: var(--fg-color, #fff);
+	font-size: 12.5px;
+}
+
+.knb-line-label {
+	color: var(--text-muted, #6b7280);
+}
+
+.knb-line-value {
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+
+.knb-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
 }
