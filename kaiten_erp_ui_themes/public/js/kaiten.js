@@ -156,6 +156,16 @@
 		{ id: "plum", label: "Plum", swatch: "#6d28d9" },
 	];
 
+	/* Liquid is frosted glass on a cool mist wash: translucent surfaces and
+	   soft cool tones rather than Lumen's opaque white or Atlas's flat ERP. */
+	var LIQUID_TONES = [
+		{ id: "mist", label: "Mist", swatch: "linear-gradient(135deg,#38bdf8,#0ea5e9,#67e8f9)" },
+		{ id: "aqua", label: "Aqua", swatch: "linear-gradient(135deg,#2dd4bf,#14b8a6,#5eead4)" },
+		{ id: "glacier", label: "Glacier", swatch: "linear-gradient(135deg,#60a5fa,#3b82f6,#93c5fd)" },
+		{ id: "pearl", label: "Pearl", swatch: "linear-gradient(135deg,#94a3b8,#64748b,#cbd5e1)" },
+		{ id: "tide", label: "Tide", swatch: "linear-gradient(135deg,#22d3ee,#0891b2,#67e8f9)" },
+	];
+
 	/* A skin is a look, and nothing more: one stylesheet of token overrides
 	   layered on kaiten.css, picked with data-kaiten-skin. It is independent of
 	   the light/dark appearance, which stays Frappe's. "default" carries no
@@ -189,6 +199,13 @@
 			note: "Flat ERP bar, plain surfaces, square corners",
 			swatch: "linear-gradient(135deg,#334155 0%,#334155 55%,#1e293b 100%)",
 			tones: ATLAS_TONES,
+		},
+		{
+			id: "liquid",
+			label: "Liquid",
+			note: "Minimal frosted glass, cool mist wash",
+			swatch: "linear-gradient(135deg,#e0f2fe 0%,#7dd3fc 40%,#67e8f9 70%,#a5f3fc 100%)",
+			tones: LIQUID_TONES,
 		},
 	];
 

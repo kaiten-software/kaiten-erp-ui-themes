@@ -46,9 +46,9 @@ for records the site does not have yet.
 - **Themes** — *Default* is the stock desk with only the Kaiten bar; *Aurora* is
   colour at rest with an animated mesh; *Lumen* is soft light on a tinted
   gradient wash, with pill controls and ink-black actions; *Atlas* is the flat
-  classic-ERP look — one solid accent, plain surfaces, square corners. Each
-  theme offers its own colour tones, and a colour you mix yourself can be added
-  to the palette.
+  classic-ERP look — one solid accent, plain surfaces, square corners; *Liquid*
+  is a minimal frosted-glass desk on a cool mist wash. Each theme offers its
+  own colour tones, and a colour you mix yourself can be added to the palette.
 - **Mega menu** — Workspaces, Modules, Create, Insights, Tools, Pinned and
   Recent. Search filters the tree. Pins can be filed onto shelves.
 - **Menus you can edit** — the Module nav derives itself from the site's own
@@ -86,7 +86,7 @@ bar, or the ◕ button on the right.
 | Shell | Command bar or Module nav. |
 | Content | Which menus the Module nav carries: *Module nav* is the automatic set derived from the site's workspaces, and every Active profile is offered beside it. |
 | Look | How the Module nav opens a module — *Standard* drops a menu under the clicked module, *Workspace grid* lists modules down the left with the chosen module's entries as an icon grid. |
-| Theme | Default, Aurora, Lumen or Atlas. Independent of the appearance: every theme has a light and a dark treatment. |
+| Theme | Default, Aurora, Lumen, Atlas or Liquid. Independent of the appearance: every theme has a light and a dark treatment. |
 | Colour | The tones the chosen theme offers, and any you mixed. Hidden for Default, which has none. |
 | Pages | *Standard* leaves Frappe's own forms and lists alone; *Custom* replaces them with the boxed, tighter treatment. |
 | Density | Normal, cozy or compact. |
@@ -100,7 +100,7 @@ Frappe derives most of its spacing from a handful of CSS variables, and compact
 remaps them, so labels sit closer to their fields, sections stack tighter, rows
 and cells lose their padding, inputs and buttons come down to 25px, the page
 head to 40px, and corners tighten so the denser rows do not read as a stack of
-lozenges. A form is around a fifth shorter. Aurora, Lumen and Atlas all
+lozenges. A form is around a fifth shorter. Aurora, Lumen, Atlas and Liquid all
 offer it; Default does not, and hides the control, because it is stock Frappe
 with only the bar added — spacing included.
 

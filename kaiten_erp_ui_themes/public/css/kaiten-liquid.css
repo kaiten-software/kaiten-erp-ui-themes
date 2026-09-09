@@ -1,0 +1,498 @@
+/* =========================================================================
+   Liquid — minimal frosted glass
+   -------------------------------------------------------------------------
+   A skin layered on kaiten.css. Soft translucent surfaces, hairline borders,
+   a cool mist page wash and calm motion. Aurora's animated mesh and eight-hue
+   cycle are collapsed; Lumen's opaque white cards become glass that lets the
+   wash show through.
+
+   Every rule carries [data-kaiten-skin="liquid"], so nothing here reaches
+   another skin. The doubled .aurora-on wins ties against the base nth-child
+   hue cycles without depending on file order.
+
+   Tone tokens drive the look. A mixed tone arrives as inline custom
+   properties, so the page wash and glass tint always read --aur-accent /
+   the mesh tokens rather than a preset-only variable.
+   ========================================================================= */
+
+.aurora-on[data-kaiten-skin="liquid"] {
+	/* Geometry — soft, not pill-everything. Air without losing desk density. */
+	--radius-sm: 11px;
+	--radius: 14px;
+	--radius-md: 16px;
+	--radius-lg: 20px;
+	--radius-xl: 24px;
+
+	--aur-r-sm: 12px;
+	--aur-r: 16px;
+	--aur-r-lg: 20px;
+	--aur-r-xl: 26px;
+
+	/* Surfaces — frosted glass. The wash reads through the cards. */
+	--aur-surface: rgba(255, 255, 255, 0.58);
+	--aur-surface-2: rgba(255, 255, 255, 0.42);
+	--aur-sheet: rgba(255, 255, 255, 0.62);
+	--aur-row-tint: transparent;
+
+	--aur-line: rgba(15, 23, 42, 0.08);
+	--aur-line-strong: rgba(15, 23, 42, 0.14);
+	--aur-ink: #1a2332;
+	--aur-ink-soft: #6b778a;
+
+	/* Depth — wide, cool, soft. No hard glow. */
+	--aur-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.03), 0 8px 20px -14px rgba(15, 23, 42, 0.18);
+	--aur-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 22px 48px -28px rgba(15, 23, 42, 0.28);
+	--aur-shadow-lg: 0 2px 8px rgba(15, 23, 42, 0.05), 0 40px 80px -36px rgba(15, 23, 42, 0.34);
+	--aur-glow: 0 0 0 3px color-mix(in oklab, var(--aur-accent) 18%, transparent);
+
+	/* Motion — calm. */
+	--aur-ease-back: cubic-bezier(0.22, 1, 0.36, 1);
+	--aur-fast: 0.18s;
+	--aur-mid: 0.32s;
+	--aur-slow: 0.55s;
+
+	/* One hue for the whole desk. Mist (cool sky) is the finished fallback. */
+	--liq-h: 198;
+	--aur-accent: #0ea5e9;
+	--aur-grad: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 48%, #67e8f9 100%);
+	--aur-grad-cool: linear-gradient(135deg, #0ea5e9 0%, #22d3ee 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(103, 232, 249, 0.08));
+	--aur-mesh-a: rgba(56, 189, 248, 0.28);
+	--aur-mesh-b: rgba(125, 211, 252, 0.2);
+	--aur-mesh-c: rgba(167, 243, 208, 0.18);
+	--aur-mesh-d: rgba(186, 230, 253, 0.16);
+
+	/* Soft glass fill used by chrome that must stay legible over the wash. */
+	--liq-glass: rgba(255, 255, 255, 0.55);
+	--liq-glass-strong: rgba(255, 255, 255, 0.72);
+	--liq-blur: 22px;
+
+	--liq-page: color-mix(in oklab, var(--aur-accent) 6%, #f3f7fb);
+	--liq-page-2: color-mix(in oklab, var(--aur-accent) 14%, #e8eef6);
+
+	background:
+		linear-gradient(
+			168deg,
+			#f8fbfe 0%,
+			var(--liq-page) 48%,
+			var(--liq-page-2) 100%
+		);
+}
+
+.aurora-on[data-kaiten-skin="liquid"][data-theme="dark"] {
+	--aur-surface: rgba(22, 30, 44, 0.62);
+	--aur-surface-2: rgba(18, 24, 36, 0.55);
+	--aur-sheet: rgba(22, 30, 44, 0.68);
+	--aur-line: rgba(148, 163, 184, 0.14);
+	--aur-line-strong: rgba(148, 163, 184, 0.26);
+	--aur-ink: #e8eef6;
+	--aur-ink-soft: #94a3b8;
+	--placeholder-color: #94a3b8;
+
+	--aur-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 20px -14px rgba(0, 0, 0, 0.45);
+	--aur-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), 0 22px 48px -28px rgba(0, 0, 0, 0.55);
+	--aur-shadow-lg: 0 2px 8px rgba(0, 0, 0, 0.3), 0 40px 80px -36px rgba(0, 0, 0, 0.65);
+
+	--liq-glass: rgba(22, 30, 44, 0.58);
+	--liq-glass-strong: rgba(22, 30, 44, 0.78);
+
+	--liq-page: color-mix(in oklab, var(--aur-accent) 10%, #0c121c);
+	--liq-page-2: color-mix(in oklab, var(--aur-accent) 16%, #080d14);
+
+	background:
+		linear-gradient(
+			168deg,
+			#0a1018 0%,
+			var(--liq-page) 50%,
+			var(--liq-page-2) 100%
+		);
+}
+
+/* -------------------------------------------------------------------------
+   Tones — cool liquids only; each repaints accent, mesh and page wash
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="liquid"][data-aur-accent="mist"] {
+	--liq-h: 198;
+	--aur-accent: #0ea5e9;
+	--aur-grad: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 48%, #67e8f9 100%);
+	--aur-grad-cool: linear-gradient(135deg, #0ea5e9 0%, #22d3ee 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(103, 232, 249, 0.08));
+	--aur-mesh-a: rgba(56, 189, 248, 0.28);
+	--aur-mesh-b: rgba(125, 211, 252, 0.2);
+	--aur-mesh-c: rgba(167, 243, 208, 0.18);
+	--aur-mesh-d: rgba(186, 230, 253, 0.16);
+}
+
+.aurora-on[data-kaiten-skin="liquid"][data-aur-accent="aqua"] {
+	--liq-h: 172;
+	--aur-accent: #14b8a6;
+	--aur-grad: linear-gradient(135deg, #2dd4bf 0%, #14b8a6 48%, #5eead4 100%);
+	--aur-grad-cool: linear-gradient(135deg, #14b8a6 0%, #2dd4bf 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(20, 184, 166, 0.12), rgba(94, 234, 212, 0.08));
+	--aur-mesh-a: rgba(45, 212, 191, 0.28);
+	--aur-mesh-b: rgba(94, 234, 212, 0.2);
+	--aur-mesh-c: rgba(165, 243, 252, 0.16);
+	--aur-mesh-d: rgba(153, 246, 228, 0.18);
+}
+
+.aurora-on[data-kaiten-skin="liquid"][data-aur-accent="glacier"] {
+	--liq-h: 214;
+	--aur-accent: #3b82f6;
+	--aur-grad: linear-gradient(135deg, #60a5fa 0%, #3b82f6 48%, #93c5fd 100%);
+	--aur-grad-cool: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(147, 197, 253, 0.08));
+	--aur-mesh-a: rgba(96, 165, 250, 0.28);
+	--aur-mesh-b: rgba(147, 197, 253, 0.2);
+	--aur-mesh-c: rgba(191, 219, 254, 0.16);
+	--aur-mesh-d: rgba(165, 243, 252, 0.14);
+}
+
+.aurora-on[data-kaiten-skin="liquid"][data-aur-accent="pearl"] {
+	--liq-h: 220;
+	--aur-accent: #64748b;
+	--aur-grad: linear-gradient(135deg, #94a3b8 0%, #64748b 48%, #cbd5e1 100%);
+	--aur-grad-cool: linear-gradient(135deg, #64748b 0%, #94a3b8 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(100, 116, 139, 0.12), rgba(203, 213, 225, 0.08));
+	--aur-mesh-a: rgba(148, 163, 184, 0.28);
+	--aur-mesh-b: rgba(203, 213, 225, 0.22);
+	--aur-mesh-c: rgba(226, 232, 240, 0.2);
+	--aur-mesh-d: rgba(186, 230, 253, 0.12);
+}
+
+.aurora-on[data-kaiten-skin="liquid"][data-aur-accent="tide"] {
+	--liq-h: 188;
+	--aur-accent: #0891b2;
+	--aur-grad: linear-gradient(135deg, #22d3ee 0%, #0891b2 48%, #67e8f9 100%);
+	--aur-grad-cool: linear-gradient(135deg, #0891b2 0%, #22d3ee 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(8, 145, 178, 0.12), rgba(103, 232, 249, 0.08));
+	--aur-mesh-a: rgba(34, 211, 238, 0.28);
+	--aur-mesh-b: rgba(103, 232, 249, 0.2);
+	--aur-mesh-c: rgba(165, 243, 252, 0.16);
+	--aur-mesh-d: rgba(153, 246, 228, 0.14);
+}
+
+/* -------------------------------------------------------------------------
+   Neutrals — cool, near-pure. Stock controls must not tint toward the accent.
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="liquid"]:not([data-theme="dark"]) {
+	--gray-50: #f7f9fc;
+	--gray-100: #eef2f7;
+	--gray-200: #e2e8f0;
+	--gray-300: #d0d8e4;
+	--gray-400: #a8b3c4;
+	--gray-450: #8b97aa;
+	--gray-500: #6f7c90;
+	--gray-600: #546073;
+	--gray-700: #3d4758;
+	--gray-800: #2a3342;
+	--gray-900: #1a2332;
+	--gray-950: #0f1520;
+}
+
+/* -------------------------------------------------------------------------
+   Backdrop — soft static mist, not Aurora's drifting mesh
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="liquid"] body::before {
+	filter: blur(36px) saturate(110%);
+	transform: none;
+	animation: none;
+	opacity: 0.85;
+}
+
+.aurora-on[data-kaiten-skin="liquid"][data-theme="dark"] body::before {
+	opacity: 0.55;
+}
+
+/* One hue everywhere. */
+.aurora-on.aurora-on[data-kaiten-skin="liquid"] .list-row-container,
+.aurora-on.aurora-on[data-kaiten-skin="liquid"] .body-sidebar .sidebar-item-container,
+.aurora-on.aurora-on[data-kaiten-skin="liquid"] .dock-items .dock-item,
+.aurora-on.aurora-on[data-kaiten-skin="liquid"] .form-section {
+	--cyc-h: var(--liq-h);
+}
+
+/* -------------------------------------------------------------------------
+   Cards — frosted glass, no stripe, soft lift
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="liquid"] .widget,
+.aurora-on[data-kaiten-skin="liquid"] .frappe-card,
+.aurora-on[data-kaiten-skin="liquid"] .form-section.card-section,
+.aurora-on[data-kaiten-skin="liquid"] .dashboard-section,
+.aurora-on[data-kaiten-skin="liquid"] .layout-main-section {
+	background: var(--liq-glass);
+	backdrop-filter: blur(var(--liq-blur)) saturate(140%);
+	-webkit-backdrop-filter: blur(var(--liq-blur)) saturate(140%);
+	border: 1px solid var(--aur-line);
+	box-shadow: var(--aur-shadow);
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .widget::before,
+.aurora-on[data-kaiten-skin="liquid"] .frappe-card::before,
+.aurora-on[data-kaiten-skin="liquid"] .form-section::before {
+	background-image: none;
+	background-color: transparent;
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .widget::after,
+.aurora-on[data-kaiten-skin="liquid"] .frappe-card::after {
+	background: none;
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .widget:hover,
+.aurora-on[data-kaiten-skin="liquid"] .frappe-card:hover {
+	transform: translateY(-2px);
+	border-color: var(--aur-line-strong);
+	box-shadow: var(--aur-shadow-lg);
+	background: var(--liq-glass-strong);
+}
+
+/* A transform on the section makes Frappe's pencil editor a child of the card. */
+.aurora-on[data-kaiten-skin="liquid"] .form-section:hover {
+	transform: none;
+	border-color: var(--aur-line-strong);
+	box-shadow: var(--aur-shadow-lg);
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .widget.shortcut-widget-box {
+	background: var(--liq-glass);
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .widget.shortcut-widget-box:hover {
+	transform: translateY(-2px);
+	background: var(--aur-grad-soft), var(--liq-glass-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Titles — flat ink. No gradient wordmark.
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="liquid"] .page-title .title-text,
+.aurora-on[data-kaiten-skin="liquid"] .page-head .title-text {
+	font-weight: 650;
+	letter-spacing: -0.02em;
+	background: none;
+	-webkit-text-fill-color: currentColor;
+	color: var(--aur-ink);
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .page-head,
+.aurora-on[data-kaiten-skin="liquid"] .form-tabs-list {
+	border-bottom: 0;
+	background: var(--liq-glass);
+	backdrop-filter: blur(var(--liq-blur)) saturate(140%);
+	-webkit-backdrop-filter: blur(var(--liq-blur)) saturate(140%);
+}
+
+/* -------------------------------------------------------------------------
+   Controls — soft radii, accent primary (not ink-black)
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="liquid"] .btn,
+.aurora-on[data-kaiten-skin="liquid"] .es-button,
+.aurora-on[data-kaiten-skin="liquid"] .filter-section .filter-button,
+.aurora-on[data-kaiten-skin="liquid"] .filter-selector .btn,
+.aurora-on[data-kaiten-skin="liquid"] .sort-selector .btn,
+.aurora-on[data-kaiten-skin="liquid"] .list-count,
+.aurora-on[data-kaiten-skin="liquid"] .indicator-pill,
+.aurora-on[data-kaiten-skin="liquid"] .document-link .count,
+.aurora-on[data-kaiten-skin="liquid"] .badge-link .count {
+	border-radius: var(--aur-r-sm);
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .form-tabs .nav-link,
+.aurora-on[data-kaiten-skin="liquid"] .form-tabs-list .nav-link {
+	border-radius: var(--radius-sm);
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .btn-primary,
+.aurora-on[data-kaiten-skin="liquid"] .es-button[data-variant="solid"]:not([data-theme]) {
+	background: var(--aur-grad-cool);
+	border: 0;
+	color: #fff;
+	box-shadow: 0 12px 28px -16px color-mix(in oklab, var(--aur-accent) 70%, transparent);
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .btn-primary:hover,
+.aurora-on[data-kaiten-skin="liquid"] .es-button[data-variant="solid"]:not([data-theme]):hover {
+	filter: brightness(1.04);
+	box-shadow: 0 16px 32px -14px color-mix(in oklab, var(--aur-accent) 80%, transparent);
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .btn-default,
+.aurora-on[data-kaiten-skin="liquid"] .btn-secondary {
+	background: var(--liq-glass-strong);
+	border-color: var(--aur-line-strong);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .form-control,
+.aurora-on[data-kaiten-skin="liquid"] .frappe-control input.form-control,
+.aurora-on[data-kaiten-skin="liquid"] .frappe-control select.form-control,
+.aurora-on[data-kaiten-skin="liquid"] .frappe-control textarea.form-control {
+	border-radius: var(--aur-r-sm);
+	background: var(--aur-surface-2);
+	border: 1px solid var(--aur-line);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .form-control:focus {
+	background: var(--liq-glass-strong);
+	border-color: var(--aur-accent);
+	box-shadow: var(--aur-glow);
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .widget.number-widget-box .widget-content .number,
+.aurora-on[data-kaiten-skin="liquid"] .number-card .number {
+	background: none;
+	-webkit-text-fill-color: currentColor;
+	color: var(--aur-ink);
+	letter-spacing: -0.025em;
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .progress-bar {
+	border-radius: 999px;
+	background: var(--aur-grad-cool);
+}
+
+/* -------------------------------------------------------------------------
+   Kaiten bar — glass strip
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="liquid"] .aur-bar {
+	background: color-mix(in oklab, var(--liq-glass-strong) 88%, transparent);
+	backdrop-filter: blur(24px) saturate(150%);
+	-webkit-backdrop-filter: blur(24px) saturate(150%);
+	border-bottom-color: var(--aur-line);
+	box-shadow: 0 12px 36px -30px rgba(15, 23, 42, 0.45);
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .aur-mega,
+.aurora-on[data-kaiten-skin="liquid"] .aur-pop {
+	background: var(--liq-glass-strong);
+	backdrop-filter: blur(28px) saturate(160%);
+	-webkit-backdrop-filter: blur(28px) saturate(160%);
+	border-color: var(--aur-line);
+	box-shadow: var(--aur-shadow-lg);
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .aur-tab.aur-open {
+	background: var(--aur-grad-cool);
+	color: #fff;
+	box-shadow: 0 10px 22px -14px color-mix(in oklab, var(--aur-accent) 75%, transparent);
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .aur-tab.aur-open .aur-tab-count {
+	background: rgba(255, 255, 255, 0.28);
+	color: #fff;
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .aur-tab.aur-cursor,
+.aurora-on[data-kaiten-skin="liquid"] .aur-tab.aur-kb {
+	z-index: 3;
+	box-shadow: 0 0 0 2px var(--liq-glass-strong), 0 0 0 4px color-mix(in oklab, var(--aur-accent) 70%, transparent),
+		0 10px 24px -10px color-mix(in oklab, var(--aur-accent) 55%, transparent);
+}
+
+/* -------------------------------------------------------------------------
+   List sheet — one glass card of rows
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="liquid"] .frappe-list .result,
+.aurora-on[data-kaiten-skin="liquid"] .frappe-list .list-paging-area {
+	background: var(--liq-glass);
+	backdrop-filter: blur(var(--liq-blur)) saturate(140%);
+	-webkit-backdrop-filter: blur(var(--liq-blur)) saturate(140%);
+	border-radius: var(--aur-r-lg);
+	border: 1px solid var(--aur-line);
+	box-shadow: var(--aur-shadow);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="liquid"] .list-row-container:nth-child(even) {
+	--aur-row-tint: color-mix(in oklab, var(--aur-accent) 3%, transparent);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="liquid"] .list-row-container:hover {
+	--aur-row-tint: color-mix(in oklab, var(--aur-accent) 8%, transparent);
+	box-shadow: none;
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .list-row-container::before {
+	background: var(--aur-accent);
+	opacity: 0;
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .list-row-container:hover::before {
+	opacity: 0.65;
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .list-row-head,
+.aurora-on[data-kaiten-skin="liquid"] .list-row-head .level-right {
+	background: var(--aur-surface-2);
+	border-bottom: 1px solid var(--aur-line);
+}
+
+/* -------------------------------------------------------------------------
+   Sidebar and dock — glass rail
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="liquid"] .body-sidebar,
+.aurora-on[data-kaiten-skin="liquid"] .body-sidebar-container,
+.aurora-on[data-kaiten-skin="liquid"] .dock {
+	background: color-mix(in oklab, var(--aur-accent) 5%, var(--liq-glass));
+	backdrop-filter: blur(24px) saturate(140%);
+	-webkit-backdrop-filter: blur(24px) saturate(140%);
+	border-right: 1px solid var(--aur-line);
+	box-shadow: none;
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .dock::after {
+	content: none;
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .body-sidebar .standard-sidebar-item,
+.aurora-on[data-kaiten-skin="liquid"] .desk-sidebar .standard-sidebar-item,
+.aurora-on[data-kaiten-skin="liquid"] .list-sidebar .sidebar-item-container {
+	border-radius: var(--aur-r-sm);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="liquid"] .body-sidebar .standard-sidebar-item:hover {
+	background: var(--aur-grad-soft);
+	transform: none;
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="liquid"] .body-sidebar .standard-sidebar-item.selected,
+.aurora-on.aurora-on[data-kaiten-skin="liquid"] .body-sidebar .standard-sidebar-item.active-sidebar,
+.aurora-on[data-kaiten-skin="liquid"] .desk-sidebar .standard-sidebar-item.selected {
+	background: var(--liq-glass-strong);
+	color: var(--aur-ink);
+	box-shadow: var(--aur-shadow-sm);
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .desk-sidebar .standard-sidebar-item.selected .sidebar-item-label {
+	color: var(--aur-ink);
+}
+
+.aurora-on[data-kaiten-skin="liquid"] .desk-sidebar .standard-sidebar-item.selected .sidebar-item-icon svg {
+	color: var(--aur-accent);
+	stroke: var(--aur-accent);
+}
+
+/* -------------------------------------------------------------------------
+   Dialogs / dropdowns — glass panels
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="liquid"] .modal-content,
+.aurora-on[data-kaiten-skin="liquid"] .dropdown-menu,
+.aurora-on[data-kaiten-skin="liquid"] .popover {
+	background: var(--liq-glass-strong);
+	backdrop-filter: blur(28px) saturate(150%);
+	-webkit-backdrop-filter: blur(28px) saturate(150%);
+	border-color: var(--aur-line);
+	box-shadow: var(--aur-shadow-lg);
+}
