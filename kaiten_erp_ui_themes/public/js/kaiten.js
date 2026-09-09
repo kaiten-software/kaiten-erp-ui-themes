@@ -514,6 +514,24 @@
 		return spriteHas(guess) ? guess : "file-text";
 	}
 
+	function plural(count, one, many) {
+		return count === 1 ? one : many;
+	}
+
+	/* Anything that throws work away asks first. The desk's own confirm is used
+	   where it exists so the question looks like every other question the desk
+	   asks; the browser's is only there so a missing dialog cannot turn a
+	   guarded action into an unguarded one. */
+	function askFirst(question, run) {
+		try {
+			if (window.frappe && frappe.confirm) {
+				frappe.confirm(question, run);
+				return;
+			}
+		} catch (e) {}
+		if (window.confirm(question)) run();
+	}
+
 	function footKey(keys, label) {
 		return make("span", { class: "aur-foot-key" }, [
 			make("kbd", { text: keys }),
@@ -1795,16 +1813,22 @@
 				options.action = {
 					label: "Clear",
 					run: function () {
-						write(
-							KEY.pins,
-							pins().filter(function (item) {
-								return (item.group || DEFAULT_PIN_GROUP.id) !== active.pinGroup;
-							})
+						askFirst(
+							"Remove all " + active.items.length + " pinned " + plural(active.items.length, "entry", "entries") +
+								" from " + active.label + "? The pages themselves are untouched.",
+							function () {
+								write(
+									KEY.pins,
+									pins().filter(function (item) {
+										return (item.group || DEFAULT_PIN_GROUP.id) !== active.pinGroup;
+									})
+								);
+								setCounts();
+								syncPinButton();
+								paintPinStars();
+								renderGroups("pinned");
+							}
 						);
-						setCounts();
-						syncPinButton();
-						paintPinStars();
-						renderGroups("pinned");
 					},
 				};
 			}
@@ -1814,9 +1838,15 @@
 				options.action = {
 					label: "Clear",
 					run: function () {
-						write(KEY.recent, []);
-						setCounts();
-						renderGroups("recent");
+						askFirst(
+							"Clear all " + active.items.length + " recently visited " +
+								plural(active.items.length, "page", "pages") + "? This cannot be undone.",
+							function () {
+								write(KEY.recent, []);
+								setCounts();
+								renderGroups("recent");
+							}
+						);
 					},
 				};
 			}
@@ -4032,13 +4062,25 @@
 				if (mark.parentNode) mark.replaceWith(make("span", { class: "aur-brand-dot" }));
 			});
 		}
-		var brand = make("button", { class: "aur-brand", type: "button", title: info.name + " \u2014 theme and appearance" }, [
-			mark,
-			make("span", { class: "aur-brand-label", text: info.name }),
-		]);
+		/* The company mark reads as the way home, and on a site that has a Kaiten
+		   Home that is what it does. Where there is no such page it stays the
+		   handle for the appearance panel rather than pointing at nothing — the
+		   ◕ button in the bar opens that panel either way, so nothing is lost
+		   when the mark is spent on the more obvious errand. */
+		var home = kaitenHomeAvailable();
+		var brand = make(
+			"button",
+			{
+				class: "aur-brand",
+				type: "button",
+				title: info.name + (home ? " \u2014 home" : " \u2014 theme and appearance"),
+			},
+			[mark, make("span", { class: "aur-brand-label", text: info.name })]
+		);
 		brand.addEventListener("click", function (event) {
 			event.stopPropagation();
-			openSettings(brand);
+			if (kaitenHomeAvailable()) goKaitenHome();
+			else openSettings(brand);
 		});
 		return brand;
 	}
@@ -4894,6 +4936,31 @@
 		} catch (e) {
 			return [];
 		}
+	}
+
+	/* Kaiten Home is another app's page, so the theme cannot assume it. Both the
+	   desk-side helper and the boot payload are written by the app that owns it,
+	   and either one being present means the page is there to open. */
+	function kaitenHomeAvailable() {
+		try {
+			if (typeof kaiten_desk !== "undefined" && kaiten_desk) return true;
+		} catch (e) {}
+		try {
+			return Boolean(window.frappe && frappe.boot && frappe.boot.kaiten_desk);
+		} catch (e) {}
+		return false;
+	}
+
+	/* Home as it was left. Choosing an area again is its own errand, and the
+	   navbar keeps an entry for it. */
+	function goKaitenHome() {
+		try {
+			if (typeof kaiten_desk !== "undefined" && kaiten_desk.openKaitenHome) {
+				kaiten_desk.openKaitenHome();
+				return;
+			}
+		} catch (e) {}
+		window.location.assign("/desk/kaiten-home");
 	}
 
 	function goKaitenChooseArea() {
