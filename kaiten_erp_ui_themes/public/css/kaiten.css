@@ -1869,6 +1869,22 @@ a.aur-item:focus {
 	}
 }
 
+/* A Bootstrap modal is 1050 and every piece of this bar's chrome stands above
+   that — the scrim at 1200, the panel at 1201, the bar itself at 1202. So a
+   dialog raised from the menu was drawn behind the very panel that asked for
+   it: the Clear question opened, took the click that should have answered it,
+   and looked like a dead button.
+   Dialogs belong above all of the chrome. They stay below the field lists that
+   are floated to the body at 2000, because a link field inside a dialog has to
+   drop its suggestions over that dialog. */
+html.kaiten-bar-on .modal-backdrop {
+	z-index: 1490;
+}
+
+html.kaiten-bar-on .modal {
+	z-index: 1500;
+}
+
 /* -------------------------------------------------------------------------
    7. Buttons + ripple
    ---------------------------------------------------------------------- */
