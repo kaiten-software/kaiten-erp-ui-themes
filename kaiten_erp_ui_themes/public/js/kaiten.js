@@ -5211,13 +5211,25 @@
 		var hereTail = here ? String(here).split(":").slice(1).join(":") : "";
 		if (itemTail && hereTail && slugify(itemTail) === slugify(hereTail)) return true;
 
-		var first = item.route && item.route[0] ? String(item.route[0]) : "";
-		if (!first) return false;
-		var head = "";
+		var mine = (item.route || []).map(String);
+		if (!mine.length) return false;
+
+		var now = [];
 		try {
-			head = String((frappe.get_route() || [])[0] || "");
+			now = (frappe.get_route() || []).map(String);
 		} catch (e) {}
-		return Boolean(head) && (first === head || slugify(first) === slugify(head));
+		if (!now.length) return false;
+
+		// A one-element route is the whole address — a Page or workspace slug —
+		// so the head is all there is to compare.
+		if (mine.length === 1 || now.length === 1) {
+			return mine.length === now.length && slugify(mine[0]) === slugify(now[0]);
+		}
+
+		// Anything longer names its target after the head, and the head alone is
+		// shared by every entry of that kind: matching on it would mark every
+		// list in the sidebar active the moment any list was open.
+		return slugify(mine[0]) === slugify(now[0]) && slugify(mine[1]) === slugify(now[1]);
 	}
 
 	function itemKind(entry) {
