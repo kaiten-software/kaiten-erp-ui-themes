@@ -1,0 +1,673 @@
+/* =========================================================================
+   Halo — soft futurist, floating glass, inflated corners
+   -------------------------------------------------------------------------
+   A skin layered on kaiten.css. Milk-lilac atmosphere, cards that hover on
+   wide soft shadows, corners blown out to 24–32px, and frosted panels that
+   blur what sits behind them. Accent is a vivid violet; status colour lives
+   on thin edge bars and pill badges, never as a mesh.
+
+   Every rule carries [data-kaiten-skin="halo"], so nothing here can reach
+   another skin. Where a base rule already matches at the same specificity,
+   .aurora-on is repeated to win the tie without depending on file order.
+
+   Mixed tones arrive as inline custom properties — page wash and glass tints
+   always derive from --aur-accent / the mesh tokens.
+   ========================================================================= */
+
+.aurora-on[data-kaiten-skin="halo"] {
+	/* Geometry — generous, friendly, almost toy-like. */
+	--radius-sm: 14px;
+	--radius: 18px;
+	--radius-md: 22px;
+	--radius-lg: 28px;
+	--radius-xl: 34px;
+
+	--aur-r-sm: 16px;
+	--aur-r: 22px;
+	--aur-r-lg: 28px;
+	--aur-r-xl: 34px;
+
+	/* Surfaces — opaque white cards on a lilac mist. */
+	--aur-surface: #ffffff;
+	--aur-surface-2: #f5f6ff;
+	--aur-sheet: rgba(255, 255, 255, 0.78);
+	--aur-row-tint: transparent;
+
+	--aur-line: rgba(76, 60, 140, 0.07);
+	--aur-line-strong: rgba(76, 60, 140, 0.14);
+	--aur-ink: #1e1638;
+	--aur-ink-soft: #8a84a3;
+
+	/* Depth — neumorphic float: soft, wide, barely tinted. */
+	--aur-shadow-sm: 0 8px 20px -10px rgba(76, 60, 140, 0.18);
+	--aur-shadow: 0 18px 40px -18px rgba(76, 60, 140, 0.28), 0 4px 12px -6px rgba(76, 60, 140, 0.12);
+	--aur-shadow-lg: 0 28px 56px -22px rgba(76, 60, 140, 0.34), 0 8px 18px -8px rgba(76, 60, 140, 0.14);
+	--aur-glow: 0 0 0 4px color-mix(in oklab, var(--aur-accent) 18%, transparent);
+
+	/* Motion — floaty, never snappy. */
+	--aur-ease-back: cubic-bezier(0.22, 1, 0.36, 1);
+	--aur-fast: 0.18s;
+	--aur-mid: 0.34s;
+	--aur-slow: 0.55s;
+
+	--halo-h: 262;
+
+	/* Violet fallback. */
+	--aur-accent: #7c3aed;
+	--aur-grad: linear-gradient(135deg, #6d28d9 0%, #7c3aed 42%, #a78bfa 100%);
+	--aur-grad-cool: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(167, 139, 250, 0.07));
+	--aur-mesh-a: rgba(124, 58, 237, 0.16);
+	--aur-mesh-b: rgba(167, 139, 250, 0.14);
+	--aur-mesh-c: rgba(196, 181, 253, 0.18);
+	--aur-mesh-d: rgba(233, 213, 255, 0.22);
+
+	--halo-solid: #7c3aed;
+	--halo-solid-hover: #6d28d9;
+	--halo-glass: rgba(255, 255, 255, 0.55);
+	--halo-page: #f5f6ff;
+	--halo-page-2: color-mix(in oklab, var(--aur-accent) 8%, #eef0ff);
+
+	background:
+		radial-gradient(70rem 40rem at 8% -10%, color-mix(in oklab, var(--aur-accent) 10%, transparent), transparent 60%),
+		radial-gradient(50rem 36rem at 100% 110%, color-mix(in oklab, var(--aur-accent) 8%, transparent), transparent 55%),
+		linear-gradient(180deg, var(--halo-page) 0%, var(--halo-page-2) 100%);
+}
+
+/* -------------------------------------------------------------------------
+   Tones
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="halo"][data-aur-accent="violet"] {
+	--halo-h: 262;
+	--aur-accent: #7c3aed;
+	--aur-grad: linear-gradient(135deg, #6d28d9 0%, #7c3aed 42%, #a78bfa 100%);
+	--aur-grad-cool: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(167, 139, 250, 0.07));
+	--aur-mesh-a: rgba(124, 58, 237, 0.16);
+	--aur-mesh-b: rgba(167, 139, 250, 0.14);
+	--aur-mesh-c: rgba(196, 181, 253, 0.18);
+	--aur-mesh-d: rgba(233, 213, 255, 0.22);
+	--halo-solid: #7c3aed;
+	--halo-solid-hover: #6d28d9;
+}
+
+.aurora-on[data-kaiten-skin="halo"][data-aur-accent="azure"] {
+	--halo-h: 210;
+	--aur-accent: #2563eb;
+	--aur-grad: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 48%, #93c5fd 100%);
+	--aur-grad-cool: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(147, 197, 253, 0.08));
+	--aur-mesh-a: rgba(37, 99, 235, 0.14);
+	--aur-mesh-b: rgba(96, 165, 250, 0.14);
+	--aur-mesh-c: rgba(191, 219, 254, 0.2);
+	--aur-mesh-d: rgba(219, 234, 254, 0.22);
+	--halo-solid: #2563eb;
+	--halo-solid-hover: #1d4ed8;
+}
+
+.aurora-on[data-kaiten-skin="halo"][data-aur-accent="lime"] {
+	--halo-h: 95;
+	--aur-accent: #65a30d;
+	--aur-grad: linear-gradient(135deg, #4d7c0f 0%, #84cc16 48%, #bef264 100%);
+	--aur-grad-cool: linear-gradient(135deg, #65a30d 0%, #a3e635 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(101, 163, 13, 0.1), rgba(190, 242, 100, 0.08));
+	--aur-mesh-a: rgba(132, 204, 22, 0.16);
+	--aur-mesh-b: rgba(163, 230, 53, 0.14);
+	--aur-mesh-c: rgba(217, 249, 157, 0.2);
+	--aur-mesh-d: rgba(236, 252, 203, 0.22);
+	--halo-solid: #65a30d;
+	--halo-solid-hover: #4d7c0f;
+}
+
+.aurora-on[data-kaiten-skin="halo"][data-aur-accent="rose"] {
+	--halo-h: 340;
+	--aur-accent: #e11d48;
+	--aur-grad: linear-gradient(135deg, #be123c 0%, #f43f5e 48%, #fda4af 100%);
+	--aur-grad-cool: linear-gradient(135deg, #e11d48 0%, #fb7185 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(225, 29, 72, 0.1), rgba(253, 164, 175, 0.08));
+	--aur-mesh-a: rgba(244, 63, 94, 0.14);
+	--aur-mesh-b: rgba(251, 113, 133, 0.14);
+	--aur-mesh-c: rgba(254, 205, 211, 0.2);
+	--aur-mesh-d: rgba(255, 228, 230, 0.22);
+	--halo-solid: #e11d48;
+	--halo-solid-hover: #be123c;
+}
+
+.aurora-on[data-kaiten-skin="halo"][data-aur-accent="orchid"] {
+	--halo-h: 290;
+	--aur-accent: #c026d3;
+	--aur-grad: linear-gradient(135deg, #a21caf 0%, #d946ef 48%, #f0abfc 100%);
+	--aur-grad-cool: linear-gradient(135deg, #c026d3 0%, #e879f9 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(192, 38, 211, 0.1), rgba(240, 171, 252, 0.08));
+	--aur-mesh-a: rgba(217, 70, 239, 0.14);
+	--aur-mesh-b: rgba(232, 121, 249, 0.14);
+	--aur-mesh-c: rgba(245, 208, 254, 0.2);
+	--aur-mesh-d: rgba(250, 232, 255, 0.22);
+	--halo-solid: #c026d3;
+	--halo-solid-hover: #a21caf;
+}
+
+/* -------------------------------------------------------------------------
+   Neutrals — cool lilac-tinted, not pure gray
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="halo"]:not([data-theme="dark"]) {
+	--gray-50: #f8f8ff;
+	--gray-100: #f0f1fb;
+	--gray-200: #e4e6f4;
+	--gray-300: #d3d5e8;
+	--gray-400: #b0b3cb;
+	--gray-450: #989bb8;
+	--gray-500: #7c7f9c;
+	--gray-600: #5f6280;
+	--gray-700: #464866;
+	--gray-800: #31324a;
+	--gray-900: #222338;
+	--gray-950: #151528;
+}
+
+/* -------------------------------------------------------------------------
+   Backdrop — soft static glow, no Aurora motion
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="halo"] body::before {
+	inset: -12vh -8vw;
+	background:
+		radial-gradient(48rem 32rem at 6% 0%, var(--aur-mesh-d), transparent 62%),
+		radial-gradient(40rem 28rem at 96% 100%, var(--aur-mesh-c), transparent 60%),
+		radial-gradient(28rem 22rem at 70% 8%, var(--aur-mesh-b), transparent 58%);
+	filter: blur(40px);
+	transform: none;
+	animation: none;
+	opacity: 0.95;
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .list-row-container,
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .body-sidebar .sidebar-item-container,
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .dock-items .dock-item,
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .form-section {
+	--cyc-h: var(--halo-h);
+}
+
+/* -------------------------------------------------------------------------
+   Cards — white, inflated, floating. A thin accent rail on the trailing edge
+   echoes the status bars in the reference.
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="halo"] .widget,
+.aurora-on[data-kaiten-skin="halo"] .frappe-card,
+.aurora-on[data-kaiten-skin="halo"] .form-section.card-section,
+.aurora-on[data-kaiten-skin="halo"] .dashboard-section {
+	position: relative;
+	background: var(--aur-surface);
+	border: 1px solid var(--aur-line);
+	border-radius: var(--aur-r-lg);
+	box-shadow: var(--aur-shadow);
+	overflow: hidden;
+}
+
+.aurora-on[data-kaiten-skin="halo"] .widget::before,
+.aurora-on[data-kaiten-skin="halo"] .frappe-card::before,
+.aurora-on[data-kaiten-skin="halo"] .form-section::before {
+	background-image: none;
+	background-color: transparent;
+}
+
+/* Trailing accent rail — status colour without cluttering the face. */
+.aurora-on[data-kaiten-skin="halo"] .widget::after,
+.aurora-on[data-kaiten-skin="halo"] .frappe-card::after {
+	content: "";
+	position: absolute;
+	top: 18%;
+	right: 0;
+	bottom: 18%;
+	width: 4px;
+	border-radius: 999px 0 0 999px;
+	background: var(--aur-grad-cool);
+	opacity: 0.85;
+	pointer-events: none;
+}
+
+.aurora-on[data-kaiten-skin="halo"] .widget:hover,
+.aurora-on[data-kaiten-skin="halo"] .frappe-card:hover,
+.aurora-on[data-kaiten-skin="halo"] .form-section:hover {
+	transform: translateY(-4px);
+	border-color: transparent;
+	box-shadow: var(--aur-shadow-lg);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .widget.shortcut-widget-box {
+	background: var(--aur-surface);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .widget.shortcut-widget-box:hover {
+	transform: translateY(-4px) scale(1.01);
+	background: var(--aur-surface);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .widget .widget-body .shortcut-widget-box,
+.aurora-on[data-kaiten-skin="halo"] .links-widget-box .link-item,
+.aurora-on[data-kaiten-skin="halo"] .onboarding-step,
+.aurora-on[data-kaiten-skin="halo"] .form-dashboard-section .document-link,
+.aurora-on[data-kaiten-skin="halo"] .comment-box .comment-input-wrapper {
+	border-radius: var(--aur-r);
+	background: var(--aur-surface-2);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* A featured / number card can go full pigment. */
+.aurora-on[data-kaiten-skin="halo"] .widget.number-widget-box,
+.aurora-on[data-kaiten-skin="halo"] .widget.onboarding-widget-box {
+	background: var(--aur-grad-cool);
+	color: #fff;
+	border-color: transparent;
+}
+
+.aurora-on[data-kaiten-skin="halo"] .widget.number-widget-box .widget-title,
+.aurora-on[data-kaiten-skin="halo"] .widget.number-widget-box .widget-head,
+.aurora-on[data-kaiten-skin="halo"] .widget.number-widget-box .number-widget-data {
+	color: #fff;
+}
+
+.aurora-on[data-kaiten-skin="halo"] .widget.number-widget-box::after {
+	background: rgba(255, 255, 255, 0.55);
+}
+
+/* -------------------------------------------------------------------------
+   Titles
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="halo"] .page-title .title-text,
+.aurora-on[data-kaiten-skin="halo"] .page-head .title-text {
+	font-weight: 750;
+	letter-spacing: -0.035em;
+	background: none;
+	-webkit-text-fill-color: currentColor;
+	color: var(--aur-ink);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .page-head {
+	border-bottom: 0;
+	backdrop-filter: blur(16px);
+	-webkit-backdrop-filter: blur(16px);
+	background: color-mix(in oklab, var(--halo-page) 72%, transparent);
+}
+
+/* -------------------------------------------------------------------------
+   Controls — soft pills, violet primary
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="halo"] .btn,
+.aurora-on[data-kaiten-skin="halo"] .es-button,
+.aurora-on[data-kaiten-skin="halo"] .filter-section .filter-button,
+.aurora-on[data-kaiten-skin="halo"] .filter-selector .btn,
+.aurora-on[data-kaiten-skin="halo"] .sort-selector .btn,
+.aurora-on[data-kaiten-skin="halo"] .list-count,
+.aurora-on[data-kaiten-skin="halo"] .indicator-pill,
+.aurora-on[data-kaiten-skin="halo"] .form-tabs .nav-link,
+.aurora-on[data-kaiten-skin="halo"] .form-tabs-list .nav-link,
+.aurora-on[data-kaiten-skin="halo"] .document-link .count,
+.aurora-on[data-kaiten-skin="halo"] .badge-link .count {
+	border-radius: 999px;
+}
+
+.aurora-on[data-kaiten-skin="halo"] .btn-primary,
+.aurora-on[data-kaiten-skin="halo"] .es-button[data-variant="solid"]:not([data-theme]) {
+	background: var(--aur-grad-cool);
+	border: 0;
+	color: #fff;
+	box-shadow: 0 12px 24px -12px color-mix(in oklab, var(--aur-accent) 70%, transparent);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .btn-primary:hover,
+.aurora-on[data-kaiten-skin="halo"] .es-button[data-variant="solid"]:not([data-theme]):hover {
+	background: var(--halo-solid-hover);
+	filter: none;
+	box-shadow: 0 16px 28px -12px color-mix(in oklab, var(--aur-accent) 80%, transparent);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .btn-default,
+.aurora-on[data-kaiten-skin="halo"] .btn-secondary {
+	background: var(--aur-surface);
+	border-color: var(--aur-line);
+	box-shadow: var(--aur-shadow-sm);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .btn-default:hover,
+.aurora-on[data-kaiten-skin="halo"] .btn-secondary:hover {
+	background: var(--aur-surface);
+	border-color: transparent;
+	box-shadow: var(--aur-shadow);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .form-control,
+.aurora-on[data-kaiten-skin="halo"] .frappe-control input.form-control,
+.aurora-on[data-kaiten-skin="halo"] .frappe-control select.form-control,
+.aurora-on[data-kaiten-skin="halo"] .frappe-control textarea.form-control,
+.aurora-on[data-kaiten-skin="halo"] .like-disabled-input {
+	border-radius: var(--aur-r);
+	background: #fff;
+	border: 1px solid var(--aur-line);
+	box-shadow: inset 0 2px 6px rgba(76, 60, 140, 0.04);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .form-control:focus,
+.aurora-on[data-kaiten-skin="halo"] .frappe-control input.form-control:focus {
+	border-color: color-mix(in oklab, var(--aur-accent) 45%, transparent);
+	box-shadow: var(--aur-glow), inset 0 1px 2px rgba(76, 60, 140, 0.04);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .indicator-pill.green,
+.aurora-on[data-kaiten-skin="halo"] .indicator-pill-right.green {
+	background: color-mix(in oklab, #22c55e 16%, #fff);
+	color: #15803d;
+}
+
+/* -------------------------------------------------------------------------
+   Kaiten chrome — glass bar, soft mega, inflated tabs
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="halo"] .aur-bar {
+	background: var(--halo-glass);
+	border-bottom: 1px solid var(--aur-line);
+	box-shadow: 0 12px 32px -20px rgba(76, 60, 140, 0.35);
+	backdrop-filter: blur(18px) saturate(1.2);
+	-webkit-backdrop-filter: blur(18px) saturate(1.2);
+	border-radius: 0 0 var(--aur-r-lg) var(--aur-r-lg);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-brand {
+	background: var(--aur-grad-cool);
+	color: #fff;
+	border-radius: 999px;
+	box-shadow: 0 10px 22px -12px color-mix(in oklab, var(--aur-accent) 75%, transparent);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-tab {
+	border-radius: 999px;
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-tab.aur-open {
+	background: var(--aur-grad-cool);
+	color: #fff;
+	box-shadow: 0 12px 24px -14px color-mix(in oklab, var(--aur-accent) 80%, transparent);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-tab.aur-kb,
+.aurora-on[data-kaiten-skin="halo"] .aur-tab.aur-cursor {
+	box-shadow: 0 0 0 2px #fff, 0 0 0 4px color-mix(in oklab, var(--aur-accent) 70%, transparent),
+		0 12px 24px -12px color-mix(in oklab, var(--aur-accent) 55%, transparent);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-search {
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.85);
+	border: 1px solid var(--aur-line);
+	box-shadow: inset 0 2px 8px rgba(76, 60, 140, 0.06);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-icon-btn.aur-theme-btn {
+	background: var(--aur-grad-cool);
+	color: #fff;
+	border-radius: 999px;
+	box-shadow: 0 10px 20px -10px color-mix(in oklab, var(--aur-accent) 70%, transparent);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-mega {
+	background: rgba(255, 255, 255, 0.82);
+	border: 1px solid var(--aur-line);
+	border-radius: var(--aur-r-xl);
+	box-shadow: var(--aur-shadow-lg);
+	backdrop-filter: blur(22px) saturate(1.15);
+	-webkit-backdrop-filter: blur(22px) saturate(1.15);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-group {
+	border-radius: var(--aur-r);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-group.aur-active {
+	background: var(--aur-grad-soft);
+	box-shadow: inset 3px 0 0 var(--aur-accent);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-group.aur-kb,
+.aurora-on[data-kaiten-skin="halo"] .aur-group.aur-cursor {
+	background: var(--aur-grad-cool);
+	color: #fff;
+	box-shadow: 0 10px 20px -12px color-mix(in oklab, var(--aur-accent) 70%, transparent);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-item {
+	border-radius: var(--aur-r);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-item:hover,
+.aurora-on[data-kaiten-skin="halo"] .aur-item.aur-cursor {
+	background: var(--aur-grad-soft);
+	box-shadow: var(--aur-shadow-sm);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-item-icon {
+	border-radius: 14px;
+	background: color-mix(in oklab, var(--aur-accent) 10%, #fff);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-pop {
+	background: rgba(255, 255, 255, 0.9);
+	border: 1px solid var(--aur-line);
+	border-radius: var(--aur-r-xl);
+	box-shadow: var(--aur-shadow-lg);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-skin,
+.aurora-on[data-kaiten-skin="halo"] .aur-content {
+	border-radius: var(--aur-r);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-skin.aur-on,
+.aurora-on[data-kaiten-skin="halo"] .aur-content.aur-on {
+	border-color: transparent;
+	box-shadow: var(--aur-glow), var(--aur-shadow-sm);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-seg {
+	border-radius: 999px;
+	background: var(--aur-surface-2);
+	border: 1px solid var(--aur-line);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-seg button.aur-on {
+	background: var(--aur-grad-cool);
+	box-shadow: 0 8px 16px -10px color-mix(in oklab, var(--aur-accent) 70%, transparent);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .aur-nav-more {
+	border-radius: 999px;
+	box-shadow: var(--aur-shadow-sm);
+}
+
+/* -------------------------------------------------------------------------
+   Sidebar — soft glass rail
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="halo"] .body-sidebar,
+.aurora-on[data-kaiten-skin="halo"] .desk-sidebar {
+	background: rgba(255, 255, 255, 0.62);
+	border-right: 1px solid var(--aur-line);
+	backdrop-filter: blur(18px) saturate(1.15);
+	-webkit-backdrop-filter: blur(18px) saturate(1.15);
+	box-shadow: 12px 0 32px -24px rgba(76, 60, 140, 0.28);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .body-sidebar .standard-sidebar-item,
+.aurora-on[data-kaiten-skin="halo"] .desk-sidebar .standard-sidebar-item {
+	border-radius: 999px;
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .body-sidebar .standard-sidebar-item:hover {
+	background: var(--aur-grad-soft);
+	transform: none;
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .body-sidebar .standard-sidebar-item.selected,
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .body-sidebar .standard-sidebar-item.active-sidebar,
+.aurora-on[data-kaiten-skin="halo"] .desk-sidebar .standard-sidebar-item.selected {
+	background: var(--aur-surface);
+	color: var(--aur-ink);
+	box-shadow: var(--aur-shadow-sm);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .body-sidebar .standard-sidebar-item .sidebar-item-icon,
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .body-sidebar .standard-sidebar-item:hover .sidebar-item-icon {
+	border-radius: 12px;
+	background: color-mix(in oklab, var(--aur-accent) 12%, #ffffff);
+	box-shadow: none;
+	transform: none;
+	color: var(--aur-accent);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .dock::after {
+	content: none;
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .dock .dock-items .dock-item {
+	border-radius: 16px;
+	background: rgba(255, 255, 255, 0.75);
+	box-shadow: var(--aur-shadow-sm);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .dock .dock-items .dock-item:hover {
+	background: #fff;
+	box-shadow: var(--aur-shadow);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .dock-item.active {
+	background: color-mix(in oklab, var(--aur-accent) 14%, #ffffff);
+	box-shadow: var(--aur-glow);
+}
+
+/* -------------------------------------------------------------------------
+   Forms & lists
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="halo"] .form-section {
+	background: var(--aur-surface);
+	border-color: var(--aur-line);
+	border-radius: var(--aur-r-lg);
+	box-shadow: var(--aur-shadow);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .form-section .section-head {
+	color: var(--aur-ink);
+	font-weight: 700;
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .form-section .section-head::before {
+	background: var(--aur-grad-cool);
+	border-radius: 999px;
+	box-shadow: 0 0 0 4px color-mix(in oklab, var(--aur-accent) 14%, transparent);
+	width: 4px;
+}
+
+.aurora-on[data-kaiten-skin="halo"] .list-row-head {
+	background: transparent;
+	border-bottom: 1px solid var(--aur-line);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .list-row-container {
+	border-radius: var(--aur-r);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .list-row-container .list-row:hover {
+	background: var(--aur-grad-soft);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .layout-main-section {
+	background: transparent;
+}
+
+.aurora-on[data-kaiten-skin="halo"] .form-grid,
+.aurora-on[data-kaiten-skin="halo"] .datatable {
+	border-radius: var(--aur-r-lg);
+	border: 1px solid var(--aur-line);
+	box-shadow: var(--aur-shadow-sm);
+	overflow: hidden;
+}
+
+.aurora-on[data-kaiten-skin="halo"] .datatable .dt-header,
+.aurora-on[data-kaiten-skin="halo"] .datatable .dt-row-header {
+	background: var(--aur-surface-2);
+}
+
+/* -------------------------------------------------------------------------
+   Overlays — frosted glass
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="halo"] .modal-content,
+.aurora-on[data-kaiten-skin="halo"] .dropdown-menu {
+	border-radius: var(--aur-r-xl);
+	background: rgba(255, 255, 255, 0.88);
+	border: 1px solid var(--aur-line);
+	box-shadow: var(--aur-shadow-lg);
+	backdrop-filter: blur(20px) saturate(1.1);
+	-webkit-backdrop-filter: blur(20px) saturate(1.1);
+}
+
+/* -------------------------------------------------------------------------
+   Dark — deep violet night, glass still frosted
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="halo"][data-theme="dark"] {
+	--aur-surface: #1a1730;
+	--aur-surface-2: #141228;
+	--aur-sheet: rgba(26, 23, 48, 0.82);
+	--aur-line: rgba(255, 255, 255, 0.07);
+	--aur-line-strong: rgba(255, 255, 255, 0.14);
+	--aur-ink: #f0ecff;
+	--aur-ink-soft: #9b95b8;
+
+	--aur-shadow-sm: 0 8px 20px -10px rgba(0, 0, 0, 0.55);
+	--aur-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.7), 0 4px 12px -6px rgba(0, 0, 0, 0.4);
+	--aur-shadow-lg: 0 28px 56px -18px rgba(0, 0, 0, 0.8), 0 8px 18px -8px rgba(0, 0, 0, 0.5);
+
+	--halo-glass: rgba(26, 23, 48, 0.72);
+	--halo-page: #0e0c1a;
+	--halo-page-2: color-mix(in oklab, var(--aur-accent) 18%, #0e0c1a);
+
+	--gray-100: #e4e0f4;
+	--gray-200: #bcb6d6;
+	--gray-300: #9b94b8;
+	--gray-400: #7a7398;
+	--gray-450: #675f86;
+	--gray-500: #534c6e;
+	--gray-600: #423c5a;
+	--gray-700: #342f48;
+	--gray-800: #262238;
+	--gray-900: #1a1730;
+
+	background:
+		radial-gradient(60rem 36rem at 10% -8%, color-mix(in oklab, var(--aur-accent) 22%, transparent), transparent 58%),
+		linear-gradient(180deg, var(--halo-page) 0%, var(--halo-page-2) 100%);
+}
+
+.aurora-on[data-kaiten-skin="halo"][data-theme="dark"] body::before {
+	opacity: 0.7;
+}
+
+.aurora-on[data-kaiten-skin="halo"][data-theme="dark"] .aur-bar,
+.aurora-on[data-kaiten-skin="halo"][data-theme="dark"] .aur-mega,
+.aurora-on[data-kaiten-skin="halo"][data-theme="dark"] .aur-pop,
+.aurora-on[data-kaiten-skin="halo"][data-theme="dark"] .modal-content,
+.aurora-on[data-kaiten-skin="halo"][data-theme="dark"] .body-sidebar,
+.aurora-on[data-kaiten-skin="halo"][data-theme="dark"] .desk-sidebar {
+	background: var(--halo-glass);
+}
+
+.aurora-on[data-kaiten-skin="halo"][data-theme="dark"] .widget.number-widget-box,
+.aurora-on[data-kaiten-skin="halo"][data-theme="dark"] .widget.onboarding-widget-box {
+	background: var(--aur-grad-cool);
+}

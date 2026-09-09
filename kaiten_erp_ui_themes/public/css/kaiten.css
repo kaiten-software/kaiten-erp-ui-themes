@@ -211,17 +211,139 @@
 /* -------------------------------------------------------------------------
    1d. Density
    -------------------------------------------------------------------------
-   Compact means less air, not smaller everything. Frappe derives most of its
-   spacing from --padding-*, --margin-* and a handful of height tokens, so
-   remapping those reaches every stock component in one move — including ones
-   this theme never names. The rules after the token block are for the places
-   that hard-code their own numbers, plus this theme's own chrome.
+   Three steps from comfortable to tight. Standard leaves Frappe's own spacing
+   alone. Dense takes back wasted air without pinching. Sleek is the tightest —
+   less air, not smaller type for its own sake.
+
+   Frappe derives most of its spacing from --padding-*, --margin-* and a handful
+   of height tokens, so remapping those reaches every stock component in one
+   move — including ones this theme never names. The rules after each token
+   block are for the places that hard-code their own numbers, plus this theme's
+   own chrome.
 
    The class is doubled so the block outranks a skin's token block, which is
    0-2-0 on the same element: density is a preference and has to win over the
    look, whichever stylesheet happens to load last.
    ---------------------------------------------------------------------- */
 
+/* Dense — halfway from Standard to Sleek. */
+.aurora-on.aurora-on[data-aur-density="dense"] {
+	--padding-xs: 5px;
+	--padding-sm: 7px;
+	--padding-md: 12px;
+	--padding-lg: 16px;
+	--padding-xl: 24px;
+	--padding-2xl: 32px;
+
+	--margin-xs: 4px;
+	--margin-sm: 8px;
+	--margin-md: 12px;
+	--margin-lg: 16px;
+	--margin-xl: 24px;
+	--margin-2xl: 32px;
+
+	--input-height: 28px;
+	--btn-height: 28px;
+	--checkbox-size: 14px;
+	--page-head-height: 46px;
+	--sidebar-width: 220px;
+
+	--radius-sm: 6px;
+	--radius: 8px;
+	--radius-md: 10px;
+	--radius-lg: 12px;
+	--radius-xl: 16px;
+
+	--aur-r-sm: 9px;
+	--aur-r: 12px;
+	--aur-r-lg: 15px;
+	--aur-r-xl: 18px;
+
+	--aur-bar-h: 42px;
+}
+
+.aurora-on.aurora-on[data-aur-density="dense"] .frappe-control {
+	margin-bottom: 8px;
+}
+
+.aurora-on.aurora-on[data-aur-density="dense"] .control-label {
+	margin-bottom: 3px;
+	font-size: 12px;
+}
+
+.aurora-on.aurora-on[data-aur-density="dense"] .form-control,
+.aurora-on.aurora-on[data-aur-density="dense"] .frappe-control input.form-control,
+.aurora-on.aurora-on[data-aur-density="dense"] .frappe-control select.form-control,
+.aurora-on.aurora-on[data-aur-density="dense"] .frappe-control textarea.form-control,
+.aurora-on.aurora-on[data-aur-density="dense"] .like-disabled-input {
+	padding: 3px 8px;
+	font-size: 13px;
+}
+
+.aurora-on.aurora-on[data-aur-density="dense"] .form-section {
+	padding: 0 12px;
+	margin-bottom: 10px;
+}
+
+.aurora-on.aurora-on[data-aur-density="dense"] .section-body {
+	padding-top: 8px;
+}
+
+.aurora-on.aurora-on[data-aur-density="dense"] .form-section .section-head {
+	padding: 8px 12px;
+	font-size: 12.5px;
+}
+
+.aurora-on.aurora-on[data-aur-density="dense"] .form-column {
+	padding: 0 12px;
+}
+
+.aurora-on.aurora-on[data-aur-density="dense"] .form-column .frappe-control {
+	padding-right: 12px;
+}
+
+.aurora-on.aurora-on[data-aur-density="dense"] .form-tabs-list .nav-link,
+.aurora-on.aurora-on[data-aur-density="dense"] .form-tabs .nav-link {
+	padding-top: 7px;
+	padding-bottom: 7px;
+}
+
+.aurora-on.aurora-on[data-aur-density="dense"] .form-grid .grid-static-col,
+.aurora-on.aurora-on[data-aur-density="dense"] .form-grid .grid-row .col,
+.aurora-on.aurora-on[data-aur-density="dense"] .datatable .dt-cell__content {
+	padding: 5px 8px;
+	font-size: 12.5px;
+}
+
+.aurora-on.aurora-on[data-aur-density="dense"] .list-row-container .list-row {
+	padding-top: 3px;
+	padding-bottom: 3px;
+}
+
+.aurora-on.aurora-on[data-aur-density="dense"] .widget {
+	padding: 8px;
+}
+
+.aurora-on.aurora-on[data-aur-density="dense"] .widget-head {
+	padding: 4px 8px;
+	min-height: 32px;
+}
+
+.aurora-on.aurora-on[data-aur-density="dense"] .body-sidebar .standard-sidebar-item {
+	padding: 4px 8px;
+	margin: 0 6px;
+}
+
+.aurora-on.aurora-on[data-aur-density="dense"] .aur-item {
+	padding: 7px 10px;
+}
+
+.aurora-on.aurora-on[data-aur-density="dense"] .aur-tab {
+	padding: 5px 11px;
+}
+
+/* Sleek — the tightest step. Formerly stored as "compact". */
+.aurora-on.aurora-on[data-aur-density="sleek"],
 .aurora-on.aurora-on[data-aur-density="compact"] {
 	--padding-xs: 4px;
 	--padding-sm: 5px;
@@ -261,16 +383,23 @@
 
 /* Fields — the vertical rhythm of a form is label margin, control margin and
    section padding stacked; all three come down together or nothing does. */
+.aurora-on.aurora-on[data-aur-density="sleek"] .frappe-control,
 .aurora-on.aurora-on[data-aur-density="compact"] .frappe-control {
 	margin-bottom: 4px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .control-label,
 .aurora-on.aurora-on[data-aur-density="compact"] .control-label {
 	margin-bottom: 2px;
 	font-size: 11.5px;
 	line-height: 1.4;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .form-control,
+.aurora-on.aurora-on[data-aur-density="sleek"] .frappe-control input.form-control,
+.aurora-on.aurora-on[data-aur-density="sleek"] .frappe-control select.form-control,
+.aurora-on.aurora-on[data-aur-density="sleek"] .frappe-control textarea.form-control,
+.aurora-on.aurora-on[data-aur-density="sleek"] .like-disabled-input,
 .aurora-on.aurora-on[data-aur-density="compact"] .form-control,
 .aurora-on.aurora-on[data-aur-density="compact"] .frappe-control input.form-control,
 .aurora-on.aurora-on[data-aur-density="compact"] .frappe-control select.form-control,
@@ -280,32 +409,40 @@
 	font-size: 12.5px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .frappe-control textarea.form-control,
 .aurora-on.aurora-on[data-aur-density="compact"] .frappe-control textarea.form-control {
 	min-height: 52px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .form-section,
 .aurora-on.aurora-on[data-aur-density="compact"] .form-section {
 	padding: 0 10px;
 	margin-bottom: 7px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .section-body,
 .aurora-on.aurora-on[data-aur-density="compact"] .section-body {
 	padding-top: 5px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .form-section .section-head,
 .aurora-on.aurora-on[data-aur-density="compact"] .form-section .section-head {
 	padding: 6px 10px;
 	font-size: 12px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .form-column,
 .aurora-on.aurora-on[data-aur-density="compact"] .form-column {
 	padding: 0 10px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .form-column .frappe-control,
 .aurora-on.aurora-on[data-aur-density="compact"] .form-column .frappe-control {
 	padding-right: 10px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .form-tabs-list .nav-link,
+.aurora-on.aurora-on[data-aur-density="sleek"] .form-tabs .nav-link,
 .aurora-on.aurora-on[data-aur-density="compact"] .form-tabs-list .nav-link,
 .aurora-on.aurora-on[data-aur-density="compact"] .form-tabs .nav-link {
 	padding-top: 5px;
@@ -313,10 +450,12 @@
 	font-size: 12.5px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .form-footer,
 .aurora-on.aurora-on[data-aur-density="compact"] .form-footer {
 	gap: 8px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .comment-box,
 .aurora-on.aurora-on[data-aur-density="compact"] .comment-box {
 	padding: 8px 10px;
 	margin-top: 12px;
@@ -325,6 +464,9 @@
 
 /* Child tables and the report grid: a cell is read across, so its height is
    pure cost. */
+.aurora-on.aurora-on[data-aur-density="sleek"] .form-grid .grid-static-col,
+.aurora-on.aurora-on[data-aur-density="sleek"] .form-grid .grid-row .col,
+.aurora-on.aurora-on[data-aur-density="sleek"] .datatable .dt-cell__content,
 .aurora-on.aurora-on[data-aur-density="compact"] .form-grid .grid-static-col,
 .aurora-on.aurora-on[data-aur-density="compact"] .form-grid .grid-row .col,
 .aurora-on.aurora-on[data-aur-density="compact"] .datatable .dt-cell__content {
@@ -332,90 +474,110 @@
 	font-size: 12px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .grid-heading-row .grid-row,
 .aurora-on.aurora-on[data-aur-density="compact"] .grid-heading-row .grid-row {
 	font-size: 11px;
 }
 
 /* List rows */
+.aurora-on.aurora-on[data-aur-density="sleek"] .list-row-container .list-row,
 .aurora-on.aurora-on[data-aur-density="compact"] .list-row-container .list-row {
 	padding-top: 1px;
 	padding-bottom: 1px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .list-row-col,
+.aurora-on.aurora-on[data-aur-density="sleek"] .list-subject,
 .aurora-on.aurora-on[data-aur-density="compact"] .list-row-col,
 .aurora-on.aurora-on[data-aur-density="compact"] .list-subject {
 	font-size: 12.5px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .list-row-col,
 .aurora-on.aurora-on[data-aur-density="compact"] .list-row-col {
 	margin-right: 10px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .list-row-head,
 .aurora-on.aurora-on[data-aur-density="compact"] .list-row-head {
 	font-size: 10.5px;
 }
 
 /* Cards */
+.aurora-on.aurora-on[data-aur-density="sleek"] .widget,
 .aurora-on.aurora-on[data-aur-density="compact"] .widget {
 	padding: 5px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .widget-head,
 .aurora-on.aurora-on[data-aur-density="compact"] .widget-head {
 	padding: 2px 6px;
 	min-height: 28px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .widget .widget-body,
 .aurora-on.aurora-on[data-aur-density="compact"] .widget .widget-body {
 	padding-top: 4px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .widget .widget-title,
 .aurora-on.aurora-on[data-aur-density="compact"] .widget .widget-title {
 	font-size: 13px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .layout-main-section,
 .aurora-on.aurora-on[data-aur-density="compact"] .layout-main-section {
 	padding-top: 4px;
 	padding-bottom: 4px;
 }
 
 /* Page head and titles */
+.aurora-on.aurora-on[data-aur-density="sleek"] .page-title .title-text,
+.aurora-on.aurora-on[data-aur-density="sleek"] .page-head .title-text,
 .aurora-on.aurora-on[data-aur-density="compact"] .page-title .title-text,
 .aurora-on.aurora-on[data-aur-density="compact"] .page-head .title-text {
 	font-size: 14.5px;
 }
 
 /* Rails */
+.aurora-on.aurora-on[data-aur-density="sleek"] .body-sidebar .standard-sidebar-item,
 .aurora-on.aurora-on[data-aur-density="compact"] .body-sidebar .standard-sidebar-item {
 	padding: 2px 6px;
 	margin: 0 5px;
 	font-size: 12.5px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .body-sidebar .sidebar-item-icon,
 .aurora-on.aurora-on[data-aur-density="compact"] .body-sidebar .sidebar-item-icon {
 	width: 18px;
 	height: 18px;
 	border-radius: 6px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .dock .dock-items .dock-item,
 .aurora-on.aurora-on[data-aur-density="compact"] .dock .dock-items .dock-item {
 	width: 24px;
 	height: 24px;
 }
 
 /* Overlays */
+.aurora-on.aurora-on[data-aur-density="sleek"] .modal-header,
 .aurora-on.aurora-on[data-aur-density="compact"] .modal-header {
 	padding: 10px 14px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .modal-body,
 .aurora-on.aurora-on[data-aur-density="compact"] .modal-body {
 	padding: 12px 14px;
 }
 
 /* This theme's own chrome */
+.aurora-on.aurora-on[data-aur-density="sleek"] .aur-item,
 .aurora-on.aurora-on[data-aur-density="compact"] .aur-item {
 	padding: 5px 8px;
 }
 
+.aurora-on.aurora-on[data-aur-density="sleek"] .aur-tab,
 .aurora-on.aurora-on[data-aur-density="compact"] .aur-tab {
 	padding: 4px 9px;
 	font-size: 12px;
@@ -685,6 +847,10 @@
 	   the bar the height it was. */
 	padding: 7px 5px;
 	margin: -7px 0;
+	scroll-behavior: auto;
+	/* When a chevron is up, its slot is reserved inside the strip so the focused
+	   tab can sit clear of it instead of under it. */
+	transition: padding-left var(--aur-fast) var(--aur-ease), padding-right var(--aur-fast) var(--aur-ease);
 }
 
 .aur-nav::-webkit-scrollbar {
@@ -695,18 +861,22 @@
    cut off mid-word. A mask does this over the bar's own blurred gradient, which
    no solid overlay could match. */
 .aur-nav-wrap.aur-more-left .aur-nav {
-	-webkit-mask-image: linear-gradient(90deg, transparent, #000 40px);
-	mask-image: linear-gradient(90deg, transparent, #000 40px);
+	padding-left: 28px;
+	-webkit-mask-image: linear-gradient(90deg, transparent, #000 36px);
+	mask-image: linear-gradient(90deg, transparent, #000 36px);
 }
 
 .aur-nav-wrap.aur-more-right .aur-nav {
-	-webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
-	mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+	padding-right: 28px;
+	-webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
+	mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
 }
 
 .aur-nav-wrap.aur-more-left.aur-more-right .aur-nav {
-	-webkit-mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent);
-	mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+	padding-left: 28px;
+	padding-right: 28px;
+	-webkit-mask-image: linear-gradient(90deg, transparent, #000 36px, #000 calc(100% - 36px), transparent);
+	mask-image: linear-gradient(90deg, transparent, #000 36px, #000 calc(100% - 36px), transparent);
 }
 
 /* A handle on each fade, shown only while there is something that way, so the
@@ -810,7 +980,9 @@
 
 .aur-bar.aur-kb-bar .aur-tab.aur-open.aur-kb,
 .aur-bar.aur-kb-bar .aur-tab.aur-cursor {
-	transform: translateY(-1px) scale(1.04);
+	/* Lift without growing sideways — a scaled tab used to bleed its ring onto
+	   the neighbour when it sat half under the left fade. */
+	transform: translateY(-1px);
 }
 
 .aur-tab-count {
@@ -3254,29 +3426,34 @@ a.aur-item:focus {
 
 .aur-seg {
 	display: flex;
-	gap: 4px;
+	gap: 3px;
 	padding: 3px;
 	border-radius: 999px;
 	border: 1px solid var(--aur-line);
 	background: var(--aur-surface-2);
+	width: 100%;
 }
 
 .aur-seg button {
-	flex: 1;
+	flex: 1 1 0;
+	min-width: 0;
 	border: none;
 	background: transparent;
 	color: var(--aur-ink);
-	font-size: 12px;
+	font-size: 11.5px;
 	font-weight: 600;
-	padding: 5px 8px;
+	padding: 6px 4px;
 	border-radius: 999px;
 	cursor: pointer;
-	transition: background var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease);
+	letter-spacing: 0.01em;
+	transition: background var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease),
+		box-shadow var(--aur-fast) var(--aur-ease);
 }
 
 .aur-seg button.aur-on {
 	color: #fff;
 	background: var(--aur-grad-cool);
+	box-shadow: 0 6px 14px -8px rgba(79, 70, 229, 0.85);
 }
 
 .aur-pop [hidden] {

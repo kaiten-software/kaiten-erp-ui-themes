@@ -93,6 +93,22 @@
 		{ id: "blush", label: "Blush", swatch: "linear-gradient(135deg,#f43f5e,#fb7185,#fecdd3)" },
 	];
 
+	var CAST_TONES = [
+		{ id: "violet", label: "Violet", swatch: "linear-gradient(90deg,#5b2ef0,#7b5cff,#9b87ff)" },
+		{ id: "indigo", label: "Indigo", swatch: "linear-gradient(90deg,#364fc7,#5c7cfa,#91a7ff)" },
+		{ id: "coral", label: "Coral", swatch: "linear-gradient(90deg,#d9480f,#fd7e14,#ffa94d)" },
+		{ id: "jade", label: "Jade", swatch: "linear-gradient(90deg,#099268,#20c997,#63e6be)" },
+		{ id: "ink", label: "Ink", swatch: "linear-gradient(90deg,#212529,#495057,#868e96)" },
+	];
+
+	var HALO_TONES = [
+		{ id: "violet", label: "Violet", swatch: "linear-gradient(135deg,#6d28d9,#7c3aed,#a78bfa)" },
+		{ id: "azure", label: "Azure", swatch: "linear-gradient(135deg,#1d4ed8,#3b82f6,#93c5fd)" },
+		{ id: "lime", label: "Lime", swatch: "linear-gradient(135deg,#4d7c0f,#84cc16,#bef264)" },
+		{ id: "rose", label: "Rose", swatch: "linear-gradient(135deg,#be123c,#f43f5e,#fda4af)" },
+		{ id: "orchid", label: "Orchid", swatch: "linear-gradient(135deg,#a21caf,#d946ef,#f0abfc)" },
+	];
+
 	/* A skin is a look, and nothing more: one stylesheet of token overrides
 	   layered on kaiten.css, picked with data-kaiten-skin. It is independent of
 	   the light/dark appearance, which stays Frappe's. "default" carries no
@@ -120,6 +136,20 @@
 			swatch: "linear-gradient(135deg,#ede9fe 0%,#c4b5fd 38%,#fbcfe8 68%,#fde68a 100%)",
 			tones: LUMEN_TONES,
 		},
+		{
+			id: "cast",
+			label: "Cast",
+			note: "Milky flats, right angles, hard light",
+			swatch: "linear-gradient(135deg,#6c42f5 0%,#6c42f5 42%,#ffffff 42%,#ffffff 100%)",
+			tones: CAST_TONES,
+		},
+		{
+			id: "halo",
+			label: "Halo",
+			note: "Futurist glass, soft float, inflated corners",
+			swatch: "linear-gradient(135deg,#f5f6ff 0%,#c4b5fd 40%,#7c3aed 100%)",
+			tones: HALO_TONES,
+		},
 	];
 
 	/* Frappe's three appearances. Its own name for the third is "automatic",
@@ -133,6 +163,15 @@
 	// A tone the user mixed themselves is stored as one of these and referenced
 	// as "custom:<id>", so it can sit beside the built-in swatches.
 	var CUSTOM_PREFIX = "custom:";
+
+	/* Spacing of the desk — three steps from comfortable to tight. Independent
+	   of the skin: every theme that offers density offers the same three. Older
+	   prefs wrote "cozy" and "compact"; those land on Standard and Sleek. */
+	var DENSITIES = [
+		{ id: "standard", label: "Standard", note: "Comfortable spacing" },
+		{ id: "dense", label: "Dense", note: "Less wasted space" },
+		{ id: "sleek", label: "Sleek", note: "Tight and sharp" },
+	];
 
 	/* The two tabs that belong to the person rather than to the content. They
 	   bracket the strip and survive a content switch, because a pin made under
@@ -2846,6 +2885,16 @@
 		state.pinCursor = { kind: "tab", key: ids[next] };
 		setKbZone("bar");
 		openTab(ids[next]);
+
+		// The redraw may have scrolled the strip for layout reasons, or left the
+		// previous tab's ring peeking out of the fade. Re-assert the cursor and
+		// snap the new tab fully into view once the open fill has settled.
+		var node = el.tabNodes && el.tabNodes[ids[next]];
+		if (node) {
+			state.pinCursor = null;
+			setKbZone("bar");
+			setCursor(node);
+		}
 		return true;
 	}
 
@@ -3258,9 +3307,15 @@
 				if (state.kbZone === "bar") {
 					var ids = tabIds();
 					if (!ids.length) return;
-					state.pinCursor = { kind: "tab", key: event.key === "Home" ? ids[0] : ids[ids.length - 1] };
+					var endId = event.key === "Home" ? ids[0] : ids[ids.length - 1];
+					state.pinCursor = { kind: "tab", key: endId };
 					setKbZone("bar");
-					openTab(state.pinCursor.key);
+					openTab(endId);
+					if (el.tabNodes && el.tabNodes[endId]) {
+						state.pinCursor = null;
+						setKbZone("bar");
+						setCursor(el.tabNodes[endId]);
+					}
 					return;
 				}
 				if (state.kbZone === "groups") {
@@ -3481,11 +3536,13 @@
 		renderSkins();
 		renderTones();
 
-		[
-			{ id: "cozy", label: "Cozy" },
-			{ id: "compact", label: "Compact" },
-		].forEach(function (option) {
-			var button = make("button", { class: currentDensity() === option.id ? "aur-on" : "", type: "button", text: option.label });
+		DENSITIES.forEach(function (option) {
+			var button = make("button", {
+				class: currentDensity() === option.id ? "aur-on" : "",
+				type: "button",
+				title: option.note,
+				text: option.label,
+			});
 			button.addEventListener("click", function () {
 				setDensity(option.id);
 				Array.prototype.forEach.call(density.children, function (node) {
@@ -3845,23 +3902,54 @@
 		el.navWrap.classList.toggle("aur-more-right", slack > 2 && el.nav.scrollLeft < slack - 2);
 	}
 
-	/* Land a tab clear of both ends, with room to spare, so its neighbour still
-	   peeks out — that sliver is what says the row carries on. */
+	/* Land a tab clear of both ends — the chevron, the fade, and a sliver of its
+	   neighbour — so the keyboard ring is fully on screen and nothing behind it
+	   still reads as selected. Instant, not smooth: a lagging scroll is what left
+	   the previous tab's outline hanging while Pinned was still out of frame. */
 	function revealTab(node) {
-		if (!el.nav || !node) return;
+		if (!el.nav || !node || !el.nav.contains(node)) return;
 
-		var peek = 58;
-		var left = node.offsetLeft - peek;
-		var right = node.offsetLeft + node.offsetWidth + peek;
-		var target = el.nav.scrollLeft;
+		paintNavOverflow();
 
-		if (left < target) target = left;
-		else if (right > target + el.nav.clientWidth) target = right - el.nav.clientWidth;
+		var gutter = 32;
+		var peek = 52;
+		var leftEdge = el.navWrap && el.navWrap.classList.contains("aur-more-left") ? gutter : 8;
+		var rightEdge = el.navWrap && el.navWrap.classList.contains("aur-more-right") ? gutter : 8;
+
+		var navBox = el.nav.getBoundingClientRect();
+		var tabBox = node.getBoundingClientRect();
+		var delta = 0;
+
+		if (tabBox.left < navBox.left + leftEdge) {
+			delta = tabBox.left - (navBox.left + leftEdge) - peek;
+		} else if (tabBox.right > navBox.right - rightEdge) {
+			delta = tabBox.right - (navBox.right - rightEdge) + peek;
+		}
+
+		if (Math.abs(delta) < 1) {
+			paintNavOverflow();
+			return;
+		}
 
 		var max = Math.max(0, el.nav.scrollWidth - el.nav.clientWidth);
-		target = Math.max(0, Math.min(target, max));
-		if (Math.abs(target - el.nav.scrollLeft) > 1) el.nav.scrollTo({ left: target, behavior: "smooth" });
+		var target = Math.max(0, Math.min(el.nav.scrollLeft + delta, max));
+		el.nav.scrollLeft = target;
 		paintNavOverflow();
+
+		// Padding for a newly shown chevron can shift the tab again — one more
+		// pass lands it clear once the gutters have settled.
+		navBox = el.nav.getBoundingClientRect();
+		tabBox = node.getBoundingClientRect();
+		leftEdge = el.navWrap.classList.contains("aur-more-left") ? gutter : 8;
+		rightEdge = el.navWrap.classList.contains("aur-more-right") ? gutter : 8;
+		delta = 0;
+		if (tabBox.left < navBox.left + leftEdge) delta = tabBox.left - (navBox.left + leftEdge) - 8;
+		else if (tabBox.right > navBox.right - rightEdge) delta = tabBox.right - (navBox.right - rightEdge) + 8;
+		if (Math.abs(delta) >= 1) {
+			max = Math.max(0, el.nav.scrollWidth - el.nav.clientWidth);
+			el.nav.scrollLeft = Math.max(0, Math.min(el.nav.scrollLeft + delta, max));
+			paintNavOverflow();
+		}
 	}
 
 	function buildBar(anchor) {
@@ -4252,8 +4340,19 @@
 		return offered[0].id;
 	}
 
+	function knownDensity(id) {
+		return DENSITIES.some(function (option) {
+			return option.id === id;
+		});
+	}
+
 	function currentDensity() {
-		return localStorage.getItem(KEY.density) || "cozy";
+		var stored = localStorage.getItem(KEY.density);
+		if (knownDensity(stored)) return stored;
+		// Prefs written before the three-step scale.
+		if (stored === "cozy" || stored === "normal") return "standard";
+		if (stored === "compact") return "sleek";
+		return "standard";
 	}
 
 	/* A mixed tone has no stylesheet to live in, so its stops are written onto
@@ -4370,6 +4469,7 @@
 	}
 
 	function setDensity(id) {
+		if (!knownDensity(id) || id === currentDensity()) return;
 		localStorage.setItem(KEY.density, id);
 		applyPrefs();
 		schedulePush();

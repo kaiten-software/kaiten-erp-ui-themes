@@ -1,0 +1,640 @@
+/* =========================================================================
+   Cast — milky flats, right angles, light from the top-left
+   -------------------------------------------------------------------------
+   A skin layered on kaiten.css. White cards sit on a vivid field like poured
+   milk on pigment; every corner is square; every shadow falls down and right,
+   as if a single lamp hangs above the left shoulder. No glow, no mesh, no
+   pill — the geometry is the whole idea.
+
+   Every rule carries [data-kaiten-skin="cast"], so nothing here can reach
+   another skin. Where a base rule already matches at the same specificity,
+   .aurora-on is repeated to win the tie without depending on file order.
+
+   The look is driven by the tone tokens below. A mixed tone arrives as inline
+   custom properties, so page paint and soft washes always derive from
+   --aur-accent / the mesh tokens rather than a preset-only variable.
+   ========================================================================= */
+
+.aurora-on[data-kaiten-skin="cast"] {
+	/* Geometry — right angles everywhere. The loudest signal of this skin. */
+	--radius-sm: 0;
+	--radius: 0;
+	--radius-md: 0;
+	--radius-lg: 0;
+	--radius-xl: 0;
+	--border-radius: 0;
+	--border-radius-sm: 0;
+	--border-radius-md: 0;
+	--border-radius-lg: 0;
+	--border-radius-full: 0;
+
+	--aur-r-sm: 0;
+	--aur-r: 0;
+	--aur-r-lg: 0;
+	--aur-r-xl: 0;
+
+	/* Surfaces — opaque milk. The field colour reads in the gaps, never through. */
+	--aur-surface: #ffffff;
+	--aur-surface-2: #f7f5fb;
+	--aur-sheet: #ffffff;
+	--aur-row-tint: transparent;
+
+	--aur-line: rgba(28, 18, 48, 0.08);
+	--aur-line-strong: rgba(28, 18, 48, 0.16);
+	--aur-ink: #1a1428;
+	--aur-ink-soft: #6e6680;
+
+	/* Depth — hard cast: offset right and down, almost no blur on the near edge.
+	   Soft ambient only as a second layer, still biased bottom-right. */
+	--aur-shadow-sm: 3px 3px 0 rgba(28, 18, 48, 0.1);
+	--aur-shadow: 5px 5px 0 rgba(28, 18, 48, 0.12), 14px 18px 28px -16px rgba(28, 18, 48, 0.28);
+	--aur-shadow-lg: 7px 7px 0 rgba(28, 18, 48, 0.14), 22px 28px 40px -18px rgba(28, 18, 48, 0.36);
+	--aur-glow: 0 0 0 2px color-mix(in oklab, var(--aur-accent) 28%, transparent);
+
+	/* Motion — crisp, no overshoot. A square does not bounce. */
+	--aur-ease-back: cubic-bezier(0.2, 0.8, 0.2, 1);
+	--aur-fast: 0.12s;
+	--aur-mid: 0.22s;
+	--aur-slow: 0.4s;
+
+	/* One hue for the whole desk — violet, matching the poured field. */
+	--cast-h: 262;
+
+	/* Violet fallback — finished even if the stored tone belongs elsewhere. */
+	--aur-accent: #6c42f5;
+	--aur-grad: linear-gradient(90deg, #5b2ef0 0%, #7b5cff 55%, #9b87ff 100%);
+	--aur-grad-cool: linear-gradient(90deg, #6c42f5 0%, #8b6cf7 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(108, 66, 245, 0.1), rgba(155, 135, 255, 0.06));
+	--aur-mesh-a: rgba(108, 66, 245, 0.18);
+	--aur-mesh-b: rgba(155, 135, 255, 0.12);
+	--aur-mesh-c: rgba(91, 46, 240, 0.1);
+	--aur-mesh-d: rgba(199, 180, 255, 0.14);
+
+	/* Solid primary — flat pigment, not a glass button. */
+	--cast-solid: #6c42f5;
+	--cast-solid-hover: #5b2ef0;
+	--cast-ink-btn: #1a1428;
+
+	/* The poured field: a saturated plane the milk cards float on. */
+	--cast-field: color-mix(in oklab, var(--aur-accent) 72%, #4a1fd4);
+	--cast-field-deep: color-mix(in oklab, var(--aur-accent) 88%, #2a0f8a);
+
+	background: var(--cast-field);
+}
+
+/* -------------------------------------------------------------------------
+   Tones — each repaints the accent and the poured field
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="cast"][data-aur-accent="violet"] {
+	--cast-h: 262;
+	--aur-accent: #6c42f5;
+	--aur-grad: linear-gradient(90deg, #5b2ef0 0%, #7b5cff 55%, #9b87ff 100%);
+	--aur-grad-cool: linear-gradient(90deg, #6c42f5 0%, #8b6cf7 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(108, 66, 245, 0.1), rgba(155, 135, 255, 0.06));
+	--aur-mesh-a: rgba(108, 66, 245, 0.18);
+	--aur-mesh-b: rgba(155, 135, 255, 0.12);
+	--aur-mesh-c: rgba(91, 46, 240, 0.1);
+	--aur-mesh-d: rgba(199, 180, 255, 0.14);
+	--cast-solid: #6c42f5;
+	--cast-solid-hover: #5b2ef0;
+}
+
+.aurora-on[data-kaiten-skin="cast"][data-aur-accent="indigo"] {
+	--cast-h: 232;
+	--aur-accent: #3f5bdb;
+	--aur-grad: linear-gradient(90deg, #364fc7 0%, #5c7cfa 55%, #91a7ff 100%);
+	--aur-grad-cool: linear-gradient(90deg, #3f5bdb 0%, #748ffc 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(63, 91, 219, 0.1), rgba(145, 167, 255, 0.06));
+	--aur-mesh-a: rgba(63, 91, 219, 0.18);
+	--aur-mesh-b: rgba(116, 143, 252, 0.12);
+	--aur-mesh-c: rgba(54, 79, 199, 0.1);
+	--aur-mesh-d: rgba(186, 200, 255, 0.14);
+	--cast-solid: #3f5bdb;
+	--cast-solid-hover: #364fc7;
+}
+
+.aurora-on[data-kaiten-skin="cast"][data-aur-accent="coral"] {
+	--cast-h: 12;
+	--aur-accent: #e8590c;
+	--aur-grad: linear-gradient(90deg, #d9480f 0%, #fd7e14 55%, #ffa94d 100%);
+	--aur-grad-cool: linear-gradient(90deg, #e8590c 0%, #ff922b 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(232, 89, 12, 0.1), rgba(255, 169, 77, 0.06));
+	--aur-mesh-a: rgba(232, 89, 12, 0.16);
+	--aur-mesh-b: rgba(255, 146, 43, 0.12);
+	--aur-mesh-c: rgba(217, 72, 15, 0.1);
+	--aur-mesh-d: rgba(255, 201, 150, 0.14);
+	--cast-solid: #e8590c;
+	--cast-solid-hover: #d9480f;
+}
+
+.aurora-on[data-kaiten-skin="cast"][data-aur-accent="jade"] {
+	--cast-h: 158;
+	--aur-accent: #0ca678;
+	--aur-grad: linear-gradient(90deg, #099268 0%, #20c997 55%, #63e6be 100%);
+	--aur-grad-cool: linear-gradient(90deg, #0ca678 0%, #38d9a9 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(12, 166, 120, 0.1), rgba(99, 230, 190, 0.06));
+	--aur-mesh-a: rgba(12, 166, 120, 0.16);
+	--aur-mesh-b: rgba(56, 217, 169, 0.12);
+	--aur-mesh-c: rgba(9, 146, 104, 0.1);
+	--aur-mesh-d: rgba(150, 242, 215, 0.14);
+	--cast-solid: #0ca678;
+	--cast-solid-hover: #099268;
+}
+
+.aurora-on[data-kaiten-skin="cast"][data-aur-accent="ink"] {
+	--cast-h: 250;
+	--aur-accent: #343a40;
+	--aur-grad: linear-gradient(90deg, #212529 0%, #495057 55%, #868e96 100%);
+	--aur-grad-cool: linear-gradient(90deg, #343a40 0%, #495057 100%);
+	--aur-grad-soft: linear-gradient(135deg, rgba(52, 58, 64, 0.08), rgba(134, 142, 150, 0.05));
+	--aur-mesh-a: rgba(52, 58, 64, 0.12);
+	--aur-mesh-b: rgba(73, 80, 87, 0.1);
+	--aur-mesh-c: rgba(33, 37, 41, 0.1);
+	--aur-mesh-d: rgba(173, 181, 189, 0.12);
+	--cast-solid: #212529;
+	--cast-solid-hover: #000000;
+	--cast-field: #4a4458;
+	--cast-field-deep: #2e2a38;
+}
+
+/* -------------------------------------------------------------------------
+   Neutrals — pure, untinted. A cast shadow needs honest gray.
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="cast"]:not([data-theme="dark"]) {
+	--gray-50: #faf9fc;
+	--gray-100: #f3f1f7;
+	--gray-200: #e8e4ef;
+	--gray-300: #d6d0de;
+	--gray-400: #b5adbf;
+	--gray-450: #9a91a8;
+	--gray-500: #7d748c;
+	--gray-600: #5f576c;
+	--gray-700: #453e52;
+	--gray-800: #2f2a3a;
+	--gray-900: #1f1b28;
+	--gray-950: #14111a;
+}
+
+/* -------------------------------------------------------------------------
+   Backdrop — kill Aurora's mesh. The field is flat pigment; a faint vignette
+   keeps the milk cards from floating in a void.
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="cast"] body::before {
+	inset: 0;
+	background:
+		radial-gradient(120% 80% at 12% 0%, rgba(255, 255, 255, 0.22), transparent 55%),
+		radial-gradient(90% 70% at 100% 100%, rgba(0, 0, 0, 0.18), transparent 50%);
+	filter: none;
+	transform: none;
+	animation: none;
+	opacity: 1;
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .list-row-container,
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .body-sidebar .sidebar-item-container,
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .dock-items .dock-item,
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .form-section {
+	--cyc-h: var(--cast-h);
+}
+
+/* -------------------------------------------------------------------------
+   Cards — milk slabs. Square, borderless on the light edge, shadow does the
+   depth. A hairline on top-left hints at the light source.
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="cast"] .widget,
+.aurora-on[data-kaiten-skin="cast"] .frappe-card,
+.aurora-on[data-kaiten-skin="cast"] .form-section.card-section,
+.aurora-on[data-kaiten-skin="cast"] .dashboard-section,
+.aurora-on[data-kaiten-skin="cast"] .layout-main-section,
+.aurora-on[data-kaiten-skin="cast"] .list-row-container,
+.aurora-on[data-kaiten-skin="cast"] .codex-editor,
+.aurora-on[data-kaiten-skin="cast"] .page-card {
+	background: var(--aur-surface);
+	border: 1px solid var(--aur-line);
+	border-radius: 0 !important;
+	box-shadow: var(--aur-shadow);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .widget::before,
+.aurora-on[data-kaiten-skin="cast"] .frappe-card::before,
+.aurora-on[data-kaiten-skin="cast"] .form-section::before {
+	background-image: none;
+	background-color: transparent;
+}
+
+.aurora-on[data-kaiten-skin="cast"] .widget::after,
+.aurora-on[data-kaiten-skin="cast"] .frappe-card::after {
+	background: none;
+}
+
+.aurora-on[data-kaiten-skin="cast"] .widget:hover,
+.aurora-on[data-kaiten-skin="cast"] .frappe-card:hover,
+.aurora-on[data-kaiten-skin="cast"] .form-section:hover {
+	transform: translate(1px, 1px);
+	border-color: var(--aur-line-strong);
+	box-shadow: 3px 3px 0 rgba(28, 18, 48, 0.14), 10px 12px 22px -14px rgba(28, 18, 48, 0.32);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .widget.shortcut-widget-box {
+	background: var(--aur-surface);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .widget.shortcut-widget-box:hover {
+	transform: translate(1px, 1px);
+	background: var(--aur-surface);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .widget .widget-body .shortcut-widget-box,
+.aurora-on[data-kaiten-skin="cast"] .links-widget-box .link-item,
+.aurora-on[data-kaiten-skin="cast"] .onboarding-step,
+.aurora-on[data-kaiten-skin="cast"] .form-dashboard-section .document-link,
+.aurora-on[data-kaiten-skin="cast"] .comment-box .comment-input-wrapper {
+	border-radius: 0;
+	box-shadow: var(--aur-shadow-sm);
+}
+
+/* -------------------------------------------------------------------------
+   Titles — flat ink, tight tracking, no gradient fill
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="cast"] .page-title .title-text,
+.aurora-on[data-kaiten-skin="cast"] .page-head .title-text {
+	font-weight: 800;
+	letter-spacing: -0.03em;
+	background: none;
+	-webkit-text-fill-color: currentColor;
+	color: var(--aur-ink);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .page-head {
+	border-bottom: 0;
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+	background: transparent;
+}
+
+/* -------------------------------------------------------------------------
+   Controls — square. Primary is flat pigment with a hard cast.
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="cast"] .btn,
+.aurora-on[data-kaiten-skin="cast"] .es-button,
+.aurora-on[data-kaiten-skin="cast"] .filter-section .filter-button,
+.aurora-on[data-kaiten-skin="cast"] .filter-selector .btn,
+.aurora-on[data-kaiten-skin="cast"] .sort-selector .btn,
+.aurora-on[data-kaiten-skin="cast"] .list-count,
+.aurora-on[data-kaiten-skin="cast"] .indicator-pill,
+.aurora-on[data-kaiten-skin="cast"] .form-tabs .nav-link,
+.aurora-on[data-kaiten-skin="cast"] .form-tabs-list .nav-link,
+.aurora-on[data-kaiten-skin="cast"] .document-link .count,
+.aurora-on[data-kaiten-skin="cast"] .badge-link .count,
+.aurora-on[data-kaiten-skin="cast"] .input-with-feedback,
+.aurora-on[data-kaiten-skin="cast"] .form-control,
+.aurora-on[data-kaiten-skin="cast"] select.form-control,
+.aurora-on[data-kaiten-skin="cast"] textarea.form-control,
+.aurora-on[data-kaiten-skin="cast"] .like-disabled-input,
+.aurora-on[data-kaiten-skin="cast"] .awesomplete > ul {
+	border-radius: 0 !important;
+}
+
+.aurora-on[data-kaiten-skin="cast"] .btn-primary,
+.aurora-on[data-kaiten-skin="cast"] .es-button[data-variant="solid"]:not([data-theme]) {
+	background: var(--aur-grad-cool);
+	border: 0;
+	color: #fff;
+	box-shadow: 4px 4px 0 rgba(28, 18, 48, 0.22);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .btn-primary:hover,
+.aurora-on[data-kaiten-skin="cast"] .es-button[data-variant="solid"]:not([data-theme]):hover {
+	background: var(--cast-solid-hover);
+	filter: none;
+	transform: translate(1px, 1px);
+	box-shadow: 2px 2px 0 rgba(28, 18, 48, 0.28);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .btn-default,
+.aurora-on[data-kaiten-skin="cast"] .btn-secondary {
+	background: var(--aur-surface);
+	border: 1px solid var(--aur-line-strong);
+	box-shadow: var(--aur-shadow-sm);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .btn-default:hover,
+.aurora-on[data-kaiten-skin="cast"] .btn-secondary:hover {
+	background: var(--aur-surface);
+	border-color: var(--aur-ink);
+	box-shadow: 4px 4px 0 rgba(28, 18, 48, 0.12);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .form-control,
+.aurora-on[data-kaiten-skin="cast"] .frappe-control input.form-control,
+.aurora-on[data-kaiten-skin="cast"] .frappe-control select.form-control,
+.aurora-on[data-kaiten-skin="cast"] .frappe-control textarea.form-control,
+.aurora-on[data-kaiten-skin="cast"] .like-disabled-input {
+	background: #fff;
+	border: 1px solid var(--aur-line-strong);
+	box-shadow: inset -1px -1px 0 rgba(28, 18, 48, 0.04);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .form-control:focus,
+.aurora-on[data-kaiten-skin="cast"] .frappe-control input.form-control:focus,
+.aurora-on[data-kaiten-skin="cast"] .frappe-control select.form-control:focus,
+.aurora-on[data-kaiten-skin="cast"] .frappe-control textarea.form-control:focus {
+	border-color: var(--aur-accent);
+	box-shadow: 3px 3px 0 color-mix(in oklab, var(--aur-accent) 35%, transparent);
+}
+
+/* -------------------------------------------------------------------------
+   Kaiten bar — a milk strip on the field, square tabs with hard rings
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="cast"] .aur-bar {
+	background: var(--aur-surface);
+	border-bottom: 1px solid var(--aur-line);
+	box-shadow: 0 6px 0 rgba(28, 18, 48, 0.06), 0 14px 28px -18px rgba(28, 18, 48, 0.35);
+	border-radius: 0;
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+}
+
+.aurora-on[data-kaiten-skin="cast"] .aur-brand,
+.aurora-on[data-kaiten-skin="cast"] .aur-tab,
+.aurora-on[data-kaiten-skin="cast"] .aur-icon-btn,
+.aurora-on[data-kaiten-skin="cast"] .aur-search,
+.aurora-on[data-kaiten-skin="cast"] .aur-seg,
+.aurora-on[data-kaiten-skin="cast"] .aur-seg button,
+.aurora-on[data-kaiten-skin="cast"] .aur-skin,
+.aurora-on[data-kaiten-skin="cast"] .aur-content,
+.aurora-on[data-kaiten-skin="cast"] .aur-swatch,
+.aurora-on[data-kaiten-skin="cast"] .aur-pop,
+.aurora-on[data-kaiten-skin="cast"] .aur-mega,
+.aurora-on[data-kaiten-skin="cast"] .aur-item,
+.aurora-on[data-kaiten-skin="cast"] .aur-group,
+.aurora-on[data-kaiten-skin="cast"] .aur-nav-more,
+.aurora-on[data-kaiten-skin="cast"] .aur-chip,
+.aurora-on[data-kaiten-skin="cast"] .aur-tab-count {
+	border-radius: 0 !important;
+}
+
+.aurora-on[data-kaiten-skin="cast"] .aur-brand {
+	background: var(--aur-grad-cool);
+	color: #fff;
+	box-shadow: 4px 4px 0 rgba(28, 18, 48, 0.25);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .aur-tab.aur-open {
+	background: var(--aur-grad-cool);
+	color: #fff;
+	box-shadow: 4px 4px 0 rgba(28, 18, 48, 0.22);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .aur-tab.aur-kb,
+.aurora-on[data-kaiten-skin="cast"] .aur-tab.aur-cursor {
+	box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--aur-accent), 5px 5px 0 rgba(28, 18, 48, 0.2);
+	transform: none;
+}
+
+.aurora-on[data-kaiten-skin="cast"] .aur-bar.aur-kb-bar .aur-tab.aur-open.aur-kb,
+.aurora-on[data-kaiten-skin="cast"] .aur-bar.aur-kb-bar .aur-tab.aur-cursor {
+	transform: none;
+}
+
+.aurora-on[data-kaiten-skin="cast"] .aur-search {
+	background: var(--aur-surface-2);
+	border: 1px solid var(--aur-line-strong);
+	box-shadow: inset -1px -1px 0 rgba(28, 18, 48, 0.04);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .aur-icon-btn.aur-theme-btn {
+	background: var(--aur-grad-cool);
+	color: #fff;
+	box-shadow: 3px 3px 0 rgba(28, 18, 48, 0.22);
+	border-radius: 0 !important;
+}
+
+.aurora-on[data-kaiten-skin="cast"] .aur-mega {
+	background: var(--aur-surface);
+	border: 1px solid var(--aur-line);
+	box-shadow: 8px 10px 0 rgba(28, 18, 48, 0.1), 24px 32px 48px -20px rgba(28, 18, 48, 0.4);
+	border-radius: 0;
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+}
+
+.aurora-on[data-kaiten-skin="cast"] .aur-group.aur-active {
+	background: var(--aur-grad-soft);
+	box-shadow: inset 3px 0 0 var(--aur-accent);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .aur-group.aur-kb,
+.aurora-on[data-kaiten-skin="cast"] .aur-group.aur-cursor {
+	background: var(--aur-grad-cool);
+	color: #fff;
+	box-shadow: 3px 3px 0 rgba(28, 18, 48, 0.2);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .aur-item:hover,
+.aurora-on[data-kaiten-skin="cast"] .aur-item.aur-cursor {
+	background: var(--aur-grad-soft);
+	box-shadow: 3px 3px 0 color-mix(in oklab, var(--aur-accent) 22%, transparent);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .aur-pop {
+	background: var(--aur-surface);
+	border: 1px solid var(--aur-line);
+	box-shadow: 6px 8px 0 rgba(28, 18, 48, 0.1), 18px 22px 36px -16px rgba(28, 18, 48, 0.38);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .aur-skin.aur-on,
+.aurora-on[data-kaiten-skin="cast"] .aur-content.aur-on {
+	border-color: var(--aur-accent);
+	box-shadow: 3px 3px 0 color-mix(in oklab, var(--aur-accent) 40%, transparent);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .aur-seg {
+	background: var(--aur-surface-2);
+	border: 1px solid var(--aur-line);
+	box-shadow: inset -1px -1px 0 rgba(28, 18, 48, 0.04);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .aur-seg button.aur-on {
+	background: var(--aur-grad-cool);
+	box-shadow: 2px 2px 0 rgba(28, 18, 48, 0.2);
+}
+
+/* -------------------------------------------------------------------------
+   Sidebar & dock — square chips, cast selected state
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="cast"] .body-sidebar,
+.aurora-on[data-kaiten-skin="cast"] .desk-sidebar {
+	background: color-mix(in oklab, var(--aur-surface) 92%, var(--aur-accent));
+	border-right: 1px solid var(--aur-line);
+	box-shadow: 6px 0 0 rgba(28, 18, 48, 0.04);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .body-sidebar .standard-sidebar-item,
+.aurora-on[data-kaiten-skin="cast"] .desk-sidebar .standard-sidebar-item {
+	border-radius: 0;
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .body-sidebar .standard-sidebar-item:hover {
+	background: var(--aur-grad-soft);
+	transform: none;
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .body-sidebar .standard-sidebar-item.selected,
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .body-sidebar .standard-sidebar-item.active-sidebar,
+.aurora-on[data-kaiten-skin="cast"] .desk-sidebar .standard-sidebar-item.selected {
+	background: var(--aur-surface);
+	color: var(--aur-ink);
+	box-shadow: 3px 3px 0 rgba(28, 18, 48, 0.12);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .body-sidebar .standard-sidebar-item .sidebar-item-icon,
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .body-sidebar .standard-sidebar-item:hover .sidebar-item-icon {
+	border-radius: 0;
+	background: color-mix(in oklab, var(--aur-accent) 12%, #ffffff);
+	box-shadow: 2px 2px 0 rgba(28, 18, 48, 0.1);
+	transform: none;
+	color: var(--aur-accent);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .dock::after {
+	content: none;
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .dock .dock-items .dock-item {
+	border-radius: 0;
+	background: var(--aur-surface);
+	box-shadow: 3px 3px 0 rgba(28, 18, 48, 0.12);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .dock .dock-items .dock-item:hover {
+	background: #ffffff;
+	transform: translate(1px, 1px);
+	box-shadow: 2px 2px 0 rgba(28, 18, 48, 0.16);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .dock-item.active {
+	background: color-mix(in oklab, var(--aur-accent) 14%, #ffffff);
+	box-shadow: 3px 3px 0 color-mix(in oklab, var(--aur-accent) 45%, transparent);
+}
+
+/* -------------------------------------------------------------------------
+   Form sections — milk slabs with a flat accent spine
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="cast"] .form-section {
+	background: var(--aur-surface);
+	border-color: var(--aur-line);
+	box-shadow: var(--aur-shadow);
+	border-radius: 0;
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .form-section .section-head {
+	color: var(--aur-ink);
+	font-weight: 700;
+	letter-spacing: -0.02em;
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .form-section .section-head::before {
+	background: var(--aur-accent);
+	border-radius: 0;
+	box-shadow: 2px 2px 0 color-mix(in oklab, var(--aur-accent) 35%, transparent);
+	width: 3px;
+}
+
+/* -------------------------------------------------------------------------
+   Lists & grids
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="cast"] .list-row-head {
+	background: var(--aur-surface-2);
+	border-bottom: 1px solid var(--aur-line-strong);
+	box-shadow: none;
+}
+
+.aurora-on[data-kaiten-skin="cast"] .list-row-container .list-row:hover {
+	background: var(--aur-grad-soft);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .form-grid,
+.aurora-on[data-kaiten-skin="cast"] .datatable {
+	border-radius: 0;
+	box-shadow: var(--aur-shadow-sm);
+	border: 1px solid var(--aur-line);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .datatable .dt-header,
+.aurora-on[data-kaiten-skin="cast"] .datatable .dt-row-header {
+	background: var(--aur-surface-2);
+}
+
+/* -------------------------------------------------------------------------
+   Overlays
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="cast"] .modal-content,
+.aurora-on[data-kaiten-skin="cast"] .dropdown-menu {
+	border-radius: 0;
+	background: var(--aur-surface);
+	border: 1px solid var(--aur-line);
+	box-shadow: 8px 10px 0 rgba(28, 18, 48, 0.1), 24px 30px 48px -18px rgba(28, 18, 48, 0.42);
+}
+
+/* -------------------------------------------------------------------------
+   Dark — milk becomes chalk on a deep field; cast still falls down-right
+   ---------------------------------------------------------------------- */
+
+.aurora-on[data-kaiten-skin="cast"][data-theme="dark"] {
+	--aur-surface: #1c1826;
+	--aur-surface-2: #16131f;
+	--aur-sheet: #1c1826;
+	--aur-line: rgba(255, 255, 255, 0.08);
+	--aur-line-strong: rgba(255, 255, 255, 0.14);
+	--aur-ink: #f0ecf7;
+	--aur-ink-soft: #9a92ab;
+
+	--aur-shadow-sm: 3px 3px 0 rgba(0, 0, 0, 0.55);
+	--aur-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55), 14px 18px 28px -12px rgba(0, 0, 0, 0.85);
+	--aur-shadow-lg: 7px 7px 0 rgba(0, 0, 0, 0.6), 22px 28px 40px -14px rgba(0, 0, 0, 0.92);
+
+	--cast-field: color-mix(in oklab, var(--aur-accent) 35%, #0c0814);
+	--cast-field-deep: #07050c;
+
+	--gray-100: #e6e1ef;
+	--gray-200: #bfb7cd;
+	--gray-300: #9e95b0;
+	--gray-400: #7d7490;
+	--gray-450: #6a617c;
+	--gray-500: #554d66;
+	--gray-600: #443d52;
+	--gray-700: #353042;
+	--gray-800: #272331;
+	--gray-900: #1a1622;
+
+	background: var(--cast-field);
+}
+
+.aurora-on[data-kaiten-skin="cast"][data-theme="dark"] body::before {
+	background:
+		radial-gradient(100% 70% at 10% 0%, color-mix(in oklab, var(--aur-accent) 28%, transparent), transparent 55%),
+		radial-gradient(80% 60% at 100% 100%, rgba(0, 0, 0, 0.55), transparent 50%);
+}
+
+.aurora-on[data-kaiten-skin="cast"][data-theme="dark"] .btn-primary,
+.aurora-on[data-kaiten-skin="cast"][data-theme="dark"] .es-button[data-variant="solid"]:not([data-theme]) {
+	box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.65);
+}
+
+.aurora-on[data-kaiten-skin="cast"][data-theme="dark"] .aur-bar,
+.aurora-on[data-kaiten-skin="cast"][data-theme="dark"] .aur-mega,
+.aurora-on[data-kaiten-skin="cast"][data-theme="dark"] .aur-pop {
+	background: var(--aur-surface);
+}

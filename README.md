@@ -37,8 +37,11 @@ bench --site [site] clear-cache
   HRMS exactly as it was. See [Menu content](#menu-content).
 - **Themes** — *Default* is the stock desk with only the Kaiten bar; *Aurora* is
   colour at rest with an animated mesh; *Lumen* is soft light on a tinted
-  gradient wash, with pill controls and ink-black actions. Each theme offers its
-  own colour tones, and a colour you mix yourself can be added to the palette.
+  gradient wash, with pill controls and ink-black actions; *Cast* is milky flat
+  planes with right angles and hard light from the top-left; *Halo* is a soft
+  futurist glass look with inflated corners and floating shadows. Each theme
+  offers its own colour tones, and a colour you mix yourself can be added to the
+  palette.
 - **Mega menu** — Workspaces, Modules, Create, Insights, Tools, Pinned and
   Recent. Search filters the tree. Pins can be filed onto shelves. On a narrow
   window the tab strip scrolls, and each end that still has tabs behind it fades
@@ -107,22 +110,23 @@ bar, or the ◕ button on the right.
 | --- | --- |
 | Appearance | Light, dark and system, one click each. This is Frappe's own setting, saved against the user; the ☀/☽/◑ button in the bar is a shortcut that steps through the same three. |
 | Menu content | Default, or any Active content profile. Changes which links the menu carries and nothing else — no value here reaches a stylesheet. |
-| Theme | Default, Aurora or Lumen. Independent of the appearance: every theme has a light and a dark treatment. Independent of the content, too: it repaints the menu without changing a single link. |
+| Theme | Default, Aurora, Lumen, Cast or Halo. Independent of the appearance: every theme has a light and a dark treatment. Independent of the content, too: it repaints the menu without changing a single link. |
 | Colour | The tones the chosen theme offers, and any you mixed. Hidden for Default, which has none. |
-| Density | Cozy or compact. |
+| Density | Standard, Dense or Sleek. |
 
 The panel stays open while you work in it, so a theme, a colour and a density
 can be tried against the page behind it and compared without reopening
 anything.
 
-**Density.** Compact is not a smaller font — it is less air, everywhere.
-Frappe derives most of its spacing from a handful of CSS variables, and compact
-remaps them, so labels sit closer to their fields, sections stack tighter, rows
+**Density.** Three steps of spacing, not type size. **Standard** leaves Frappe's
+own rhythm alone. **Dense** takes back wasted air without pinching. **Sleek** is
+the tightest — labels sit closer to their fields, sections stack tighter, rows
 and cells lose their padding, inputs and buttons come down to 25px, the page
 head to 40px, and corners tighten so the denser rows do not read as a stack of
-lozenges. A form is around a fifth shorter. Aurora and Lumen both offer it;
-Default does not, and hides the control, because it is stock Frappe with only
-the bar added — spacing included.
+lozenges. A form is around a fifth shorter on Sleek. Aurora and Lumen both offer
+all three; Default does not, and hides the control, because it is stock Frappe
+with only the bar added — spacing included. Older prefs that said Cozy or
+Compact map to Standard and Sleek.
 
 **Mixing a colour.** The `+` beside the tones opens three colour stops — the
 gradient's start, middle and end. The middle one is also the flat accent used
