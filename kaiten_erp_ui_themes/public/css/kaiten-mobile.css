@@ -1,0 +1,70 @@
+/* =========================================================================
+   Kaiten — phone layout for the mega-menu bar
+   -------------------------------------------------------------------------
+   Structure only. Reads the same --aur-* tokens every skin writes, so a
+   theme switch on a phone changes colour and nothing else. Does not restore
+   the old module-shell (data-kaiten-shell) layout.
+   ========================================================================= */
+
+@media (max-width: 720px) {
+	.aur-bar-inner {
+		padding: 0 8px;
+		gap: 6px;
+	}
+
+	.aur-brand {
+		max-width: 42vw;
+		padding: 4px 9px 4px 7px;
+		font-size: 11px;
+	}
+
+	.aur-nav-wrap {
+		min-width: 0;
+		flex: 1 1 auto;
+	}
+
+	.aur-search {
+		width: 36px;
+		padding-inline: 8px;
+	}
+
+	.aur-search:focus {
+		width: min(46vw, 160px);
+	}
+
+	.aur-mega {
+		left: 8px !important;
+		right: 8px !important;
+		width: auto !important;
+		max-width: none;
+	}
+
+	.aur-mega-cols {
+		grid-template-columns: 1fr;
+	}
+
+	.aur-mega-groups {
+		display: flex;
+		gap: 6px;
+		overflow-x: auto;
+		border-right: none;
+		border-bottom: 1px solid var(--aur-line);
+		padding: 10px;
+	}
+
+	.krate {
+		height: 32px;
+		padding: 0 8px;
+		font-size: 12px;
+	}
+
+	.krate-live {
+		display: none;
+	}
+
+	.body-sidebar .sidebar-item-label {
+		opacity: 1;
+		visibility: visible;
+		color: inherit;
+	}
+}

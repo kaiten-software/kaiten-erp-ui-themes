@@ -1367,6 +1367,15 @@
 	}
 }
 
+@keyframes aur-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
 .aur-mega::before {
 	content: "";
 	position: absolute;
@@ -2401,8 +2410,8 @@ a.aur-item:focus {
 	z-index: 40;
 }
 
-.aurora-on.aurora-on .frappe-control:focus-within,
-.aurora-on.aurora-on .frappe-control:has(.awesomplete > ul:not([hidden])) {
+.aurora-on.aurora-on .frappe-control:focus-within:not(:has(.grid-row-open)),
+.aurora-on.aurora-on .frappe-control:has(.awesomplete > ul:not([hidden])):not(:has(.grid-row-open)) {
 	position: relative;
 	z-index: 41;
 }
@@ -2412,12 +2421,22 @@ a.aur-item:focus {
 	overflow: visible;
 }
 
-/* Pencil / row editor must sit above the freeze scrim and remain clickable. */
+/* Pencil editor — follow ERPNext:
+   #freeze.grid-form is a real click target (outside click closes the row).
+   .form-in-grid sits above it. Do not raise the parent section — that
+   paints the rest of the card over the scrim. Do not disable clicks on
+   the freeze (that is what made the right-side click do nothing). */
 .aurora-on.aurora-on .form-section:has(.grid-row-open),
 .aurora-on.aurora-on .form-grid-container:has(.grid-row-open),
-.aurora-on.aurora-on .grid-row.grid-row-open {
-	position: relative;
-	z-index: 1050;
+.aurora-on.aurora-on .grid-row.grid-row-open,
+.aurora-on.aurora-on .frappe-control:has(.grid-row-open),
+.aurora-on.aurora-on .form-column:has(.grid-row-open),
+.aurora-on.aurora-on .form-layout:has(.grid-row-open),
+.aurora-on.aurora-on .form-page:has(.grid-row-open) {
+	z-index: auto !important;
+	transform: none !important;
+	filter: none !important;
+	isolation: auto !important;
 }
 
 .aurora-on .grid-row-open .form-in-grid {
@@ -2425,11 +2444,38 @@ a.aur-item:focus {
 	z-index: 1055 !important;
 	pointer-events: auto !important;
 	opacity: 1 !important;
+	background: var(--aur-surface, #fff) !important;
+	color: var(--aur-ink, #1b1f2a) !important;
+	box-shadow: 0 24px 64px rgba(15, 18, 28, 0.28);
+}
+
+/* A transform on .form-section makes position:fixed lock to the card.
+   :hover { transform: none } then jumped the editor — hide/show on hover. */
+.aurora-on .form-section.aur-reveal,
+.aurora-on .form-in-grid .aur-reveal,
+.aurora-on .form-in-grid .form-section {
+	transform: none;
+	opacity: 1;
+}
+
+.aurora-on .form-in-grid .control-label,
+.aurora-on .form-in-grid .grid-form-heading,
+.aurora-on .form-in-grid .panel-title {
+	opacity: 1 !important;
+	color: var(--aur-ink, #1b1f2a);
 }
 
 .aurora-on #freeze.grid-form {
-	z-index: 1020;
+	z-index: 1048;
 	pointer-events: auto;
+	/* Frappe paints #freeze with --bg-color at 0.8. That is a white
+	   sheet. Combined with a trapped editor it washed the popup out. */
+	background-color: rgba(15, 18, 28, 0.45) !important;
+	opacity: 1 !important;
+}
+
+.aurora-on #freeze.grid-form .freeze-message-container {
+	pointer-events: none;
 }
 
 .aurora-on .form-section .section-head {
@@ -3001,17 +3047,18 @@ a.aur-item:focus {
 	max-height: min(60vh, 420px);
 	overflow-x: hidden;
 	overflow-y: auto;
-	animation: aur-mega-in var(--aur-fast) var(--aur-ease) backwards;
+	/* Opacity only. aur-mega-in writes transform, which wipes Popper's
+	   placement and makes Created On / sort menus jump on item hover. */
+	animation: aur-fade-in var(--aur-fast) var(--aur-ease) backwards;
 }
 
 .aurora-on .dropdown-item {
 	border-radius: 8px;
-	transition: background var(--aur-fast) var(--aur-ease), padding-left var(--aur-fast) var(--aur-ease);
+	transition: background var(--aur-fast) var(--aur-ease);
 }
 
 .aurora-on .dropdown-item:hover {
 	background: var(--aur-grad-soft);
-	padding-left: 20px;
 }
 
 .aurora-on .datatable .dt-row:hover .dt-cell {
@@ -5041,4 +5088,827 @@ a.aur-item:focus {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
+}
+
+.aur-brand-logo {
+	height: 18px;
+	width: auto;
+	max-width: 36px;
+	border-radius: 5px;
+	object-fit: contain;
+	background: var(--aur-surface);
+	flex: none;
+}
+
+.aur-brand-label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+}
+
+/* Rate ticker — content, not a skin. Hidden until html.kaiten-rate-on. */
+.krate {
+	display: none;
+	align-items: center;
+	gap: 10px;
+	height: 28px;
+	padding: 0 12px;
+	border-top: 1px solid var(--aur-line);
+	background: color-mix(in oklab, var(--aur-surface) 92%, var(--aur-accent) 8%);
+	font-size: 11px;
+	line-height: 1;
+	white-space: nowrap;
+	color: var(--aur-ink);
+}
+
+html.kaiten-rate-on .krate {
+	display: flex;
+}
+
+.krate-live {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	flex: 0 0 auto;
+	color: var(--aur-ink);
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	font-size: 9px;
+}
+
+.krate-pulse {
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: #34d399;
+	box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7);
+	animation: krate-pulse 2.4s ease-out infinite;
+}
+
+@keyframes krate-pulse {
+	70% {
+		box-shadow: 0 0 0 6px rgba(52, 211, 153, 0);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+	}
+}
+
+.krate-viewport {
+	flex: 1 1 auto;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scrollbar-width: none;
+}
+
+.krate-viewport::-webkit-scrollbar {
+	display: none;
+}
+
+.krate-track {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+}
+
+.krate-tick {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	flex: 0 0 auto;
+}
+
+.krate-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 2px;
+	transform: rotate(45deg);
+}
+
+.krate-gold {
+	background: linear-gradient(135deg, #fbbf24, #b45309);
+}
+
+.krate-silver {
+	background: linear-gradient(135deg, #e2e8f0, #94a3b8);
+}
+
+.krate-platinum {
+	background: linear-gradient(135deg, #e0f2fe, #7dd3fc);
+}
+
+.krate-neutral {
+	background: linear-gradient(135deg, #cbd5e1, #64748b);
+}
+
+.krate-metal {
+	color: var(--aur-ink);
+}
+
+.krate-value {
+	color: var(--aur-ink);
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.krate-change {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	font-variant-numeric: tabular-nums;
+}
+
+.krate-arrow {
+	font-size: 8px;
+}
+
+.krate-up {
+	color: #16a34a;
+}
+
+.krate-down {
+	color: #dc2626;
+}
+
+.krate-flat {
+	color: var(--aur-ink-soft);
+}
+
+/* -------------------------------------------------------------------------
+   Module sidebar
+   -------------------------------------------------------------------------
+   Structure only. Every colour is a token the active skin (or Default) already
+   wrote, so a theme switch repaints this rail and nothing here may name a
+   hex of its own.
+   ---------------------------------------------------------------------- */
+
+.kside {
+	position: sticky;
+	top: 0;
+	align-self: flex-start;
+	display: flex;
+	flex-direction: column;
+	flex: 0 0 auto;
+	width: 258px;
+	height: 100dvh;
+	padding: 8px;
+	background: var(--aur-surface);
+	border-right: 1px solid var(--aur-line);
+	color: var(--aur-ink);
+	z-index: 5;
+}
+
+html:not(.kaiten-side-on) .kside {
+	display: none;
+}
+
+html.kaiten-side-on .body-sidebar-container,
+html.kaiten-side-on .dock {
+	display: none !important;
+}
+
+.kside-top {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex: none;
+	margin-bottom: 8px;
+}
+
+.kside-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: 6px 8px;
+	border: 0;
+	border-radius: var(--aur-r-sm);
+	background: transparent;
+	color: var(--aur-ink);
+	cursor: pointer;
+	text-align: left;
+}
+
+.kside-head:hover {
+	background: color-mix(in oklab, var(--aur-accent) 10%, transparent);
+}
+
+.kside-head-icon {
+	flex: none;
+	display: grid;
+	place-items: center;
+	width: 26px;
+	height: 26px;
+	border-radius: 8px;
+	background: color-mix(in oklab, var(--aur-accent) 16%, var(--aur-surface));
+	color: var(--aur-accent);
+}
+
+.kside-head-glyph,
+.kside-head-icon svg {
+	width: 15px;
+	height: 15px;
+}
+
+.kside-title {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 13px;
+	font-weight: 700;
+}
+
+/* Always at the top: in the header when open, at the head of the
+   54px rail when collapsed. Never at the foot. */
+html.aurora-on .kside .kside-collapse,
+.kside .kside-collapse {
+	position: static;
+	z-index: 3;
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: 1px solid transparent;
+	border-radius: 10px;
+	background: var(--aur-accent);
+	color: var(--aur-on-selected, #fff);
+	box-shadow: 0 2px 8px color-mix(in oklab, var(--aur-accent) 40%, transparent);
+	transform: none;
+	cursor: pointer;
+}
+
+html.aurora-on .kside .kside-collapse:hover,
+html.aurora-on .kside .kside-collapse:focus-visible,
+.kside .kside-collapse:hover,
+.kside .kside-collapse:focus-visible {
+	background: color-mix(in oklab, var(--aur-accent) 82%, var(--aur-ink));
+	border-color: transparent;
+	color: var(--aur-on-selected, #fff);
+	outline: none;
+}
+
+.kside-body {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+}
+
+.kside-label,
+.kside-area,
+.kside-sub {
+	margin: 10px 8px 4px;
+	color: var(--aur-ink-soft);
+	font-size: 10.5px;
+	font-weight: 800;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+}
+
+.kside-pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	padding: 0 4px 8px;
+}
+
+.kside-pill {
+	padding: 4px 10px;
+	border: 1px solid var(--aur-line);
+	border-radius: 999px;
+	background: var(--aur-surface);
+	color: var(--aur-ink-soft);
+	font-size: 12px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.kside-pill:hover {
+	border-color: var(--aur-line-strong);
+	color: var(--aur-ink);
+}
+
+.kside-pill.is-on {
+	border-color: transparent;
+	background: var(--aur-accent);
+	color: var(--aur-on-selected, #fff);
+}
+
+.kside-items {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.kside-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 8px;
+	border-radius: var(--aur-r-sm);
+	color: var(--aur-ink);
+	text-decoration: none;
+}
+
+.kside-item:hover,
+.kside-item:focus-visible {
+	background: color-mix(in oklab, var(--aur-accent) 10%, transparent);
+	color: var(--aur-ink);
+	text-decoration: none;
+	outline: none;
+}
+
+.kside-item-icon {
+	flex: none;
+	display: grid;
+	place-items: center;
+	width: 26px;
+	height: 26px;
+	border-radius: 8px;
+	background: color-mix(in oklab, var(--aur-accent) 16%, var(--aur-surface));
+	color: var(--aur-accent);
+}
+
+.kside-item-glyph {
+	width: 15px;
+	height: 15px;
+}
+
+.kside-item-label {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 13px;
+}
+
+.kside-item.is-active {
+	background: color-mix(in oklab, var(--aur-accent) 18%, transparent);
+	font-weight: 700;
+}
+
+.kside-item .knav-star,
+.kside-head-star {
+	flex: none;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--aur-ink-soft);
+	cursor: pointer;
+	opacity: 0;
+}
+
+.kside-item:hover .knav-star,
+.kside-top:hover .kside-head-star,
+.knav-star.is-on {
+	opacity: 1;
+}
+
+.knav-star.is-on {
+	color: var(--aur-accent);
+}
+
+.kside.is-collapsed,
+html[data-aur-density="standard"] .kside.is-collapsed,
+html[data-aur-density="dense"] .kside.is-collapsed,
+html[data-aur-density="sleek"] .kside.is-collapsed {
+	width: 54px;
+	overflow: hidden;
+}
+
+.kside.is-collapsed .kside-title,
+.kside.is-collapsed .kside-label,
+.kside.is-collapsed .kside-pills,
+.kside.is-collapsed .kside-area,
+.kside.is-collapsed .kside-sub,
+.kside.is-collapsed .kside-item-label,
+.kside.is-collapsed .knav-star,
+.kside.is-collapsed .kside-pin-slot {
+	display: none;
+}
+
+.kside.is-collapsed .kside-top {
+	justify-content: center;
+}
+
+.kside.is-collapsed .kside-head {
+	flex: none;
+	width: 100%;
+	justify-content: center;
+	padding: 6px 0;
+	margin-top: 44px;
+}
+
+html.aurora-on .kside.is-collapsed .kside-collapse,
+.kside.is-collapsed .kside-collapse {
+	position: absolute;
+	left: 50%;
+	top: 10px;
+	bottom: auto;
+	transform: translateX(-50%) rotate(180deg);
+}
+
+.kside-pin-slot {
+	display: inline-flex;
+	flex: none;
+}
+
+.kside-scrim {
+	display: none;
+}
+
+html[data-aur-density="dense"] .kside-item {
+	padding: 4px 8px;
+}
+
+html[data-aur-density="sleek"] .kside-item {
+	padding: 3px 6px;
+}
+
+html[data-aur-density="sleek"] .kside {
+	width: 232px;
+	padding: 6px;
+}
+
+/* Grid-row editor stacking is defined with the form-view rules above.
+   Do not disable #freeze or the form here — that broke ERPNext's
+   click-outside-to-close and could swallow the opening pencil click. */
+
+/* -------------------------------------------------------------------------
+   Default-skin density
+   -------------------------------------------------------------------------
+   Default is not .aurora-on, so the skin density block never reaches it.
+   These rules only remap Frappe spacing tokens and a few hard-coded paddings.
+   No colour, no card chrome, no widget lift.
+   ---------------------------------------------------------------------- */
+
+html:not(.aurora-on)[data-aur-density="dense"] {
+	--padding-xs: 5px;
+	--padding-sm: 7px;
+	--padding-md: 12px;
+	--padding-lg: 16px;
+	--padding-xl: 24px;
+	--padding-2xl: 32px;
+	--margin-xs: 4px;
+	--margin-sm: 8px;
+	--margin-md: 12px;
+	--margin-lg: 16px;
+	--margin-xl: 24px;
+	--margin-2xl: 32px;
+	--input-height: 28px;
+	--btn-height: 28px;
+	--checkbox-size: 14px;
+	--page-head-height: 46px;
+	--sidebar-width: 220px;
+	--aur-bar-h: 42px;
+}
+
+html:not(.aurora-on)[data-aur-density="sleek"],
+html:not(.aurora-on)[data-aur-density="compact"] {
+	--padding-xs: 4px;
+	--padding-sm: 5px;
+	--padding-md: 10px;
+	--padding-lg: 13px;
+	--padding-xl: 20px;
+	--padding-2xl: 26px;
+	--margin-xs: 3px;
+	--margin-sm: 6px;
+	--margin-md: 9px;
+	--margin-lg: 13px;
+	--margin-xl: 20px;
+	--margin-2xl: 26px;
+	--input-height: 25px;
+	--btn-height: 25px;
+	--checkbox-size: 13px;
+	--page-head-height: 40px;
+	--sidebar-width: 204px;
+	--aur-bar-h: 38px;
+}
+
+html:not(.aurora-on)[data-aur-density="dense"] .frappe-control {
+	margin-bottom: 8px;
+}
+
+html:not(.aurora-on)[data-aur-density="dense"] .control-label {
+	margin-bottom: 3px;
+	font-size: 12px;
+}
+
+html:not(.aurora-on)[data-aur-density="dense"] .form-control,
+html:not(.aurora-on)[data-aur-density="dense"] .frappe-control input.form-control,
+html:not(.aurora-on)[data-aur-density="dense"] .frappe-control select.form-control,
+html:not(.aurora-on)[data-aur-density="dense"] .frappe-control textarea.form-control,
+html:not(.aurora-on)[data-aur-density="dense"] .like-disabled-input {
+	padding: 3px 8px;
+	font-size: 13px;
+}
+
+html:not(.aurora-on)[data-aur-density="dense"] .form-tabs-list .nav-link,
+html:not(.aurora-on)[data-aur-density="dense"] .form-tabs .nav-link {
+	padding-top: 7px;
+	padding-bottom: 7px;
+}
+
+html:not(.aurora-on)[data-aur-density="dense"] .form-grid .grid-static-col,
+html:not(.aurora-on)[data-aur-density="dense"] .form-grid .grid-row .col,
+html:not(.aurora-on)[data-aur-density="dense"] .datatable .dt-cell__content {
+	padding: 5px 8px;
+	font-size: 12.5px;
+}
+
+html:not(.aurora-on)[data-aur-density="dense"] .list-row-container .list-row {
+	padding-top: 3px;
+	padding-bottom: 3px;
+}
+
+html:not(.aurora-on)[data-aur-density="dense"] .body-sidebar .standard-sidebar-item {
+	padding: 4px 8px;
+	margin: 0 6px;
+}
+
+html:not(.aurora-on)[data-aur-density="dense"] .aur-item {
+	padding: 7px 10px;
+}
+
+html:not(.aurora-on)[data-aur-density="dense"] .aur-tab {
+	padding: 5px 11px;
+}
+
+html:not(.aurora-on)[data-aur-density="sleek"] .frappe-control,
+html:not(.aurora-on)[data-aur-density="compact"] .frappe-control {
+	margin-bottom: 4px;
+}
+
+html:not(.aurora-on)[data-aur-density="sleek"] .control-label,
+html:not(.aurora-on)[data-aur-density="compact"] .control-label {
+	margin-bottom: 2px;
+	font-size: 11.5px;
+	line-height: 1.4;
+}
+
+html:not(.aurora-on)[data-aur-density="sleek"] .form-control,
+html:not(.aurora-on)[data-aur-density="sleek"] .frappe-control input.form-control,
+html:not(.aurora-on)[data-aur-density="sleek"] .frappe-control select.form-control,
+html:not(.aurora-on)[data-aur-density="sleek"] .frappe-control textarea.form-control,
+html:not(.aurora-on)[data-aur-density="sleek"] .like-disabled-input,
+html:not(.aurora-on)[data-aur-density="compact"] .form-control,
+html:not(.aurora-on)[data-aur-density="compact"] .frappe-control input.form-control,
+html:not(.aurora-on)[data-aur-density="compact"] .frappe-control select.form-control,
+html:not(.aurora-on)[data-aur-density="compact"] .frappe-control textarea.form-control,
+html:not(.aurora-on)[data-aur-density="compact"] .like-disabled-input {
+	padding: 2px 7px;
+	font-size: 12.5px;
+}
+
+html:not(.aurora-on)[data-aur-density="sleek"] .form-tabs-list .nav-link,
+html:not(.aurora-on)[data-aur-density="sleek"] .form-tabs .nav-link,
+html:not(.aurora-on)[data-aur-density="compact"] .form-tabs-list .nav-link,
+html:not(.aurora-on)[data-aur-density="compact"] .form-tabs .nav-link {
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+
+html:not(.aurora-on)[data-aur-density="sleek"] .form-grid .grid-static-col,
+html:not(.aurora-on)[data-aur-density="sleek"] .form-grid .grid-row .col,
+html:not(.aurora-on)[data-aur-density="sleek"] .datatable .dt-cell__content,
+html:not(.aurora-on)[data-aur-density="compact"] .form-grid .grid-static-col,
+html:not(.aurora-on)[data-aur-density="compact"] .form-grid .grid-row .col,
+html:not(.aurora-on)[data-aur-density="compact"] .datatable .dt-cell__content {
+	padding: 3px 7px;
+	font-size: 12px;
+}
+
+html:not(.aurora-on)[data-aur-density="sleek"] .list-row-container .list-row,
+html:not(.aurora-on)[data-aur-density="compact"] .list-row-container .list-row {
+	padding-top: 1px;
+	padding-bottom: 1px;
+}
+
+html:not(.aurora-on)[data-aur-density="sleek"] .body-sidebar .standard-sidebar-item,
+html:not(.aurora-on)[data-aur-density="compact"] .body-sidebar .standard-sidebar-item {
+	padding: 3px 6px;
+	margin: 0 4px;
+}
+
+html:not(.aurora-on)[data-aur-density="sleek"] .aur-item,
+html:not(.aurora-on)[data-aur-density="compact"] .aur-item {
+	padding: 5px 8px;
+}
+
+html:not(.aurora-on)[data-aur-density="sleek"] .aur-tab,
+html:not(.aurora-on)[data-aur-density="compact"] .aur-tab {
+	padding: 4px 9px;
+}
+
+/* -------------------------------------------------------------------------
+   QA fixes — list filters, print preview chrome
+   -------------------------------------------------------------------------
+   Additive. Do not put these in a skin file. They must hold on Default and
+   on every skin so the same list/print bugs cannot return after a theme switch.
+   ---------------------------------------------------------------------- */
+
+/* Frappe parks these at offset -100px (or 0,0) for a frame before JS
+   recenters them. Keep them invisible until they sit under the button. */
+body > .filter-popover:not(.aur-pop-ready),
+body > .group-by-popover:not(.aur-pop-ready) {
+	visibility: hidden;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.filter-popover .filter-box .list_filter.row {
+	align-items: center;
+}
+
+.filter-popover .filter-box .form-group {
+	margin-bottom: 0;
+	display: flex;
+	align-items: center;
+	min-height: var(--input-height, 28px);
+}
+
+.filter-popover .filter-box .form-control,
+.filter-popover .filter-box select.form-control,
+.filter-popover .filter-box input.form-control {
+	height: var(--input-height, 28px);
+	min-height: var(--input-height, 28px);
+	margin: 0;
+	line-height: 1.2;
+}
+
+.filter-popover .filter-box .remove-filter {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 1;
+	align-self: center;
+}
+
+.page-form.list-page-form {
+	align-items: center;
+}
+
+.page-form .standard-filter-section {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 10px;
+}
+
+/* Bootstrap .col-md-2 floats and percentage widths fight this row.
+   Every filter is one flex item of the same outer size. */
+.page-form .standard-filter-section .form-group,
+.page-form .standard-filter-section .form-group.col-md-2,
+.page-form .standard-filter-section .form-group.col-md-3 {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	float: none;
+	width: auto;
+	max-width: none;
+	height: var(--input-height, 28px);
+	margin-bottom: 0;
+	padding-left: 0;
+	padding-right: 0;
+	min-width: 0;
+	flex: 0 0 auto;
+}
+
+.page-form .standard-filter-section .frappe-control,
+.page-form .standard-filter-section .form-group.frappe-control {
+	margin-bottom: 0;
+	min-width: 0;
+	max-width: none;
+}
+
+/* One pill per filter: the field and ≈ / chevron share the same box.
+   A radius on the input alone split Data fields into two shapes. */
+.page-form .standard-filter-section .input-group {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: stretch;
+	box-sizing: border-box;
+	width: 220px;
+	height: var(--input-height, 28px);
+	min-height: var(--input-height, 28px);
+	overflow: hidden;
+	border: 1px solid var(--aur-line, var(--border-color));
+	border-radius: 999px;
+	background: var(--control-bg, var(--aur-surface, var(--bg-color)));
+}
+
+.page-form .standard-filter-section input.form-control,
+.page-form .standard-filter-section select.form-control {
+	box-sizing: border-box;
+	width: 220px;
+	min-width: 0;
+	max-width: 220px;
+	height: var(--input-height, 28px);
+	min-height: var(--input-height, 28px);
+	text-overflow: ellipsis;
+}
+
+.page-form .standard-filter-section .input-group input.form-control,
+.page-form .standard-filter-section .input-group select.form-control {
+	flex: 1 1 auto;
+	width: auto;
+	min-width: 0;
+	max-width: none;
+	height: auto;
+	min-height: var(--input-height, 28px);
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	background: transparent;
+}
+
+.aurora-on .page-form .standard-filter-section .input-group input.form-control,
+.aurora-on .page-form .standard-filter-section .input-group select.form-control,
+.aurora-on .page-form .standard-filter-section .input-group input.form-control:focus {
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	background: transparent;
+}
+
+.page-form .standard-filter-section .input-group-btn {
+	display: flex;
+	align-items: stretch;
+	flex: none;
+	margin: 0;
+}
+
+.page-form .standard-filter-section .match-type-dropdown-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: auto;
+	min-height: var(--input-height, 28px);
+	margin: 0;
+	padding: 0 10px;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	background: transparent;
+}
+
+.print-preview-wrapper,
+.print-preview,
+iframe.print-format-container {
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+/* -------------------------------------------------------------------------
+   Skip-link / screen-reader buttons
+   -------------------------------------------------------------------------
+   Frappe parks "Navigate to main content" on every page sidebar as
+   .sr-only.btn. Theme .btn { position: relative } beats .sr-only
+   { position: absolute }, so print sidebars kept a 16×8 chip that grew
+   into a pill on click. Restore the clip; un-hide only for keyboard Tab.
+   ---------------------------------------------------------------------- */
+
+.aurora-on .btn.sr-only,
+.aurora-on .btn.sr-only-focusable,
+.btn.sr-only,
+.btn.sr-only-focusable {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	padding: 0 !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	clip: rect(0, 0, 0, 0) !important;
+	clip-path: inset(50%) !important;
+	border: 0 !important;
+	white-space: nowrap !important;
+	transform: none !important;
+	box-shadow: none !important;
+	pointer-events: none;
+}
+
+.aurora-on .btn.sr-only-focusable:focus-visible,
+.btn.sr-only-focusable:focus-visible {
+	position: static !important;
+	width: auto !important;
+	height: auto !important;
+	margin: 8px 0 !important;
+	padding: 4px 12px !important;
+	overflow: visible !important;
+	clip: auto !important;
+	clip-path: none !important;
+	white-space: normal !important;
+	pointer-events: auto;
+	transform: none !important;
 }

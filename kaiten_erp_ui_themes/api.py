@@ -234,8 +234,44 @@ def _tools(rows: list, readable: set) -> list:
 	return groups
 
 
-def resolve_brand() -> str:
-	"""Site-specific wordmark, or Kaiten when none is configured."""
+def _default_company() -> str:
+	try:
+		company = frappe.defaults.get_user_default("Company")
+		if company:
+			return str(company).strip()
+	except Exception:
+		pass
+	try:
+		company = (frappe.defaults.get_defaults() or {}).get("company")
+		if company:
+			return str(company).strip()
+	except Exception:
+		pass
+	return ""
+
+
+def _company_logo(company: str) -> str:
+	if not company:
+		return ""
+	try:
+		if not frappe.db.exists("DocType", "Company"):
+			return ""
+		logo = frappe.db.get_value("Company", company, "company_logo")
+		return str(logo or "").strip()
+	except Exception:
+		return ""
+
+
+def _app_logo() -> str:
+	try:
+		from frappe.core.doctype.navbar_settings.navbar_settings import get_app_logo
+
+		return str(get_app_logo() or "").strip()
+	except Exception:
+		return ""
+
+
+def _wordmark_fallback() -> str:
 	configured = frappe.conf.get("kaiten_brand")
 	if configured:
 		name = str(configured).strip()
@@ -252,9 +288,23 @@ def resolve_brand() -> str:
 	return "Kaiten"
 
 
+def resolve_company_brand() -> dict:
+	"""Desk pill: default Company name + its logo, then the app wordmark/logo."""
+	company = _default_company()
+	name = company or _wordmark_fallback()
+	logo = _company_logo(company) or _app_logo()
+	return {"name": name, "logo": logo, "company": company}
+
+
+def resolve_brand() -> str:
+	"""Site-specific wordmark: Company first, then App Name / Kaiten."""
+	return resolve_company_brand()["name"]
+
+
 @frappe.whitelist(allow_guest=True)
 def get_brand() -> dict:
-	return {"brand": resolve_brand()}
+	info = resolve_company_brand()
+	return {"brand": info["name"], "logo": info["logo"]}
 
 
 @frappe.whitelist()
@@ -735,7 +785,51 @@ def get_menu_configs() -> list:
 def clear_menu_cache() -> None:
 	"""Drop every user's cached menu, since the configuration is shared."""
 	frappe.cache().delete_keys("kaiten_erp_ui_themes_menu::")
+	frappe.cache().delete_keys("kaiten_erp_ui_themes_shell_nav::")
 
+
+
+def _nav_is_configured() -> bool:
+	try:
+		return bool(frappe.db.exists(NAV_DOCTYPE, {"enabled": 1}))
+	except Exception:
+		return False
+
+
+@frappe.whitelist()
+def get_shell_nav(refresh: int | str = 0, profile: str | None = None) -> dict:
+	"""Top-level menus for the module-nav sidebar, each with its own columns."""
+	if frappe.session.user == "Guest":
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	profile = (profile or "").strip()
+	if profile == DEFAULT_CONTENT or (profile and profile not in _active_menu_configs()):
+		profile = ""
+
+	slug = profile or DEFAULT_CONTENT
+	cache_key = f"kaiten_erp_ui_themes_shell_nav::{frappe.session.user}::{slug}"
+
+	if not frappe.utils.cint(refresh):
+		cached = frappe.cache().get_value(cache_key)
+		if cached:
+			return cached
+
+	readable = _readable_doctypes()
+	if _nav_is_configured():
+		menus = _config_menus(readable, profile)
+		if menus:
+			payload = {"user": frappe.session.user, "menus": menus, "source": "config", "profile": slug}
+			frappe.cache().set_value(cache_key, payload, expires_in_sec=CACHE_TTL)
+			return payload
+
+	payload = {
+		"user": frappe.session.user,
+		"menus": _workspace_menus(readable),
+		"source": "auto",
+		"profile": slug,
+	}
+	frappe.cache().set_value(cache_key, payload, expires_in_sec=CACHE_TTL)
+	return payload
 
 # --------------------------------------------------------------------------
 # Bootstrapping and drift
@@ -1335,3 +1429,84 @@ def set_prefs(payload: str, rev: str = "0") -> dict:
 	doc.save(ignore_permissions=True)
 
 	return {"rev": doc.rev}
+
+
+# --------------------------------------------------------------------------
+# Rate ticker
+#
+# Jewellery desks show the latest submitted metal rates under the bar. Sites
+# without Daily Metal Rate Sheet get an empty payload and the client hides
+# the strip — style never depends on this existing.
+# --------------------------------------------------------------------------
+
+RATE_DOCTYPE = "Daily Metal Rate Sheet"
+RATE_ITEM_DOCTYPE = "Daily Metal Rate Sheet Item"
+RATE_CACHE_TTL = 60
+
+
+def _empty_ticker() -> dict:
+	return {"sheet": None, "rate_date": None, "items": []}
+
+
+@frappe.whitelist()
+def get_rate_ticker(refresh: int | str = 0) -> dict:
+	"""The latest submitted metal rates, or empty when there is no feed."""
+	if frappe.session.user == "Guest":
+		return _empty_ticker()
+
+	key = "kaiten_rate_ticker"
+	if not frappe.utils.cint(refresh):
+		cached = frappe.cache().get_value(key)
+		if cached is not None:
+			return cached
+
+	payload = _build_rate_ticker()
+	frappe.cache().set_value(key, payload, expires_in_sec=RATE_CACHE_TTL)
+	return payload
+
+
+def _build_rate_ticker() -> dict:
+	if not frappe.db.exists("DocType", RATE_DOCTYPE):
+		return _empty_ticker()
+
+	sheets = frappe.get_all(
+		RATE_DOCTYPE,
+		filters={"docstatus": 1},
+		fields=["name", "rate_date"],
+		order_by="rate_date desc, creation desc",
+		limit_page_length=1,
+		ignore_permissions=True,
+	)
+	if not sheets:
+		return _empty_ticker()
+
+	sheet = sheets[0]
+
+	rows = frappe.get_all(
+		RATE_ITEM_DOCTYPE,
+		filters={"parent": sheet.name, "parenttype": RATE_DOCTYPE},
+		fields=["metal_purity", "rate_per_10_gram", "last_rate_per_10_gram"],
+		order_by="idx asc",
+		ignore_permissions=True,
+	)
+
+	items = []
+	for row in rows:
+		rate = frappe.utils.flt(row.get("rate_per_10_gram"))
+		if rate <= 0:
+			continue
+
+		last = frappe.utils.flt(row.get("last_rate_per_10_gram"))
+		items.append(
+			{
+				"label": row.get("metal_purity"),
+				"rate": rate,
+				"change": (rate - last) if last else 0,
+			}
+		)
+
+	return {
+		"sheet": sheet.name,
+		"rate_date": str(sheet.rate_date) if sheet.rate_date else None,
+		"items": items,
+	}

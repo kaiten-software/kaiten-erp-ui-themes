@@ -27,6 +27,7 @@
 		layout: "kaiten_ui_layout",
 		content: "kaiten_ui_content",
 		rev: "kaiten_ui_rev",
+		navSide: "kaiten_ui_nav_side",
 	};
 
 	// Everything worth carrying between machines. Anything not listed here stays
@@ -136,20 +137,6 @@
 			swatch: "linear-gradient(135deg,#ede9fe 0%,#c4b5fd 38%,#fbcfe8 68%,#fde68a 100%)",
 			tones: LUMEN_TONES,
 		},
-		{
-			id: "cast",
-			label: "Cast",
-			note: "Milky flats, right angles, hard light",
-			swatch: "linear-gradient(135deg,#6c42f5 0%,#6c42f5 42%,#ffffff 42%,#ffffff 100%)",
-			tones: CAST_TONES,
-		},
-		{
-			id: "halo",
-			label: "Halo",
-			note: "Futurist glass, glowing fields, inflated corners",
-			swatch: "linear-gradient(135deg,#f5f6ff 0%,#c4b5fd 40%,#7c3aed 100%)",
-			tones: HALO_TONES,
-		},
 	];
 
 	/* Frappe's three appearances. Its own name for the third is "automatic",
@@ -168,9 +155,9 @@
 	   of the skin: every theme that offers density offers the same three. Older
 	   prefs wrote "cozy" and "compact"; those land on Standard and Sleek. */
 	var DENSITIES = [
-		{ id: "standard", label: "Standard", note: "Comfortable spacing" },
-		{ id: "dense", label: "Dense", note: "Less wasted space" },
-		{ id: "sleek", label: "Sleek", note: "Tight and sharp" },
+		{ id: "standard", label: "Normal", note: "Comfortable spacing" },
+		{ id: "dense", label: "Cozy", note: "Less wasted space" },
+		{ id: "sleek", label: "Compact", note: "Tight and sharp" },
 	];
 
 	/* The two tabs that belong to the person rather than to the content. They
@@ -189,6 +176,8 @@
 		{ id: "insights", label: "Insights", icon: "chart-column" },
 		{ id: "tools", label: "Tools", icon: "settings" },
 	];
+
+	var RATE_POLL_MS = 60000;
 
 	function siteTabList() {
 		return [PINNED_TAB].concat(SITE_TABS, [RECENT_TAB]);
@@ -423,6 +412,11 @@
 		adopt("aurora_ui_recent", KEY.recent);
 		adopt("aurora_ui_layout", KEY.layout);
 		adopt("aurora:accent", KEY.accent);
+		try {
+			if (localStorage.getItem(KEY.content) === "standard") {
+				localStorage.setItem(KEY.content, DEFAULT_CONTENT);
+			}
+		} catch (e) {}
 	}
 
 	/* ---------------------------------------------------------------------
@@ -542,6 +536,41 @@
 		return location.pathname.split("/")[1] === "desk" ? "/desk" : "/app";
 	}
 
+	/* Kaiten Home is another app's page. The theme only opens it when that app
+	   has said the page is there — boot flag, desk helper, or an allowed Page.
+	   A forced /home is the stock workspace, which is a different destination. */
+	function kaitenHomeAvailable() {
+		try {
+			if (typeof kaiten_desk !== "undefined" && kaiten_desk) return true;
+		} catch (e) {}
+		try {
+			var boot = window.frappe && frappe.boot;
+			if (boot && boot.kaiten_desk) return true;
+			if (boot && boot.kaiten_home && boot.kaiten_home.enabled === false) return false;
+			if (boot && boot.kaiten_home && boot.kaiten_home.enabled) return true;
+			if (boot && boot.page_info && boot.page_info["kaiten-home"]) return true;
+			var allowed = (boot && boot.allowed_pages) || [];
+			if (allowed.indexOf && allowed.indexOf("kaiten-home") >= 0) return true;
+		} catch (e2) {}
+		return false;
+	}
+
+	function goKaitenHome() {
+		try {
+			if (typeof kaiten_desk !== "undefined" && kaiten_desk && typeof kaiten_desk.showKaitenHome === "function") {
+				kaiten_desk.showKaitenHome();
+				return;
+			}
+		} catch (e) {}
+		try {
+			if (window.frappe && typeof frappe.set_route === "function") {
+				frappe.set_route("kaiten-home");
+				return;
+			}
+		} catch (e2) {}
+		window.location.assign(prefix() + "/kaiten-home");
+	}
+
 	function hrefFor(desc) {
 		var route = desc.route || [];
 		// Only a configured link can be an outside address, and it is already an
@@ -551,6 +580,11 @@
 		if (route[0] === "List") return prefix() + "/" + slugify(route[1]);
 		if (route[0] === "Form") return prefix() + "/" + slugify(route[1]) + "/" + encodeURIComponent(route[2]);
 		if (route[0] === "query-report") return prefix() + "/query-report/" + encodeURIComponent(route[1]);
+		// Dashboard names are document names, not slugs. Slugifying
+		// "Human Resource" to human-resource is what made the page 404.
+		if (route[0] === "dashboard-view" || route[0] === "Dashboard") {
+			return prefix() + "/dashboard-view/" + encodeURIComponent(route[1] || "");
+		}
 		return prefix() + "/" + route.map(slugify).join("/");
 	}
 
@@ -1027,6 +1061,7 @@
 		// knowable yet. Look again once it has had time to load.
 		setTimeout(refineRecent, 700);
 		setTimeout(refineRecent, 2200);
+		if (typeof renderSide === "function") renderSide();
 	}
 
 	function formRef(item) {
@@ -1434,6 +1469,409 @@
 				});
 			});
 		});
+	}
+
+	/* ---------------------------------------------------------------------
+	   Content sidebar
+	   ---------------------------------------------------------------------
+	   The rail is the same menus the bar carries, scoped to whichever module
+	   the open page belongs to. Paint comes from --aur-* tokens; this block
+	   only builds the tree.
+	   ------------------------------------------------------------------ */
+
+	var nav = { menus: [], byKey: {}, active: "", area: {}, source: "auto", drawerOpen: false };
+
+	function hasRoute(item) {
+		return item && Array.isArray(item.route) && item.route.length;
+	}
+
+	function isNarrow() {
+		return window.matchMedia("(max-width: 767px)").matches;
+	}
+
+	function itemKey(item) {
+		if (!item || item.act === "url") return "";
+		var route = item.route || [];
+		if (route[0] === "List" || route[0] === "Form" || route[0] === "Tree") return "dt:" + route[1];
+		if (route[0] === "query-report") return "rep:" + route[1];
+		if (route[0] === "dashboard-view" || route[0] === "Dashboard") return "dash:" + (route[1] || "");
+		if (item.id && item.id.indexOf("list:") === 0) return "dt:" + item.id.slice(5);
+		if (item.id && item.id.indexOf("report:") === 0) return "rep:" + item.id.slice(7);
+		if (item.id && item.id.indexOf("workspace:") === 0) return "ws:" + slugify(item.id.slice(10));
+		if (item.id && item.id.indexOf("page:") === 0) return item.id;
+		if (route.length === 1) return "ws:" + slugify(route[0]);
+		return item.id || "";
+	}
+
+	function itemMatchesRoute(item, here) {
+		if (!item) return false;
+		if (item.key && here && (item.key === here || slugify(item.key) === slugify(here))) return true;
+		var mine = (item.route || []).map(String);
+		if (!mine.length) return false;
+		var now = [];
+		try {
+			now = (frappe.get_route() || []).map(String);
+		} catch (e) {}
+		if (!now.length) return false;
+		if (mine.length === 1 || now.length === 1) {
+			return mine.length === now.length && slugify(mine[0]) === slugify(now[0]);
+		}
+		return slugify(mine[0]) === slugify(now[0]) && slugify(mine[1]) === slugify(now[1]);
+	}
+
+	function areaIsMixed(items) {
+		var seen = {};
+		(items || []).forEach(function (item) {
+			seen[item.kind || "operate"] = true;
+		});
+		return Object.keys(seen).length > 1;
+	}
+
+	function eachKind(items, mixed, write) {
+		[
+			{ kind: "operate", label: "" },
+			{ kind: "report", label: "Reports" },
+			{ kind: "setup", label: "Setup" },
+		].forEach(function (bucket) {
+			var rows = (items || []).filter(function (item) {
+				return (item.kind || "operate") === bucket.kind;
+			});
+			if (!rows.length) return;
+			write(bucket, rows, mixed && bucket.label);
+		});
+	}
+
+	function menuLanding(menu) {
+		if (!menu) return null;
+		if (hasRoute(menu.overview)) return menu.overview;
+		var found = null;
+		(menu.columns || []).forEach(function (column) {
+			(column.items || []).forEach(function (item) {
+				if (!found && (hasRoute(item) || (item && item.act === "url" && item.url))) found = item;
+			});
+		});
+		return found;
+	}
+
+	function buildNavModel(payload) {
+		nav.source = (payload && payload.source) || "auto";
+		nav.menus = ((payload && payload.menus) || [])
+			.map(function (menu) {
+				try {
+					var built = {
+						name: menu.name,
+						label: menu.label,
+						icon: resolveIcon(menu.icon, menu.label),
+						hue: hue(menu.name),
+						columns: (menu.columns || []).map(function (column) {
+							return {
+								title: column.title || menu.label,
+								items: (column.items || []).map(function (link) {
+									var item = configItem(link, menu.label);
+									item.key = itemKey(item);
+									return item;
+								}),
+							};
+						}),
+					};
+					built.overview = overviewItem(menu);
+					if (built.overview) built.overview.key = itemKey(built.overview);
+					return built;
+				} catch (e) {
+					console.warn("Kaiten: skipped a nav menu that could not be built", menu && menu.name, e);
+					return null;
+				}
+			})
+			.filter(Boolean);
+
+		nav.byKey = {};
+		nav.menus.forEach(function (menu) {
+			function remember(item) {
+				if (!item || !item.key || nav.byKey[item.key]) return;
+				nav.byKey[item.key] = menu.name;
+			}
+			remember(menu.overview);
+			menu.columns.forEach(function (column) {
+				column.items.forEach(remember);
+			});
+		});
+	}
+
+	function menuByName(name) {
+		for (var i = 0; i < nav.menus.length; i++) {
+			if (nav.menus[i].name === name) return nav.menus[i];
+		}
+		return null;
+	}
+
+	function routeTargetKey() {
+		var route = [];
+		try {
+			route = frappe.get_route() || [];
+		} catch (e) {}
+		if (!route.length) return "";
+		var head = String(route[0] || "");
+		if (head === "query-report") return "rep:" + route[1];
+		if (head === "List" && route[2] === "Report") return "rep:" + route[3];
+		if (head === "List" || head === "Form" || head === "Tree" || head === "print") return "dt:" + route[1];
+		if (head === "dashboard-view" || head === "Dashboard") return "dash:" + (route[1] || "");
+		if (head === "Workspaces") return "ws:" + slugify(route[1] || "");
+		var slug = slugify(head);
+		var candidates = ["page:" + head, "page:" + slug, "ws:" + slug, "ws:" + head];
+		for (var i = 0; i < candidates.length; i++) {
+			if (nav.byKey[candidates[i]]) return candidates[i];
+		}
+		return "ws:" + slug;
+	}
+
+	function activeMenuName() {
+		var found = nav.byKey[routeTargetKey()];
+		if (found) return found;
+		return nav.active && menuByName(nav.active) ? nav.active : "";
+	}
+
+	function ingestShellNav(menu) {
+		if (menu && menu.source === "config" && menu.menus && menu.menus.length) {
+			buildNavModel(menu);
+			renderSide();
+			return;
+		}
+		if (!window.frappe || !frappe.xcall) {
+			buildNavModel({ menus: [] });
+			renderSide();
+			return;
+		}
+		frappe
+			.xcall("kaiten_erp_ui_themes.api.get_shell_nav", { profile: currentContent() })
+			.then(function (payload) {
+				buildNavModel(payload || { menus: [] });
+				renderSide();
+			})
+			.catch(function () {
+				buildNavModel({ menus: [] });
+				renderSide();
+			});
+	}
+
+	function pinStar(item, extraClass) {
+		var star = make("button", {
+			class: "knav-star" + (extraClass ? " " + extraClass : "") + (isPinned(item.id) ? " is-on" : ""),
+			type: "button",
+			title: "Pin this entry",
+			"data-pin-id": item.id,
+			text: "\u2605",
+		});
+		star.addEventListener("click", function (event) {
+			event.preventDefault();
+			event.stopPropagation();
+			togglePin(item, star);
+			star.classList.toggle("is-on", isPinned(item.id));
+		});
+		return star;
+	}
+
+	function sideCollapsed() {
+		return localStorage.getItem(KEY.navSide) === "1";
+	}
+
+	function labelSideHandle(collapsed) {
+		var handle = el.side && el.side.querySelector(".kside-collapse");
+		if (!handle) return;
+		var label = collapsed ? "Expand sidebar" : "Collapse sidebar";
+		handle.title = label;
+		handle.setAttribute("aria-label", label);
+	}
+
+	function applySideCollapsed() {
+		if (isNarrow()) {
+			var open = !!nav.drawerOpen && root.classList.contains("kaiten-side-on");
+			if (el.side) el.side.classList.toggle("is-collapsed", !open);
+			root.classList.toggle("kaiten-side-collapsed", !open);
+			if (el.sideScrim) el.sideScrim.hidden = !open;
+			labelSideHandle(!open);
+			return;
+		}
+		if (el.sideScrim) el.sideScrim.hidden = true;
+		var on = sideCollapsed();
+		if (el.side) el.side.classList.toggle("is-collapsed", on);
+		root.classList.toggle("kaiten-side-collapsed", on);
+		labelSideHandle(on);
+	}
+
+	function setSideCollapsed(on) {
+		if (isNarrow()) {
+			nav.drawerOpen = !on;
+			applySideCollapsed();
+			return;
+		}
+		localStorage.setItem(KEY.navSide, on ? "1" : "0");
+		applySideCollapsed();
+		schedulePush();
+	}
+
+	function sideLink(item, active) {
+		var node = make(
+			"a",
+			{ class: "kside-item" + (active ? " is-active" : ""), href: hrefFor(item), title: item.label },
+			[
+				make("span", { class: "kside-item-icon" }, [iconNode(item.icon, "kside-item-glyph")]),
+				make("span", { class: "kside-item-label", text: item.label }),
+				pinStar(item),
+			]
+		);
+		node.addEventListener("click", function (event) {
+			if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+			event.preventDefault();
+			runItem(item);
+		});
+		return node;
+	}
+
+	function ensureSideMounted() {
+		if (!el.side) return;
+		if (document.body.contains(el.side)) return;
+		mountSide();
+	}
+
+	function mountSide() {
+		if (!el.side) return;
+		var host = document.querySelector(".body-sidebar-container");
+		if (host && host.parentNode) {
+			host.parentNode.insertBefore(el.side, host);
+			return;
+		}
+		var body = document.getElementById("body");
+		if (body && body.parentNode) {
+			body.parentNode.insertBefore(el.side, body);
+			return;
+		}
+		document.body.appendChild(el.side);
+	}
+
+	function buildSide() {
+		if (el.side) return;
+		el.sideIcon = make("span", { class: "kside-head-icon" });
+		el.sideTitle = make("span", { class: "kside-title" });
+		var head = make("button", { class: "kside-head", type: "button", title: "Open this module" }, [el.sideIcon, el.sideTitle]);
+		el.sideHead = head;
+		head.addEventListener("click", function () {
+			var landing = menuLanding(menuByName(activeMenuName()));
+			if (landing) runItem(landing);
+		});
+		var collapse = make("button", {
+			class: "kside-collapse",
+			type: "button",
+			title: "Collapse sidebar",
+			"aria-label": "Collapse sidebar",
+			text: "\u2039",
+		});
+		collapse.addEventListener("click", function (event) {
+			event.stopPropagation();
+			setSideCollapsed(!sideCollapsed());
+		});
+		el.sidePin = make("span", { class: "kside-pin-slot" });
+		el.sideBody = make("div", { class: "kside-body" });
+		el.side = make("aside", { class: "kside", "aria-label": "Module navigation" }, [
+			make("div", { class: "kside-top" }, [head, el.sidePin, collapse]),
+			el.sideBody,
+		]);
+		el.sideScrim = make("button", { class: "kside-scrim", type: "button", hidden: "hidden", "aria-label": "Close module menu" });
+		el.sideScrim.addEventListener("click", function () {
+			nav.drawerOpen = false;
+			applySideCollapsed();
+		});
+		document.body.appendChild(el.sideScrim);
+		mountSide();
+		applySideCollapsed();
+		if (!el.sideResizeBound) {
+			el.sideResizeBound = true;
+			window.addEventListener("resize", function () {
+				applySideCollapsed();
+			});
+		}
+	}
+
+	function renderSide() {
+		if (!el.sideBody) return;
+		ensureSideMounted();
+
+		var name = activeMenuName();
+		if (name) nav.active = name;
+		var menu = menuByName(name);
+		root.classList.toggle("kaiten-side-on", Boolean(menu));
+
+		if (!menu) {
+			el.sideBody.innerHTML = "";
+			el.sideTitle.textContent = "";
+			el.sideIcon.textContent = "";
+			if (el.sidePin) el.sidePin.innerHTML = "";
+			applySideCollapsed();
+			return;
+		}
+
+		el.sideTitle.textContent = /overview$/i.test(String(menu.label || "").trim())
+			? menu.label
+			: menu.label + " overview";
+		el.sideIcon.textContent = "";
+		el.sideIcon.appendChild(iconNode(menu.icon, "kside-head-glyph"));
+		if (el.sidePin) {
+			el.sidePin.innerHTML = "";
+			if (menu.overview && hasRoute(menu.overview)) el.sidePin.appendChild(pinStar(menu.overview, "kside-head-star"));
+		}
+
+		var here = routeTargetKey();
+		el.sideBody.innerHTML = "";
+
+		var holder = menu.columns.findIndex(function (column) {
+			return column.items.some(function (item) {
+				return itemMatchesRoute(item, here);
+			});
+		});
+
+		var picked = nav.area[menu.name];
+		var chosen;
+		if (picked && picked.route === here) chosen = picked.index;
+		else if (holder > -1) chosen = holder;
+		else if (picked) chosen = picked.index;
+		else chosen = 0;
+		if (chosen >= menu.columns.length) chosen = 0;
+		nav.area[menu.name] = { index: chosen, route: here };
+
+		if (menu.columns.length > 1) {
+			var pills = make("div", { class: "kside-pills" });
+			menu.columns.forEach(function (column, index) {
+				var pill = make("button", {
+					class: "kside-pill" + (index === chosen ? " is-on" : ""),
+					type: "button",
+					title: column.title,
+					text: column.title,
+				});
+				pill.addEventListener("click", function () {
+					nav.area[menu.name] = { index: index, route: routeTargetKey() };
+					renderSide();
+				});
+				pills.appendChild(pill);
+			});
+			el.sideBody.appendChild(make("div", { class: "kside-label", text: "Areas" }));
+			el.sideBody.appendChild(pills);
+		}
+
+		var column = menu.columns[chosen];
+		if (!column) {
+			applySideCollapsed();
+			return;
+		}
+
+		el.sideBody.appendChild(make("div", { class: "kside-area", text: column.title }));
+		eachKind(column.items, areaIsMixed(column.items), function (bucket, rows, heading) {
+			if (heading) el.sideBody.appendChild(make("div", { class: "kside-sub", text: heading }));
+			var list = make("div", { class: "kside-items" });
+			rows.forEach(function (item) {
+				list.appendChild(sideLink(item, itemMatchesRoute(item, here)));
+			});
+			el.sideBody.appendChild(list);
+		});
+		applySideCollapsed();
 	}
 
 	function groupsFor(tabId) {
@@ -3449,8 +3887,8 @@
 		var editor = make("div", { class: "aur-mixer" });
 		var skins = make("div", { class: "aur-skins" });
 
-		// Density rides on the skin layer, and Default deliberately has none: it
-		// is stock Frappe with only the bar added, spacing included.
+		// Density is spacing, not a skin. Default keeps stock Frappe colours
+		// and still offers Normal / Cozy / Compact.
 		var density = make("div", { class: "aur-seg" });
 		var densityLabel = make("div", { class: "aur-pop-label", text: "Density" });
 		var densityRow = make("div", { class: "aur-pop-row" }, [density]);
@@ -3493,7 +3931,6 @@
 
 		var renderSkins = function () {
 			var active = currentSkin();
-			densityLabel.hidden = densityRow.hidden = active === "default";
 			skins.innerHTML = "";
 
 			SKINS.forEach(function (skin) {
@@ -3717,8 +4154,9 @@
 	function reclip(list) {
 		if (!list.dataset.aurUnclipped) return;
 		delete list.dataset.aurUnclipped;
+		delete list.dataset.aurOrigin;
 		list.classList.remove("aur-unclipped");
-		["position", "width", "minWidth", "maxHeight", "left", "top", "bottom", "zIndex"].forEach(function (prop) {
+		["position", "width", "minWidth", "maxHeight", "left", "top", "bottom", "zIndex", "visibility"].forEach(function (prop) {
 			list.style[prop] = "";
 		});
 	}
@@ -3753,18 +4191,33 @@
 		list.style.bottom = "auto";
 
 		/* Fixed is not always relative to the viewport: a transformed ancestor
-		   (a dialog mid-animation, say) becomes the containing block instead.
-		   Parking the list at 0,0 and reading back where that landed gives the
-		   offset to work from, whatever the ancestor turns out to be. */
-		list.style.left = "0px";
-		list.style.top = "0px";
-		var origin = list.getBoundingClientRect();
+		   becomes the containing block. Measure that origin once; doing it on
+		   every hover-class mutation parked the list at 0,0 and made it flash. */
+		var originLeft;
+		var originTop;
+		if (list.dataset.aurOrigin) {
+			var parts = list.dataset.aurOrigin.split(",");
+			originLeft = Number(parts[0]);
+			originTop = Number(parts[1]);
+		} else {
+			list.style.visibility = "hidden";
+			list.style.left = "0px";
+			list.style.top = "0px";
+			var origin = list.getBoundingClientRect();
+			originLeft = origin.left;
+			originTop = origin.top;
+			list.dataset.aurOrigin = originLeft + "," + originTop;
+			list.style.visibility = "";
+		}
 
 		var left = clamp(rect.left, 8, Math.max(8, window.innerWidth - rect.width - 8));
 		var top = flip ? rect.top - 6 - Math.min(above, 360) : rect.bottom + 6;
+		var nextLeft = Math.round(left - originLeft) + "px";
+		var nextTop = Math.round(top - originTop) + "px";
+		if (list.style.left === nextLeft && list.style.top === nextTop) return;
 
-		list.style.left = Math.round(left - origin.left) + "px";
-		list.style.top = Math.round(top - origin.top) + "px";
+		list.style.left = nextLeft;
+		list.style.top = nextTop;
 	}
 
 	function watchPopups() {
@@ -3778,11 +4231,36 @@
 		["focusin", "input", "keyup", "click"].forEach(function (type) {
 			document.addEventListener(type, sweep, true);
 		});
-		document.addEventListener("scroll", sweep, true);
+		document.addEventListener(
+			"scroll",
+			function (event) {
+				var t = event.target;
+				if (t && t.closest && t.closest(".awesomplete > ul, .datepicker, .autocomplete-results, .aur-select-pop")) return;
+				sweep();
+			},
+			true
+		);
 		window.addEventListener("resize", sweep);
 
-		// Awesomplete opens and closes by toggling hidden; the datepicker by class.
-		new MutationObserver(sweep).observe(document.body, {
+		// Awesomplete opens/closes via hidden; datepicker via class. Ignore
+		// highlight-class changes inside an open list — those fire on hover
+		// and used to re-run unclip (hide → 0,0 → show) on every row.
+		new MutationObserver(function (records) {
+			for (var i = 0; i < records.length; i++) {
+				var rec = records[i];
+				var t = rec.target;
+				if (
+					rec.attributeName === "class" &&
+					t &&
+					t.closest &&
+					t.closest(".awesomplete > ul, .datepicker, .autocomplete-results, .aur-select-pop")
+				) {
+					continue;
+				}
+				sweep();
+				return;
+			}
+		}).observe(document.body, {
 			subtree: true,
 			attributes: true,
 			attributeFilter: ["hidden", "class", "aria-expanded"],
@@ -3864,7 +4342,14 @@
 			true
 		);
 
-		document.addEventListener("scroll", closeSelect, true);
+		document.addEventListener(
+			"scroll",
+			function (event) {
+				if (el.selectPop && event.target && (event.target === el.selectPop || el.selectPop.contains(event.target))) return;
+				closeSelect();
+			},
+			true
+		);
 		window.addEventListener("resize", closeSelect);
 	}
 
@@ -3961,16 +4446,27 @@
 	}
 
 	function buildBar(anchor) {
-		/* Brand is Home — the desk page — not the theme panel. Theme lives on
-		   the colourful control at the right of the bar. */
-		var brand = make("button", { class: "aur-brand", type: "button", title: "Home" }, [
-			make("span", { class: "aur-brand-dot" }),
-			make("span", { text: brandName() }),
+		/* Brand is Home. On a site that has Kaiten Home that page is the
+		   destination; otherwise the stock workspace. Theme stays on the
+		   colourful control — the mark must not open the panel. */
+		var info = brandInfo();
+		var mark = info.logo
+			? make("img", { class: "aur-brand-logo", src: info.logo, alt: "" })
+			: make("span", { class: "aur-brand-dot" });
+		if (info.logo) {
+			mark.addEventListener("error", function () {
+				if (mark.parentNode) mark.replaceWith(make("span", { class: "aur-brand-dot" }));
+			});
+		}
+		var brand = make("button", { class: "aur-brand", type: "button", title: info.name + " — home" }, [
+			mark,
+			make("span", { class: "aur-brand-label", text: info.name }),
 		]);
 		brand.addEventListener("click", function (event) {
 			event.stopPropagation();
 			closeMega();
-			if (window.frappe && typeof frappe.set_route === "function") frappe.set_route("home");
+			if (kaitenHomeAvailable()) goKaitenHome();
+			else if (window.frappe && typeof frappe.set_route === "function") frappe.set_route("home");
 			else window.location.href = prefix() + "/home";
 		});
 
@@ -4154,6 +4650,7 @@
 				el.navWrap,
 				make("div", { class: "aur-bar-right" }, [searchWrap, el.pinBtn, paletteBtn, fullBtn]),
 			]),
+			buildRateBar(),
 		]);
 
 		// v17 puts the content in .main-section (no navbar); older desks have a
@@ -4276,6 +4773,95 @@
 		return "Kaiten";
 	}
 
+	function brandInfo() {
+		try {
+			var company = window.frappe && frappe.boot && frappe.boot.kaiten_company;
+			if (company && company.name) {
+				return { name: String(company.name), logo: String(company.logo || "") };
+			}
+		} catch (e) {}
+		var logo = "";
+		try {
+			logo = (window.frappe && frappe.boot && frappe.boot.app_logo_url) || "";
+		} catch (e) {}
+		return { name: brandName(), logo: logo };
+	}
+
+	function rateGlyphKind(label) {
+		var text = String(label || "").toLowerCase();
+		if (text.indexOf("gold") > -1) return "gold";
+		if (text.indexOf("silver") > -1) return "silver";
+		if (text.indexOf("platinum") > -1) return "platinum";
+		return "neutral";
+	}
+
+	function rateMoney(value) {
+		try {
+			return window.format_currency(value, frappe.boot.sysdefaults.currency, 0);
+		} catch (e) {
+			return String(Math.round(Number(value) || 0));
+		}
+	}
+
+	function rateTick(item) {
+		var change = Number(item.change) || 0;
+		var dir = change > 0 ? "up" : change < 0 ? "down" : "flat";
+		var arrow = change > 0 ? "\u25B2" : change < 0 ? "\u25BC" : "\u2014";
+		var nodes = [
+			make("span", { class: "krate-dot krate-" + rateGlyphKind(item.label) }),
+			make("span", { class: "krate-metal", text: item.label || "" }),
+			make("span", { class: "krate-value", text: rateMoney(item.rate) }),
+			make("span", { class: "krate-change krate-" + dir }, [
+				make("span", { class: "krate-arrow", text: arrow }),
+				change ? make("span", { text: rateMoney(Math.abs(change)) }) : null,
+			].filter(Boolean)),
+		];
+		return make("span", { class: "krate-tick" }, nodes);
+	}
+
+	function renderRates(payload) {
+		if (!el.rateTrack) return;
+		var items = (payload && payload.items) || [];
+		el.rateTrack.textContent = "";
+		if (!items.length) {
+			root.classList.remove("kaiten-rate-on");
+			return;
+		}
+		items.forEach(function (item) {
+			el.rateTrack.appendChild(rateTick(item));
+		});
+		if (payload.rate_date) {
+			el.rateBar.setAttribute("title", "Rates as of " + payload.rate_date);
+		}
+		root.classList.add("kaiten-rate-on");
+	}
+
+	function loadRates(refresh) {
+		if (!window.frappe || !frappe.xcall) return;
+		frappe
+			.xcall("kaiten_erp_ui_themes.api.get_rate_ticker", refresh ? { refresh: 1 } : {})
+			.then(renderRates)
+			.catch(function () {
+				root.classList.remove("kaiten-rate-on");
+			});
+	}
+
+	function buildRateBar() {
+		el.rateTrack = make("div", { class: "krate-track" });
+		el.rateBar = make("div", { class: "krate", role: "status", "aria-live": "polite" }, [
+			make("span", { class: "krate-live" }, [
+				make("span", { class: "krate-pulse" }),
+				make("span", { text: "Live" }),
+			]),
+			make("div", { class: "krate-viewport" }, [el.rateTrack]),
+		]);
+		if (el.rateTimer) clearInterval(el.rateTimer);
+		el.rateTimer = setInterval(function () {
+			loadRates(1);
+		}, RATE_POLL_MS);
+		return el.rateBar;
+	}
+
 	function skinById(id) {
 		for (var i = 0; i < SKINS.length; i++) {
 			if (SKINS[i].id === id) return SKINS[i];
@@ -4287,6 +4873,10 @@
 	   an old browser that switched it off keeps that look under the new name. */
 	function currentSkin() {
 		var stored = localStorage.getItem(KEY.skin);
+		if (stored === "cast" || stored === "halo") {
+			stored = "lumen";
+			localStorage.setItem(KEY.skin, stored);
+		}
 		if (stored && skinById(stored)) return stored;
 		return localStorage.getItem(KEY.enabled) === "0" ? "default" : "aurora";
 	}
@@ -4669,10 +5259,13 @@
 
 		function arm() {
 			Array.prototype.forEach.call(
-				document.querySelectorAll(".widget:not(.aur-reveal), .form-section:not(.aur-reveal)"),
+				document.querySelectorAll(".widget:not(.aur-reveal)"),
 				function (node) {
-					// Anything already on screen is painted as-is. Only content the
-					// user has to scroll to gets the entrance.
+					if (node.closest(".form-in-grid, .modal-dialog, .grid-row-open")) return;
+
+					// Form sections are not revealed: a transform on that card
+					// traps the position:fixed pencil editor and flickers on hover.
+					// Anything already on screen is painted as-is.
 					if (node.getBoundingClientRect().top < window.innerHeight - 40) {
 						node.classList.add("aur-reveal", "aur-in");
 						return;
@@ -4937,6 +5530,7 @@
 			.xcall("kaiten_erp_ui_themes.api.get_menu", args)
 			.then(function (menu) {
 				buildModel(menu);
+				ingestShellNav(menu);
 				setCounts();
 				// A content switch replaces every group, so an open menu is redrawn
 				// on the tab the user was already reading rather than closed.
@@ -5024,6 +5618,7 @@
 				pending = null;
 				dressSidebar();
 				dressToggles();
+				if (typeof ensureSideMounted === "function") ensureSideMounted();
 			});
 		};
 
@@ -5155,11 +5750,171 @@
 			});
 	}
 
+	function isToolbarPopover(node) {
+		return node && node.classList && (node.classList.contains("filter-popover") || node.classList.contains("group-by-popover"));
+	}
+
+	function popoverButtonFor(pop) {
+		if (!pop) return null;
+		if (pop.classList.contains("group-by-popover")) return document.querySelector(".group-by-button");
+		return document.querySelector(".filter-button");
+	}
+
+	function placeToolbarPopover(pop, btn) {
+		if (!pop || !btn) return false;
+		var w = pop.offsetWidth;
+		var h = pop.offsetHeight;
+		if (!w || !h) return false;
+		var br = btn.getBoundingClientRect();
+		var left = br.left + br.width / 2 - w / 2;
+		left = Math.max(8, Math.min(left, window.innerWidth - w - 8));
+		var top = br.bottom + 8;
+		if (top + h > window.innerHeight - 8 && br.top - h - 8 > 8) {
+			top = br.top - h - 8;
+		}
+		pop.style.left = Math.round(left) + "px";
+		pop.style.top = Math.round(top) + "px";
+		pop.style.right = "auto";
+		pop.style.bottom = "auto";
+		pop.style.transform = "none";
+		pop.style.margin = "0";
+		pop.classList.add("aur-pop-ready");
+		return true;
+	}
+
+	function watchFilters() {
+		var run = function (btn, pop) {
+			pop = pop || document.querySelector("body > .filter-popover, body > .group-by-popover, .filter-popover, .group-by-popover");
+			btn = btn || popoverButtonFor(pop);
+			if (!pop || !btn) return;
+			requestAnimationFrame(function () {
+				placeToolbarPopover(pop, btn);
+				requestAnimationFrame(function () {
+					placeToolbarPopover(pop, btn);
+				});
+			});
+		};
+
+		// Frappe fires these through jQuery, which never reaches addEventListener.
+		if (window.jQuery) {
+			window.jQuery(document).on("show.bs.popover", ".filter-button, .group-by-button", function () {
+				document.querySelectorAll(".filter-popover, .group-by-popover").forEach(function (node) {
+					node.classList.remove("aur-pop-ready");
+				});
+			});
+			window.jQuery(document).on("shown.bs.popover", ".filter-button, .group-by-button", function () {
+				run(this);
+			});
+			window.jQuery(document).on("hidden.bs.popover", ".filter-button, .group-by-button", function () {
+				document.querySelectorAll(".filter-popover, .group-by-popover").forEach(function (node) {
+					node.classList.remove("aur-pop-ready");
+				});
+			});
+		}
+
+		new MutationObserver(function (records) {
+			for (var i = 0; i < records.length; i++) {
+				var nodes = records[i].addedNodes;
+				for (var n = 0; n < nodes.length; n++) {
+					var node = nodes[n];
+					if (node.nodeType !== 1) continue;
+					var pop = isToolbarPopover(node) ? node : node.querySelector && node.querySelector(".filter-popover, .group-by-popover");
+					if (pop) {
+						run(popoverButtonFor(pop), pop);
+						return;
+					}
+				}
+			}
+		}).observe(document.body, { childList: true, subtree: true });
+	}
+
+	var PRINT_FIX_CSS =
+		"html,body{max-width:100%!important;overflow-x:hidden!important;box-sizing:border-box!important}" +
+		"*{box-sizing:border-box}" +
+		".print-repeating-frame,.letterhead-container{width:100%!important;max-width:100%!important;table-layout:fixed!important}" +
+		".print-repeating-frame td,.letterhead-container td{max-width:100%!important;word-wrap:break-word;overflow-wrap:anywhere}" +
+		".letter-head,.print-heading,.document-header-content,.section,.section-columns,.column.col," +
+		".print-format-doc .col,.print-format-doc [class^=\"col-\"]{max-width:100%!important;width:100%!important}" +
+		".section-columns.row{display:flex;flex-wrap:wrap;max-width:100%!important}" +
+		".letter-head{overflow:hidden}" +
+		".logo-address:not(:has(img)):not(:has(.company-address:not(:empty))){display:none}";
+
+	function dressPrintFrame(frame) {
+		try {
+			var doc = frame.contentDocument;
+			if (!doc || !doc.head) return;
+			var style = doc.getElementById("aur-print-fix");
+			if (!style) {
+				style = doc.createElement("style");
+				style.id = "aur-print-fix";
+				doc.head.appendChild(style);
+			}
+			style.textContent = PRINT_FIX_CSS;
+		} catch (err) {}
+	}
+
+	function watchGridForm() {
+		document.addEventListener(
+			"click",
+			function (event) {
+				var target = event.target;
+				if (!target || !target.closest) return;
+				if (target.closest(".form-in-grid") && !target.closest(".grid-form-heading, .grid-footer-toolbar, .grid-collapse-row")) return;
+
+				var freeze = target.closest("#freeze.grid-form");
+				var opened = freeze && Number(freeze.getAttribute("data-aur-opened") || 0);
+				if (opened && Date.now() - opened < 300) {
+					event.stopPropagation();
+					event.stopImmediatePropagation();
+					event.preventDefault();
+					return;
+				}
+
+				if (freeze && window.cur_frm && cur_frm.cur_grid) {
+					cur_frm.cur_grid.toggle_view(false);
+					event.stopPropagation();
+					event.preventDefault();
+				}
+			},
+			true
+		);
+
+		new MutationObserver(function (records) {
+			for (var i = 0; i < records.length; i++) {
+				var nodes = records[i].addedNodes;
+				for (var n = 0; n < nodes.length; n++) {
+					var node = nodes[n];
+					if (node.nodeType === 1 && node.id === "freeze") {
+						node.setAttribute("data-aur-opened", String(Date.now()));
+						return;
+					}
+				}
+			}
+		}).observe(document.documentElement, { childList: true, subtree: true });
+	}
+
+	function watchPrint() {
+		var scan = function () {
+			document.querySelectorAll("iframe.print-format-container, iframe").forEach(function (frame) {
+				if (!frame.dataset.aurPrintBound) {
+					frame.dataset.aurPrintBound = "1";
+					frame.addEventListener("load", function () {
+						dressPrintFrame(frame);
+					});
+				}
+				dressPrintFrame(frame);
+			});
+		};
+		new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
+		scan();
+	}
+
 	function boot() {
 		var anchor = document.querySelector(".main-section") || document.querySelector("header.navbar");
 		if (!anchor || !window.frappe || !frappe.xcall) return false;
 
 		buildBar(anchor);
+		buildSide();
 		watchSidebar();
 		bindKeys();
 		bindRipple();
@@ -5168,6 +5923,9 @@
 		bindReveal();
 		skinSelects();
 		watchPopups();
+		watchFilters();
+		watchPrint();
+		watchGridForm();
 		trackRoutes();
 		pullPrefs();
 		backfillTitles();
@@ -5175,6 +5933,7 @@
 		// Fetched up front so the settings panel names the chosen profile the
 		// first time it opens, rather than showing a bare record id.
 		loadMenuConfigs();
+		loadRates(0);
 		return true;
 	}
 
