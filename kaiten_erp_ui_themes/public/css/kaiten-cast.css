@@ -232,9 +232,15 @@
 }
 
 .aurora-on[data-kaiten-skin="cast"] .widget:hover,
-.aurora-on[data-kaiten-skin="cast"] .frappe-card:hover,
-.aurora-on[data-kaiten-skin="cast"] .form-section:hover {
+.aurora-on[data-kaiten-skin="cast"] .frappe-card:hover {
 	transform: translate(1px, 1px);
+	border-color: var(--aur-line-strong);
+	box-shadow: 3px 3px 0 rgba(28, 18, 48, 0.14), 10px 12px 22px -14px rgba(28, 18, 48, 0.32);
+}
+
+.aurora-on[data-kaiten-skin="cast"] .form-section:hover,
+.aurora-on[data-kaiten-skin="cast"] .form-section.card-section:hover {
+	transform: none;
 	border-color: var(--aur-line-strong);
 	box-shadow: 3px 3px 0 rgba(28, 18, 48, 0.14), 10px 12px 22px -14px rgba(28, 18, 48, 0.32);
 }
@@ -491,10 +497,29 @@
 
 .aurora-on.aurora-on[data-kaiten-skin="cast"] .body-sidebar .standard-sidebar-item.selected,
 .aurora-on.aurora-on[data-kaiten-skin="cast"] .body-sidebar .standard-sidebar-item.active-sidebar,
-.aurora-on[data-kaiten-skin="cast"] .desk-sidebar .standard-sidebar-item.selected {
+.aurora-on[data-kaiten-skin="cast"] .desk-sidebar .standard-sidebar-item.selected,
+.aurora-on[data-kaiten-skin="cast"] .desk-sidebar .standard-sidebar-item.active-sidebar {
+	--aur-on-selected: var(--aur-ink);
+	--aur-selected-chip: color-mix(in oklab, var(--aur-accent) 18%, #ffffff);
+	--aur-selected-chip-line: var(--aur-line-strong);
+	--aur-selected-rail: var(--aur-accent);
+	--aur-selected-sheen: transparent;
 	background: var(--aur-surface);
 	color: var(--aur-ink);
 	box-shadow: 3px 3px 0 rgba(28, 18, 48, 0.12);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .body-sidebar .standard-sidebar-item.selected .sidebar-item-label,
+.aurora-on[data-kaiten-skin="cast"] .desk-sidebar .standard-sidebar-item.selected .sidebar-item-label {
+	color: var(--aur-ink) !important;
+	font-weight: 700;
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .body-sidebar .standard-sidebar-item.selected .sidebar-item-icon svg,
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .body-sidebar .standard-sidebar-item.active-sidebar .sidebar-item-icon svg,
+.aurora-on[data-kaiten-skin="cast"] .desk-sidebar .standard-sidebar-item.selected .sidebar-item-icon svg {
+	color: var(--aur-accent);
+	stroke: var(--aur-accent);
 }
 
 .aurora-on.aurora-on[data-kaiten-skin="cast"] .body-sidebar .standard-sidebar-item .sidebar-item-icon,
@@ -522,7 +547,10 @@
 	box-shadow: 2px 2px 0 rgba(28, 18, 48, 0.16);
 }
 
+.aurora-on.aurora-on[data-kaiten-skin="cast"] .dock .dock-items .dock-item.active,
 .aurora-on.aurora-on[data-kaiten-skin="cast"] .dock-item.active {
+	--aur-on-selected: var(--aur-accent);
+	--aur-selected-rail: var(--aur-accent);
 	background: color-mix(in oklab, var(--aur-accent) 14%, #ffffff);
 	box-shadow: 3px 3px 0 color-mix(in oklab, var(--aur-accent) 45%, transparent);
 }

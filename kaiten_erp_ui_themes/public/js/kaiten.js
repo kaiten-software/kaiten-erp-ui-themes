@@ -3672,12 +3672,12 @@
 	}
 
 	/* ---------------------------------------------------------------------
-	   Escaping clipped ancestors
+	   Escaping clipped / stacked ancestors
 
-	   Suggestion lists are positioned inside the field that owns them, so a
-	   scrolling dialog body, a child table or a list header cuts them off.
-	   Frappe has plenty of those. Rather than chase each container, an open
-	   list is re-anchored to the viewport, which no ancestor can clip.
+	   Suggestion lists live inside the field that owns them. Even when the
+	   form card allows overflow, the next card paints later in the stack and
+	   covers the list. Re-anchor every open list to the viewport so no card
+	   can clip or bury it.
 	   ------------------------------------------------------------------ */
 
 	var POPUP_SELECTOR = ".awesomplete > ul:not([hidden]), .datepicker.active, .autocomplete-results:not([hidden])";
@@ -3690,6 +3690,13 @@
 			parent = parent.parentElement;
 		}
 		return false;
+	}
+
+	function buriedBySiblingCard(list) {
+		/* Form sections are stacked cards. An absolute list that spills into
+		   the next section is painted under that section's opaque surface. */
+		var section = list.closest(".form-section, .frappe-card, .widget, .modal-body, .grid-body");
+		return Boolean(section);
 	}
 
 	function anchorOf(list) {
@@ -3711,7 +3718,7 @@
 		if (!list.dataset.aurUnclipped) return;
 		delete list.dataset.aurUnclipped;
 		list.classList.remove("aur-unclipped");
-		["position", "width", "minWidth", "maxHeight", "left", "top", "bottom"].forEach(function (prop) {
+		["position", "width", "minWidth", "maxHeight", "left", "top", "bottom", "zIndex"].forEach(function (prop) {
 			list.style[prop] = "";
 		});
 	}
@@ -3728,7 +3735,7 @@
 		if (!anchor) return;
 
 		if (!list.dataset.aurUnclipped) {
-			if (!clippedBy(list)) return;
+			if (!clippedBy(list) && !buriedBySiblingCard(list)) return;
 			list.dataset.aurUnclipped = "1";
 			list.classList.add("aur-unclipped");
 		}
@@ -3739,6 +3746,7 @@
 		var flip = below < 190 && above > below;
 
 		list.style.position = "fixed";
+		list.style.zIndex = "1400";
 		list.style.width = Math.round(rect.width) + "px";
 		list.style.minWidth = "0";
 		list.style.maxHeight = Math.round(clamp(flip ? above : below, 140, 360)) + "px";

@@ -226,9 +226,15 @@
 }
 
 .aurora-on[data-kaiten-skin="lumen"] .widget:hover,
-.aurora-on[data-kaiten-skin="lumen"] .frappe-card:hover,
-.aurora-on[data-kaiten-skin="lumen"] .form-section:hover {
+.aurora-on[data-kaiten-skin="lumen"] .frappe-card:hover {
 	transform: translateY(-2px);
+	border-color: var(--aur-line);
+	box-shadow: var(--aur-shadow-lg);
+}
+
+.aurora-on[data-kaiten-skin="lumen"] .form-section:hover,
+.aurora-on[data-kaiten-skin="lumen"] .form-section.card-section:hover {
+	transform: none;
 	border-color: var(--aur-line);
 	box-shadow: var(--aur-shadow-lg);
 }
@@ -459,16 +465,26 @@
    the low contrast this palette runs at. */
 .aurora-on.aurora-on[data-kaiten-skin="lumen"] .body-sidebar .standard-sidebar-item.selected,
 .aurora-on.aurora-on[data-kaiten-skin="lumen"] .body-sidebar .standard-sidebar-item.active-sidebar,
-.aurora-on[data-kaiten-skin="lumen"] .desk-sidebar .standard-sidebar-item.selected {
+.aurora-on[data-kaiten-skin="lumen"] .desk-sidebar .standard-sidebar-item.selected,
+.aurora-on[data-kaiten-skin="lumen"] .desk-sidebar .standard-sidebar-item.active-sidebar {
+	--aur-on-selected: var(--aur-ink);
+	--aur-selected-chip: color-mix(in oklab, var(--aur-accent) 18%, #ffffff);
+	--aur-selected-chip-line: var(--aur-line-strong);
+	--aur-selected-rail: var(--aur-accent);
+	--aur-selected-sheen: color-mix(in oklab, var(--aur-accent) 14%, transparent);
 	background: var(--aur-surface);
 	color: var(--aur-ink);
 	box-shadow: var(--aur-shadow-sm);
 }
 
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .body-sidebar .standard-sidebar-item.selected .sidebar-item-label,
 .aurora-on[data-kaiten-skin="lumen"] .desk-sidebar .standard-sidebar-item.selected .sidebar-item-label {
-	color: var(--aur-ink);
+	color: var(--aur-ink) !important;
+	font-weight: 700;
 }
 
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .body-sidebar .standard-sidebar-item.selected .sidebar-item-icon svg,
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .body-sidebar .standard-sidebar-item.active-sidebar .sidebar-item-icon svg,
 .aurora-on[data-kaiten-skin="lumen"] .desk-sidebar .standard-sidebar-item.selected .sidebar-item-icon svg {
 	color: var(--aur-accent);
 	stroke: var(--aur-accent);
@@ -494,7 +510,10 @@
 	box-shadow: inset 0 0 0 1px var(--aur-line-strong), var(--aur-shadow-sm);
 }
 
+.aurora-on.aurora-on[data-kaiten-skin="lumen"] .dock .dock-items .dock-item.active,
 .aurora-on.aurora-on[data-kaiten-skin="lumen"] .dock-item.active {
+	--aur-on-selected: var(--aur-accent);
+	--aur-selected-rail: var(--aur-accent);
 	background: color-mix(in oklab, var(--aur-accent) 14%, #ffffff);
 	box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--aur-accent) 28%, transparent);
 }

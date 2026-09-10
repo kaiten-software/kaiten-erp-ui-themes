@@ -52,6 +52,28 @@
 	--aur-nav-h: 60px;
 	--aur-bar-h: 48px;
 	--aur-scroll: 0;
+
+	/* The selected sidebar row. A skin that paints that row light instead of
+	   with the accent gradient must repoint these, or the label and icon are
+	   painted white on a white pill. */
+	/* Accent pulled toward the ink of the mode, for text that has to be read
+	   rather than noticed. The raw accent sits near 4:1 on white, which is
+	   under AA for the small bold labels it gets used on. */
+	--aur-accent-ink: color-mix(in oklab, var(--aur-accent, #6366f1) 84%, #0b1020);
+
+	/* Big dashboard figures. The plain accent gradient is too light to read as
+	   data, so the figure gradient is pulled toward the ink of the mode. */
+	--aur-figure-grad: linear-gradient(
+		120deg,
+		color-mix(in oklab, var(--aur-accent, #6366f1) 80%, #0b1020),
+		color-mix(in oklab, var(--aur-accent, #6366f1) 58%, #0b1020)
+	);
+
+	--aur-on-selected: #ffffff;
+	--aur-selected-chip: rgba(255, 255, 255, 0.22);
+	--aur-selected-chip-line: rgba(255, 255, 255, 0.4);
+	--aur-selected-rail: rgba(255, 255, 255, 0.92);
+	--aur-selected-sheen: rgba(255, 255, 255, 0.4);
 }
 
 [data-theme="dark"] {
@@ -65,6 +87,14 @@
 	--aur-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
 	--aur-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), 0 14px 32px -22px rgba(0, 0, 0, 0.9);
 	--aur-shadow-lg: 0 6px 14px rgba(0, 0, 0, 0.45), 0 32px 64px -32px rgba(0, 0, 0, 0.95);
+
+	--aur-accent-ink: color-mix(in oklab, var(--aur-accent, #6366f1) 70%, #ffffff);
+
+	--aur-figure-grad: linear-gradient(
+		120deg,
+		color-mix(in oklab, var(--aur-accent, #6366f1) 55%, #ffffff),
+		color-mix(in oklab, var(--aur-accent, #6366f1) 82%, #ffffff)
+	);
 }
 
 /* Painting the page is the theme's job, so it stays behind the switch. */
@@ -2207,7 +2237,7 @@ a.aur-item:focus {
 .aurora-on .number-card .number {
 	font-weight: 780;
 	letter-spacing: -0.03em;
-	background: var(--aur-grad-cool);
+	background: var(--aur-figure-grad);
 	-webkit-background-clip: text;
 	background-clip: text;
 	-webkit-text-fill-color: transparent;
@@ -2242,15 +2272,15 @@ a.aur-item:focus {
 }
 
 .aurora-on .desk-sidebar .standard-sidebar-item.selected {
-	color: #fff;
+	color: var(--aur-on-selected);
 	background: var(--aur-grad-cool);
 	box-shadow: 0 10px 22px -14px rgba(79, 70, 229, 0.95);
 }
 
 .aurora-on .desk-sidebar .standard-sidebar-item.selected .sidebar-item-label,
 .aurora-on .desk-sidebar .standard-sidebar-item.selected .sidebar-item-icon svg {
-	color: #fff;
-	stroke: #fff;
+	color: var(--aur-on-selected);
+	stroke: var(--aur-on-selected);
 }
 
 .aurora-on .sidebar-label {
@@ -2344,12 +2374,62 @@ a.aur-item:focus {
 	box-shadow: var(--aur-shadow-sm);
 	padding: 4px 14px;
 	margin-bottom: 14px;
+	overflow: visible;
+	/* No transform/filter here: the pencil editor (.form-in-grid) is
+	   position:fixed and would lock to this card instead of the viewport. */
+	transform: none;
+	filter: none;
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
 	transition: box-shadow var(--aur-mid) var(--aur-ease), border-color var(--aur-mid) var(--aur-ease);
 }
 
 .aurora-on .form-section:hover {
 	border-color: var(--aur-line-strong);
 	box-shadow: var(--aur-shadow);
+	transform: none;
+}
+
+/* Raise the active field above neighbouring cards so link suggestions are
+   not painted under the next section. NEVER do this while a grid row editor
+   is open: .form-in-grid is position:fixed and would be trapped under
+   #freeze.grid-form (z-index 1020) inside a z-index:40 stacking context. */
+.aurora-on.aurora-on .form-section:has(.frappe-control:focus-within):not(:has(.grid-row-open)),
+.aurora-on.aurora-on .form-section:has(.awesomplete > ul:not([hidden])):not(:has(.grid-row-open)),
+.aurora-on.aurora-on .form-section:has(.autocomplete-results:not([hidden])):not(:has(.grid-row-open)) {
+	position: relative;
+	z-index: 40;
+}
+
+.aurora-on.aurora-on .frappe-control:focus-within,
+.aurora-on.aurora-on .frappe-control:has(.awesomplete > ul:not([hidden])) {
+	position: relative;
+	z-index: 41;
+}
+
+.aurora-on .form-grid,
+.aurora-on .form-grid-container {
+	overflow: visible;
+}
+
+/* Pencil / row editor must sit above the freeze scrim and remain clickable. */
+.aurora-on.aurora-on .form-section:has(.grid-row-open),
+.aurora-on.aurora-on .form-grid-container:has(.grid-row-open),
+.aurora-on.aurora-on .grid-row.grid-row-open {
+	position: relative;
+	z-index: 1050;
+}
+
+.aurora-on .grid-row-open .form-in-grid {
+	position: fixed !important;
+	z-index: 1055 !important;
+	pointer-events: auto !important;
+	opacity: 1 !important;
+}
+
+.aurora-on #freeze.grid-form {
+	z-index: 1020;
+	pointer-events: auto;
 }
 
 .aurora-on .form-section .section-head {
@@ -2407,6 +2487,7 @@ a.aur-item:focus {
 	border-radius: var(--aur-r);
 	border: 1px solid var(--aur-line);
 	box-shadow: var(--aur-shadow-lg);
+	background: var(--aur-surface);
 }
 
 /* The command palette is one card already. Framing its own suggestion list
@@ -2421,11 +2502,12 @@ a.aur-item:focus {
 /* Re-anchored to the viewport by the script above, once a clipping ancestor
    is found between the list and the page. */
 .aurora-on .aur-unclipped {
-	z-index: 1350 !important;
+	z-index: 1400 !important;
 	overflow-y: auto;
 	background: var(--aur-surface);
 	backdrop-filter: blur(14px) saturate(150%);
 	-webkit-backdrop-filter: blur(14px) saturate(150%);
+	box-shadow: var(--aur-shadow-lg);
 }
 
 /* -------------------------------------------------------------------------
@@ -2992,8 +3074,8 @@ a.aur-item:focus {
 
 .aurora-on .dock-item.active svg,
 .aurora-on .dock-item.active .sidebar-item-icon svg {
-	color: #fff;
-	stroke: #fff;
+	color: var(--aur-on-selected);
+	stroke: var(--aur-on-selected);
 }
 
 .aurora-on .dock-item.active::before {
@@ -3004,7 +3086,7 @@ a.aur-item:focus {
 	bottom: 18%;
 	width: 3px;
 	border-radius: 999px;
-	background: #fff;
+	background: var(--aur-selected-rail);
 	opacity: 0.9;
 }
 
@@ -3042,14 +3124,15 @@ a.aur-item:focus {
 .aurora-on .standard-sidebar-item.active-sidebar a,
 .aurora-on .standard-sidebar-item.active-sidebar .sidebar-item-label,
 .aurora-on .standard-sidebar-item.selected,
-.aurora-on .standard-sidebar-item.selected a {
-	color: #fff !important;
+.aurora-on .standard-sidebar-item.selected a,
+.aurora-on .standard-sidebar-item.selected .sidebar-item-label {
+	color: var(--aur-on-selected) !important;
 }
 
 .aurora-on .standard-sidebar-item.active-sidebar svg,
 .aurora-on .standard-sidebar-item.selected svg {
-	stroke: #fff;
-	color: #fff;
+	stroke: var(--aur-on-selected);
+	color: var(--aur-on-selected);
 }
 
 .aurora-on .title-container .header-title {
@@ -3186,8 +3269,8 @@ a.aur-item:focus {
 .aurora-on .standard-sidebar-item.active-sidebar .sidebar-item-icon svg,
 .aurora-on .standard-sidebar-item.selected .sidebar-item-icon svg,
 .aurora-on .dock-item.active > svg {
-	color: #fff;
-	stroke: #fff;
+	color: var(--aur-on-selected);
+	stroke: var(--aur-on-selected);
 }
 
 /* Cards wear their gradient edge all the time. */
@@ -3933,32 +4016,56 @@ a.aur-item:focus {
 
 /* -------------------------------------------------------------------------
    Required fields — scan-at-a-glance across every custom theme
-   Frappe toggles .reqd on the label. Accent rail + tinted field so mandatory
-   inputs read as a different colour family from optional ones.
+   Frappe toggles .reqd on the label. A dot beside the label plus a tinted
+   field so mandatory inputs read as a different colour family from optional
+   ones.
    ---------------------------------------------------------------------- */
 
+/* No padding here: the marker hangs in the column gutter so a required field
+   keeps the same width and left edge as an optional one. */
 .aurora-on.aurora-on .frappe-control:has(> .form-group > .control-label.reqd),
 .aurora-on.aurora-on .frappe-control:has(.control-label.reqd) {
 	position: relative;
-	padding-left: 11px;
+	padding-left: 0;
 }
 
-.aurora-on.aurora-on .frappe-control:has(.control-label.reqd)::before {
+/* The dot sits beside the input, not the label — it marks the thing that has
+   to be filled in. Checkbox-style controls have no .control-input, so they
+   keep a dot on the label line instead. */
+.aurora-on.aurora-on .frappe-control:has(.control-label.reqd) > .form-group > .control-input-wrapper > .control-input {
+	position: relative;
+}
+
+.aurora-on.aurora-on .frappe-control:has(.control-label.reqd) > .form-group > .control-input-wrapper > .control-input::before,
+.aurora-on.aurora-on .frappe-control:has(.control-label.reqd):not(:has(.control-input))::before {
 	content: "";
 	position: absolute;
-	left: 0;
-	top: 2px;
-	bottom: 2px;
-	width: 3px;
-	border-radius: 999px;
+	left: -10px;
+	top: 50%;
+	width: 6px;
+	height: 6px;
+	margin-top: -3px;
+	border-radius: 50%;
 	background: var(--aur-accent);
 	box-shadow: 0 0 0 3px color-mix(in oklab, var(--aur-accent) 18%, transparent);
 	pointer-events: none;
 }
 
+.aurora-on.aurora-on .frappe-control:has(.control-label.reqd):not(:has(.control-input))::before {
+	left: -10px;
+	top: 9px;
+	margin-top: 0;
+}
+
+/* A tall box has no useful middle; align to its first line. */
+.aurora-on.aurora-on .frappe-control:has(.control-label.reqd):has(textarea) > .form-group > .control-input-wrapper > .control-input::before,
+.aurora-on.aurora-on .frappe-control:has(.control-label.reqd):has(.ql-editor) > .form-group > .control-input-wrapper > .control-input::before {
+	top: 18px;
+}
+
 .aurora-on.aurora-on .control-label.reqd,
 .aurora-on.aurora-on .frappe-control .control-label.reqd {
-	color: var(--aur-accent) !important;
+	color: var(--aur-accent-ink) !important;
 	font-weight: 800;
 }
 
@@ -3986,18 +4093,18 @@ a.aur-item:focus {
 }
 
 .aurora-on .frappe-control:focus-within .control-label {
-	color: var(--aur-accent);
+	color: var(--aur-accent-ink);
 }
 
 .aurora-on.aurora-on .frappe-control:focus-within .control-label.reqd {
-	color: var(--aur-accent) !important;
+	color: var(--aur-accent-ink) !important;
 }
 
 /* Grid column headers that are mandatory. */
 .aurora-on.aurora-on .grid-heading-row .grid-static-col.reqd,
 .aurora-on.aurora-on .form-grid .grid-static-col .static-area.reqd,
 .aurora-on.aurora-on .grid-heading-row .reqd {
-	color: var(--aur-accent);
+	color: var(--aur-accent-ink);
 	font-weight: 750;
 }
 
@@ -4131,8 +4238,11 @@ a.aur-item:focus {
 	border-radius: var(--aur-r);
 }
 
+/* Clip only on the X axis so rounded corners still read; Y must stay open
+   for select chevrons and link lists inside editable cells. */
 .aurora-on .form-grid {
-	overflow: hidden;
+	overflow-x: auto;
+	overflow-y: visible;
 	box-shadow: var(--aur-shadow-sm);
 }
 
@@ -4142,6 +4252,8 @@ a.aur-item:focus {
 	border-bottom: 1px solid var(--aur-line-strong);
 	font-weight: 650;
 	letter-spacing: 0.02em;
+	/* Muted grey on a tinted header falls under 3.5:1; pull it toward ink. */
+	color: color-mix(in oklab, var(--aur-ink) 72%, var(--aur-ink-soft));
 }
 
 /* The body cannot clip — link fields in its rows have to open past it — so a
@@ -4149,10 +4261,43 @@ a.aur-item:focus {
    The card edge is .form-grid's job, and that one does clip. */
 .aurora-on .grid-body {
 	border-radius: 0;
+	overflow: visible;
 }
 
 .aurora-on .grid-row {
 	transition: background var(--aur-fast) var(--aur-ease);
+	overflow: visible;
+}
+
+.aurora-on .form-grid .grid-static-col,
+.aurora-on .form-grid .editable-row .grid-static-col,
+.aurora-on .form-grid .editable-row .frappe-control,
+.aurora-on .form-grid .editable-row .control-input {
+	overflow: visible;
+}
+
+/* Frappe parks .select-icon at top:9px for default cell padding. Dense/sleek
+   cells are shorter, so that offset clips the chevron — centre it instead. */
+.aurora-on .form-grid .editable-row .frappe-control[data-fieldtype="Select"] .select-icon,
+.aurora-on .form-grid .editable-row .select-icon {
+	top: 50% !important;
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	height: auto;
+	z-index: 2;
+	pointer-events: none;
+}
+
+.aurora-on .form-grid .editable-row select.form-control,
+.aurora-on .form-grid .editable-row .frappe-control[data-fieldtype="Select"] .form-control {
+	appearance: none;
+	-webkit-appearance: none;
+	min-height: 28px;
+	line-height: 1.25;
+	padding-top: 4px;
+	padding-bottom: 4px;
+	padding-right: 28px;
 }
 
 .aurora-on .grid-body .grid-row:nth-child(even) {
@@ -4579,14 +4724,14 @@ a.aur-item:focus {
 .aurora-on .body-sidebar .standard-sidebar-item.selected::before,
 .aurora-on .body-sidebar .standard-sidebar-item.active-sidebar::before {
 	height: 62%;
-	background: rgba(255, 255, 255, 0.92);
+	background: var(--aur-selected-rail);
 }
 
 .aurora-on .body-sidebar .standard-sidebar-item.selected .sidebar-item-icon,
 .aurora-on .body-sidebar .standard-sidebar-item.active-sidebar .sidebar-item-icon {
-	color: #fff;
-	background: rgba(255, 255, 255, 0.22);
-	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+	color: var(--aur-on-selected);
+	background: var(--aur-selected-chip);
+	box-shadow: inset 0 0 0 1px var(--aur-selected-chip-line);
 }
 
 /* A highlight that crosses the selected row once, on arrival. */
@@ -4596,7 +4741,7 @@ a.aur-item:focus {
 	top: 0;
 	bottom: 0;
 	width: 40%;
-	background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+	background: linear-gradient(100deg, transparent, var(--aur-selected-sheen), transparent);
 	transform: skewX(-18deg);
 	animation: aur-side-sheen 2.6s var(--aur-ease) 0.2s;
 	pointer-events: none;
@@ -4700,6 +4845,9 @@ a.aur-item:focus {
 	z-index: 1;
 }
 
+/* Matched to the tile rule below on purpose: at any lower specificity the
+   pale per-hue tile wins and the white glyph disappears into it. */
+.aurora-on .dock .dock-items .dock-item.active,
 .aurora-on .dock-item.active {
 	background: linear-gradient(
 		135deg,
@@ -4729,7 +4877,7 @@ a.aur-item:focus {
 	stroke-width: 2.1;
 }
 
-.aurora-on .dock .dock-items .dock-item:hover {
+.aurora-on .dock .dock-items .dock-item:hover:not(.active) {
 	background: linear-gradient(
 		150deg,
 		hsl(var(--cyc-h, 245) 88% 58% / 0.32),
@@ -4741,8 +4889,8 @@ a.aur-item:focus {
 
 .aurora-on .dock .dock-items .dock-item.active > svg,
 .aurora-on .dock .dock-items .dock-item.active .sidebar-item-icon > svg {
-	color: #fff;
-	stroke: #fff;
+	color: var(--aur-on-selected);
+	stroke: var(--aur-on-selected);
 }
 
 [data-theme="dark"].aurora-on .dock .dock-items .dock-item > svg,

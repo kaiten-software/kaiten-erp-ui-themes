@@ -221,9 +221,10 @@
 	border: 1px solid color-mix(in oklab, var(--aur-accent) 14%, var(--aur-line));
 	border-radius: var(--aur-r-lg);
 	box-shadow: var(--aur-shadow);
-	overflow: hidden;
-	backdrop-filter: blur(12px);
-	-webkit-backdrop-filter: blur(12px);
+	/* Must stay visible: link dropdowns and the grid pencil editor (position:
+	   fixed) escape the card. backdrop-filter / transform would also trap
+	   fixed descendants inside this box. */
+	overflow: visible;
 }
 
 .aurora-on[data-kaiten-skin="halo"] .widget::before,
@@ -248,11 +249,19 @@
 	pointer-events: none;
 }
 
+/* Lift widgets only — never form sections (hover transform traps fixed
+   child editors and covers link dropdowns from the section above). */
 .aurora-on[data-kaiten-skin="halo"] .widget:hover,
-.aurora-on[data-kaiten-skin="halo"] .frappe-card:hover,
-.aurora-on[data-kaiten-skin="halo"] .form-section:hover {
+.aurora-on[data-kaiten-skin="halo"] .frappe-card:hover {
 	transform: translateY(-4px);
 	border-color: transparent;
+	box-shadow: var(--aur-shadow-lg);
+}
+
+.aurora-on[data-kaiten-skin="halo"] .form-section:hover,
+.aurora-on[data-kaiten-skin="halo"] .form-section.card-section:hover {
+	transform: none;
+	border-color: color-mix(in oklab, var(--aur-accent) 22%, var(--aur-line));
 	box-shadow: var(--aur-shadow-lg);
 }
 
@@ -287,6 +296,24 @@
 .aurora-on[data-kaiten-skin="halo"] .widget.number-widget-box .widget-head,
 .aurora-on[data-kaiten-skin="halo"] .widget.number-widget-box .number-widget-data {
 	color: #fff;
+}
+
+/* The base skin paints the figure with clipped gradient text, which vanishes
+   on a full-pigment card. Solid white, and it has to beat the inline colour
+   Frappe writes onto .number. */
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .widget.number-widget-box .widget-content .number,
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .widget.number-widget-box .number {
+	background: none;
+	-webkit-background-clip: border-box;
+	background-clip: border-box;
+	-webkit-text-fill-color: #fff;
+	color: #fff !important;
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .widget.number-widget-box .widget-content .card-stats,
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .widget.number-widget-box .percentage-stat-area,
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .widget.number-widget-box .number-card-loading {
+	color: rgba(255, 255, 255, 0.88) !important;
 }
 
 .aurora-on[data-kaiten-skin="halo"] .widget.number-widget-box::after {
@@ -595,12 +622,33 @@
 	transform: none;
 }
 
+/* The selected row is a light pill here, so the ink tokens have to flip with
+   it — the base skin paints label and icon white for its accent gradient. */
 .aurora-on.aurora-on[data-kaiten-skin="halo"] .body-sidebar .standard-sidebar-item.selected,
 .aurora-on.aurora-on[data-kaiten-skin="halo"] .body-sidebar .standard-sidebar-item.active-sidebar,
-.aurora-on[data-kaiten-skin="halo"] .desk-sidebar .standard-sidebar-item.selected {
+.aurora-on[data-kaiten-skin="halo"] .desk-sidebar .standard-sidebar-item.selected,
+.aurora-on[data-kaiten-skin="halo"] .desk-sidebar .standard-sidebar-item.active-sidebar {
+	--aur-on-selected: var(--aur-ink);
+	--aur-selected-chip: color-mix(in oklab, var(--aur-accent) 20%, #ffffff);
+	--aur-selected-chip-line: color-mix(in oklab, var(--aur-accent) 34%, transparent);
+	--aur-selected-rail: var(--aur-accent);
+	--aur-selected-sheen: color-mix(in oklab, var(--aur-accent) 16%, transparent);
 	background: var(--aur-surface);
 	color: var(--aur-ink);
-	box-shadow: var(--aur-shadow-sm);
+	box-shadow: var(--aur-shadow-sm), inset 0 0 0 1px color-mix(in oklab, var(--aur-accent) 22%, transparent);
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .body-sidebar .standard-sidebar-item.selected .sidebar-item-label,
+.aurora-on[data-kaiten-skin="halo"] .desk-sidebar .standard-sidebar-item.selected .sidebar-item-label {
+	color: var(--aur-ink) !important;
+	font-weight: 700;
+}
+
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .body-sidebar .standard-sidebar-item.selected .sidebar-item-icon svg,
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .body-sidebar .standard-sidebar-item.active-sidebar .sidebar-item-icon svg,
+.aurora-on[data-kaiten-skin="halo"] .desk-sidebar .standard-sidebar-item.selected .sidebar-item-icon svg {
+	color: var(--aur-accent);
+	stroke: var(--aur-accent);
 }
 
 .aurora-on.aurora-on[data-kaiten-skin="halo"] .body-sidebar .standard-sidebar-item .sidebar-item-icon,
@@ -627,7 +675,12 @@
 	box-shadow: var(--aur-shadow);
 }
 
+/* Light tile, so the glyph and rail flip to accent instead of white. The
+   .dock .dock-items path is needed to outrank the base rail rules. */
+.aurora-on.aurora-on[data-kaiten-skin="halo"] .dock .dock-items .dock-item.active,
 .aurora-on.aurora-on[data-kaiten-skin="halo"] .dock-item.active {
+	--aur-on-selected: var(--aur-accent);
+	--aur-selected-rail: var(--aur-accent);
 	background: color-mix(in oklab, var(--aur-accent) 14%, #ffffff);
 	box-shadow: var(--aur-glow);
 }
@@ -689,7 +742,15 @@
 	border-radius: var(--aur-r-lg);
 	border: 1px solid var(--aur-line);
 	box-shadow: var(--aur-shadow-sm);
-	overflow: hidden;
+	overflow-x: auto;
+	overflow-y: visible;
+}
+
+/* Grid cells stay tight; don't use the inflated Halo field radius there. */
+.aurora-on[data-kaiten-skin="halo"] .form-grid .editable-row .form-control,
+.aurora-on[data-kaiten-skin="halo"] .form-grid .editable-row select.form-control {
+	border-radius: 10px;
+	min-height: 28px;
 }
 
 .aurora-on[data-kaiten-skin="halo"] .datatable .dt-header,
