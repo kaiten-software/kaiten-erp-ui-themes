@@ -555,7 +555,19 @@
 		return false;
 	}
 
-	function goKaitenHome() {
+	function onKaitenHome() {
+		try {
+			return (window.frappe && frappe.get_route && (frappe.get_route() || [])[0] === "kaiten-home");
+		} catch (e) {
+			return false;
+		}
+	}
+
+	/* MJERP's older desk helper only does set_route("kaiten-home"). That is a
+	   no-op when Home is already open, so Jewellery / HR / choose-area looked
+	   dead. Redraw the page that is already on screen; reload only if it was
+	   never drawn by kaiten_home. */
+	function redrawKaitenHome() {
 		try {
 			if (typeof kaiten_desk !== "undefined" && kaiten_desk && typeof kaiten_desk.showKaitenHome === "function") {
 				kaiten_desk.showKaitenHome();
@@ -563,12 +575,31 @@
 			}
 		} catch (e) {}
 		try {
+			var home = window.kaiten_home;
+			var page = home && home._page;
+			if (!page && window.frappe && frappe.pages && frappe.pages["kaiten-home"] && frappe.pages["kaiten-home"].page) {
+				page = frappe.pages["kaiten-home"].page;
+			}
+			if (onKaitenHome() && home && page && home._data && typeof home.render === "function") {
+				home.render(page, home._data);
+				return;
+			}
+		} catch (e2) {}
+		if (onKaitenHome()) {
+			window.location.assign(prefix() + "/kaiten-home");
+			return;
+		}
+		try {
 			if (window.frappe && typeof frappe.set_route === "function") {
 				frappe.set_route("kaiten-home");
 				return;
 			}
-		} catch (e2) {}
+		} catch (e3) {}
 		window.location.assign(prefix() + "/kaiten-home");
+	}
+
+	function goKaitenHome() {
+		redrawKaitenHome();
 	}
 
 	function sessionUser() {
@@ -593,31 +624,46 @@
 			sessionStorage.removeItem("kaiten_home_portal:" + sessionUser());
 		} catch (e) {}
 		try {
-			if (typeof kaiten_desk !== "undefined" && kaiten_desk) {
-				if (typeof kaiten_desk.clearArea === "function") kaiten_desk.clearArea();
-				if (typeof kaiten_desk.showKaitenHome === "function") {
-					kaiten_desk.showKaitenHome();
-					syncRateBar();
-					return;
-				}
+			if (typeof kaiten_desk !== "undefined" && kaiten_desk && typeof kaiten_desk.clearArea === "function") {
+				kaiten_desk.clearArea();
 			}
 		} catch (e2) {}
-		goKaitenHome();
+		try {
+			var home = window.kaiten_home;
+			if (
+				typeof kaiten_desk !== "undefined" &&
+				kaiten_desk &&
+				typeof kaiten_desk.openAreaPicker === "function" &&
+				home &&
+				home._page &&
+				home._data
+			) {
+				kaiten_desk.openAreaPicker(home._page, home._data);
+				syncRateBar();
+				return;
+			}
+		} catch (e3) {}
+		redrawKaitenHome();
+		syncRateBar();
 	}
 
 	function goKaitenPortal(portal) {
+		try {
+			sessionStorage.setItem("kaiten_home_portal:" + sessionUser(), portal);
+		} catch (e) {}
+		try {
+			if (typeof kaiten_desk !== "undefined" && kaiten_desk && typeof kaiten_desk.applyArea === "function") {
+				kaiten_desk.applyArea(portal, false);
+			}
+		} catch (e2) {}
 		try {
 			if (typeof kaiten_desk !== "undefined" && kaiten_desk && typeof kaiten_desk.setDeskArea === "function") {
 				kaiten_desk.setDeskArea(portal, false, function () {
 					syncRateBar();
 				});
-				return;
 			}
-		} catch (e) {}
-		try {
-			sessionStorage.setItem("kaiten_home_portal:" + sessionUser(), portal);
-		} catch (e2) {}
-		goKaitenHome();
+		} catch (e3) {}
+		redrawKaitenHome();
 		syncRateBar();
 	}
 
@@ -673,22 +719,47 @@
 	}
 
 	function notifyDropdown() {
-		return document.querySelector(".dropdown-notifications");
+		return (state.notifyHost && state.notifyHost.querySelector(".dropdown-notifications")) || null;
+	}
+
+	function closeNotify() {
+		var dropdown = notifyDropdown();
+		if (dropdown) dropdown.classList.add("hidden");
+		if (el.bellBtn) el.bellBtn.setAttribute("aria-expanded", "false");
 	}
 
 	function ensureNotifyPanel() {
-		var dropdown = notifyDropdown();
-		if (dropdown) return dropdown;
+		var existing = notifyDropdown();
+		if (existing) return existing;
+
+		/* Kaiten Home hides `.body-sidebar-container` (`display: none`). The
+		   stock dropdown lives in that rail, so toggling `hidden` there looks
+		   like a dead bell. Adopt the already-wired panel onto <body>. */
+		var host = state.notifyHost;
+		if (!host) {
+			host = make("div", { class: "aur-notify-host" });
+			document.body.appendChild(host);
+			state.notifyHost = host;
+		}
+
+		var stock =
+			document.querySelector(".body-sidebar .dropdown-notifications") ||
+			document.querySelector(".body-sidebar-container .dropdown-notifications") ||
+			document.querySelector(".dropdown-notifications");
+		if (stock && !stock.closest(".aur-notify-host")) {
+			host.appendChild(stock);
+			stock.classList.add("hidden");
+			return stock;
+		}
+
 		if (!window.jQuery || !frappe.ui || !frappe.ui.Notifications) return null;
 
-		var host = make("div", { class: "aur-notify-host" });
 		host.innerHTML =
 			'<div class="dropdown-notifications hidden">' +
 			'<div class="notifications-list" role="menu">' +
 			'<div class="notification-list-header"><div class="header-items"></div><div class="header-actions"></div></div>' +
 			'<div class="notification-list-body"><div class="panel-notifications"></div><div class="panel-events"></div></div>' +
 			"</div></div>";
-		document.body.appendChild(host);
 		try {
 			state.notify = new frappe.ui.Notifications({ wrapper: window.jQuery(host), full_height: true });
 		} catch (e) {
@@ -698,28 +769,29 @@
 	}
 
 	function placeNotifyPanel(dropdown) {
-		if (!dropdown || !el.bellBtn) return;
-		var list = dropdown.querySelector(".notifications-list");
+		var host = state.notifyHost;
+		if (!dropdown || !el.bellBtn || !host) return;
 		var box = el.bellBtn.getBoundingClientRect();
-		var width = (list && list.offsetWidth) || 360;
+		var width = Math.min(360, window.innerWidth - 20);
+		var left = clamp(box.right - width, 10, window.innerWidth - width - 10);
 		dropdown.classList.add("aur-notify-dock");
-		dropdown.style.position = "fixed";
-		dropdown.style.inset = "auto";
-		dropdown.style.top = Math.round(box.bottom + 8) + "px";
-		dropdown.style.left = Math.round(clamp(box.right - width, 10, window.innerWidth - width - 10)) + "px";
-		dropdown.style.right = "auto";
-		dropdown.style.zIndex = "1300";
-		dropdown.style.pointerEvents = "auto";
-		if (list) {
-			list.style.left = "0";
-			list.style.position = "relative";
-		}
+		dropdown.style.removeProperty("position");
+		dropdown.style.removeProperty("top");
+		dropdown.style.removeProperty("left");
+		dropdown.style.removeProperty("right");
+		dropdown.style.removeProperty("bottom");
+		dropdown.style.removeProperty("inset");
+		host.style.setProperty("--aur-notify-top", Math.round(box.bottom + 8) + "px");
+		host.style.setProperty("--aur-notify-left", Math.round(left) + "px");
+		host.style.setProperty("--aur-notify-right", "auto");
+		host.style.width = width + "px";
 	}
 
 	function toggleNotifications(event) {
 		if (event) {
 			event.preventDefault();
 			event.stopPropagation();
+			if (typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
 		}
 		closePop();
 		closeMega();
@@ -732,11 +804,15 @@
 		}
 		var willOpen = dropdown.classList.contains("hidden");
 		dropdown.classList.toggle("hidden", !willOpen);
+		if (el.bellBtn) el.bellBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
 		if (!dropdown.classList.contains("hidden")) {
 			var tasks = document.querySelector(".dropdown-background-tasks");
 			if (tasks) tasks.classList.add("hidden");
 			placeNotifyPanel(dropdown);
 			if (window.jQuery) window.jQuery(dropdown).trigger("show.bs.dropdown");
+			requestAnimationFrame(function () {
+				placeNotifyPanel(dropdown);
+			});
 		}
 	}
 
@@ -3240,6 +3316,7 @@
 	}
 
 	function openMega() {
+		closeNotify();
 		var fresh = !el.mega.classList.contains("aur-visible");
 		el.mega.classList.add("aur-visible");
 		positionMega();
@@ -4179,6 +4256,7 @@
 	}
 
 	function openSettings(anchor) {
+		closeNotify();
 		if (el.pop) return closePop();
 
 		// The tone row belongs to the chosen theme, so both are rebuilt together
@@ -4508,6 +4586,7 @@
 	function openUserMenu(anchor) {
 		if (el.pop && el.pop.classList.contains("aur-user-pop")) return closePop();
 		closePop();
+		closeNotify();
 
 		var name = userFullName();
 		var email = sessionUser();
@@ -5063,6 +5142,8 @@
 				type: "button",
 				title: "Notifications",
 				"aria-label": "Notifications",
+				"aria-expanded": "false",
+				"aria-haspopup": "true",
 			},
 			[iconNode(resolveIcon("bell", "Notifications", "user"), "aur-bell-glyph"), el.bellCount]
 		);
@@ -6532,6 +6613,13 @@
 		window.addEventListener("resize", function () {
 			var dropdown = notifyDropdown();
 			if (dropdown && !dropdown.classList.contains("hidden")) placeNotifyPanel(dropdown);
+		});
+		document.addEventListener("click", function (event) {
+			var dropdown = notifyDropdown();
+			if (!dropdown || dropdown.classList.contains("hidden")) return;
+			if (el.bellBtn && (el.bellBtn === event.target || el.bellBtn.contains(event.target))) return;
+			if (dropdown.contains(event.target)) return;
+			closeNotify();
 		});
 		return true;
 	}
