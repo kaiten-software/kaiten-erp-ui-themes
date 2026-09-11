@@ -571,6 +571,69 @@
 		window.location.assign(prefix() + "/kaiten-home");
 	}
 
+	function sessionUser() {
+		try {
+			return (window.frappe && frappe.session && frappe.session.user) || "";
+		} catch (e) {
+			return "";
+		}
+	}
+
+	function kaitenMenuPortals() {
+		try {
+			var boot = window.frappe && frappe.boot && frappe.boot.kaiten_desk;
+			return (boot && boot.menu_portals) || ["jewellery", "hr"];
+		} catch (e) {
+			return ["jewellery", "hr"];
+		}
+	}
+
+	function goKaitenChooseArea() {
+		try {
+			sessionStorage.removeItem("kaiten_home_portal:" + sessionUser());
+		} catch (e) {}
+		try {
+			if (typeof kaiten_desk !== "undefined" && kaiten_desk) {
+				if (typeof kaiten_desk.clearArea === "function") kaiten_desk.clearArea();
+				if (typeof kaiten_desk.showKaitenHome === "function") {
+					kaiten_desk.showKaitenHome();
+					return;
+				}
+			}
+		} catch (e2) {}
+		goKaitenHome();
+	}
+
+	function goKaitenPortal(portal) {
+		try {
+			if (typeof kaiten_desk !== "undefined" && kaiten_desk && typeof kaiten_desk.setDeskArea === "function") {
+				kaiten_desk.setDeskArea(portal, false);
+				return;
+			}
+		} catch (e) {}
+		try {
+			sessionStorage.setItem("kaiten_home_portal:" + sessionUser(), portal);
+		} catch (e2) {}
+		goKaitenHome();
+	}
+
+	function resetDesktopLayout() {
+		try {
+			frappe.call({
+				method: "frappe.desk.doctype.desktop_layout.desktop_layout.delete_layout",
+				callback: function () {
+					if (frappe.ui && frappe.ui.toolbar && frappe.ui.toolbar.clear_cache) {
+						frappe.ui.toolbar.clear_cache();
+					} else {
+						window.location.reload();
+					}
+				},
+			});
+		} catch (e) {
+			window.location.reload();
+		}
+	}
+
 	function hrefFor(desc) {
 		var route = desc.route || [];
 		// Only a configured link can be an outside address, and it is already an
@@ -4241,6 +4304,235 @@
 		closeOnOutsideClick();
 	}
 
+	/* Account menu — the stock desk keeps these on the avatar in the page
+	   corner. The theme bar is what people actually look at, so the same
+	   list hangs from a face on the far right of aur-bar-right. */
+
+	function userFullName() {
+		try {
+			if (frappe.user && typeof frappe.user.full_name === "function") {
+				return frappe.user.full_name() || sessionUser() || "Account";
+			}
+			var info = frappe.boot && frappe.boot.user_info && frappe.boot.user_info[sessionUser()];
+			return (info && (info.fullname || info.full_name)) || sessionUser() || "Account";
+		} catch (e) {
+			return "Account";
+		}
+	}
+
+	function userImage() {
+		try {
+			var info = frappe.boot && frappe.boot.user_info && frappe.boot.user_info[sessionUser()];
+			return (info && info.image) || "";
+		} catch (e) {
+			return "";
+		}
+	}
+
+	function userInitials(name) {
+		var parts = String(name || "?").trim().split(/\s+/);
+		var first = (parts[0] || "?").charAt(0);
+		var last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : "";
+		return (first + last).toUpperCase();
+	}
+
+	function userAvatarNode(extraClass) {
+		var name = userFullName();
+		var image = userImage();
+		var node = make("span", { class: "aur-user-face" + (extraClass ? " " + extraClass : "") });
+		if (image) {
+			var img = make("img", { src: image, alt: "" });
+			img.addEventListener("error", function () {
+				node.textContent = userInitials(name);
+			});
+			node.appendChild(img);
+		} else {
+			node.textContent = userInitials(name);
+		}
+		return node;
+	}
+
+	function userMenuItem(opts) {
+		var kids = [];
+		if (opts.icon) kids.push(iconNode(resolveIcon(opts.icon, opts.label, "user"), "aur-user-glyph"));
+		kids.push(make("span", { class: "aur-user-label", text: opts.label }));
+		var button = make(
+			"button",
+			{
+				class: "aur-user-item" + (opts.danger ? " aur-user-danger" : ""),
+				type: "button",
+			},
+			kids
+		);
+		button.addEventListener("click", function () {
+			closePop();
+			if (opts.onClick) opts.onClick();
+		});
+		return button;
+	}
+
+	function userMenuRule() {
+		return make("div", { class: "aur-user-rule", role: "separator" });
+	}
+
+	function navbarExtraItems() {
+		var builtins = {
+			"Edit Profile": 1,
+			"Toggle Theme": 1,
+			"About": 1,
+			"Frappe Support": 1,
+			"Reset Desktop Layout": 1,
+			Logout: 1,
+			"Home (choose area)": 1,
+			"Kaiten Home — Jewellery": 1,
+			"Kaiten Home — Jewelry": 1,
+			"Kaiten Home — HR": 1,
+		};
+		var extras = [];
+		try {
+			var list = (frappe.boot.navbar_settings && frappe.boot.navbar_settings.settings_dropdown) || [];
+			list.forEach(function (item) {
+				if (!item || item.hidden || !item.item_label || builtins[item.item_label]) return;
+				extras.push(item);
+			});
+		} catch (e) {}
+		return extras;
+	}
+
+	function openUserMenu(anchor) {
+		if (el.pop && el.pop.classList.contains("aur-user-pop")) return closePop();
+		closePop();
+
+		var name = userFullName();
+		var email = sessionUser();
+		var isDark = false;
+		try {
+			isDark = document.documentElement.getAttribute("data-theme") === "dark";
+		} catch (e) {}
+
+		var rows = [
+			make("div", { class: "aur-user-head" }, [
+				userAvatarNode("aur-user-face-lg"),
+				make("div", { class: "aur-user-who" }, [
+					make("div", { class: "aur-user-name", text: name }),
+					email && email !== name ? make("div", { class: "aur-user-email", text: email }) : null,
+				].filter(Boolean)),
+			]),
+			userMenuRule(),
+			userMenuItem({
+				label: "Edit Profile",
+				icon: "pencil",
+				onClick: function () {
+					if (window.frappe && typeof frappe.set_route === "function") {
+						frappe.set_route("Form", "User", sessionUser());
+					}
+				},
+			}),
+			userMenuItem({
+				label: "Toggle Theme",
+				icon: isDark ? "sun" : "moon",
+				onClick: function () {
+					if (frappe.ui && frappe.ui.ThemeSwitcher) new frappe.ui.ThemeSwitcher().show();
+				},
+			}),
+			userMenuItem({
+				label: "About",
+				icon: "info",
+				onClick: function () {
+					if (frappe.ui && frappe.ui.toolbar && frappe.ui.toolbar.show_about) {
+						frappe.ui.toolbar.show_about();
+					}
+				},
+			}),
+			userMenuItem({
+				label: "Frappe Support",
+				icon: "life-buoy",
+				onClick: function () {
+					window.open("https://support.frappe.io/help", "_blank");
+				},
+			}),
+			userMenuItem({
+				label: "Reset Desktop Layout",
+				icon: "rotate-ccw",
+				onClick: resetDesktopLayout,
+			}),
+		];
+
+		navbarExtraItems().forEach(function (item) {
+			rows.push(
+				userMenuItem({
+					label: item.item_label,
+					icon: item.icon || "circle",
+					onClick: function () {
+						if (item.item_type === "Route" && item.route) {
+							window.location.href = item.route;
+						} else if (item.item_type === "Action" && item.action && frappe.utils && frappe.utils.eval) {
+							frappe.utils.eval(item.action);
+						}
+					},
+				})
+			);
+		});
+
+		rows.push(
+			userMenuItem({
+				label: "Logout",
+				icon: "log-out",
+				danger: true,
+				onClick: function () {
+					if (frappe.app && typeof frappe.app.logout === "function") frappe.app.logout();
+				},
+			})
+		);
+
+		if (kaitenHomeAvailable()) {
+			var portals = kaitenMenuPortals();
+			rows.push(userMenuRule());
+			rows.push(
+				userMenuItem({
+					label: "Home (choose area)",
+					icon: "house",
+					onClick: goKaitenChooseArea,
+				})
+			);
+			if (portals.indexOf("jewellery") >= 0) {
+				rows.push(
+					userMenuItem({
+						label: "Kaiten Home — Jewellery",
+						icon: "star",
+						onClick: function () {
+							goKaitenPortal("jewellery");
+						},
+					})
+				);
+			}
+			if (portals.indexOf("hr") >= 0) {
+				rows.push(
+					userMenuItem({
+						label: "Kaiten Home — HR",
+						icon: "users",
+						onClick: function () {
+							goKaitenPortal("hr");
+						},
+					})
+				);
+			}
+		}
+
+		el.pop = make("div", { class: "aur-pop aur-user-pop", role: "menu", "aria-label": "Account" }, rows);
+		document.body.appendChild(el.pop);
+
+		el.popPlace = function () {
+			var box = anchor.getBoundingClientRect();
+			var width = el.pop.offsetWidth || 260;
+			el.pop.style.top = Math.round(box.bottom + 8) + "px";
+			el.pop.style.left = Math.round(clamp(box.right - width, 10, window.innerWidth - width - 10)) + "px";
+		};
+		el.popPlace();
+
+		closeOnOutsideClick();
+	}
+
 	/* ---------------------------------------------------------------------
 	   Escaping clipped / stacked ancestors
 
@@ -4655,6 +4947,21 @@
 		var fullBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Toggle fullscreen", text: "\u26F6" });
 		fullBtn.addEventListener("click", toggleFullscreen);
 
+		/* Last on the right, under the eye that used to look for the stock
+		   desk avatar. One face opens Edit Profile, theme, About, logout and
+		   the Kaiten Home switches. */
+		el.userBtn = make("button", {
+			class: "aur-icon-btn aur-user-btn",
+			type: "button",
+			title: userFullName(),
+			"aria-label": "Account menu",
+			"aria-haspopup": "menu",
+		}, [userAvatarNode()]);
+		el.userBtn.addEventListener("click", function (event) {
+			event.stopPropagation();
+			openUserMenu(el.userBtn);
+		});
+
 		el.groups = make("div", { class: "aur-mega-groups" });
 		el.body = make("div", { class: "aur-mega-body" });
 
@@ -4781,7 +5088,7 @@
 			make("div", { class: "aur-bar-inner" }, [
 				brand,
 				el.navWrap,
-				make("div", { class: "aur-bar-right" }, [searchWrap, el.pinBtn, paletteBtn, fullBtn]),
+				make("div", { class: "aur-bar-right" }, [searchWrap, el.pinBtn, paletteBtn, fullBtn, el.userBtn]),
 			]),
 			buildRateBar(),
 		]);

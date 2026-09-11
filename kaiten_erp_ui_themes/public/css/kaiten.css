@@ -1131,6 +1131,37 @@
 	box-shadow: 0 10px 22px -10px color-mix(in oklab, var(--aur-accent) 85%, transparent);
 }
 
+/* Face on the far right — a photo must not spin like the pin/theme discs. */
+.aur-icon-btn.aur-user-btn {
+	padding: 0;
+	overflow: hidden;
+}
+
+.aur-icon-btn.aur-user-btn:hover {
+	transform: translateY(-2px);
+}
+
+.aur-user-face {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	border-radius: inherit;
+	background: var(--aur-grad-cool);
+	color: #fff;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	overflow: hidden;
+}
+
+.aur-user-face img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
 /* -------------------------------------------------------------------------
    6. Mega panel
    ---------------------------------------------------------------------- */
@@ -3635,6 +3666,101 @@ html:has(.aur-bar) body[data-route^="Form"] .layout-side-section {
 
 .aur-pop [hidden] {
 	display: none;
+}
+
+.aur-pop.aur-user-pop {
+	width: 268px;
+	padding: 10px;
+}
+
+.aur-user-head {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 4px 6px 8px;
+}
+
+.aur-user-face-lg {
+	width: 36px;
+	height: 36px;
+	flex: none;
+	border-radius: 50%;
+	font-size: 12px;
+}
+
+.aur-user-who {
+	min-width: 0;
+}
+
+.aur-user-name {
+	font-size: 13px;
+	font-weight: 700;
+	color: var(--aur-ink);
+	line-height: 1.25;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.aur-user-email {
+	font-size: 11px;
+	color: var(--aur-ink-soft);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.aur-user-rule {
+	height: 1px;
+	margin: 4px 6px;
+	background: var(--aur-line);
+}
+
+.aur-user-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	padding: 7px 8px;
+	border: none;
+	border-radius: var(--aur-r);
+	background: transparent;
+	color: var(--aur-ink);
+	font-size: 13px;
+	font-weight: 600;
+	text-align: left;
+	cursor: pointer;
+	transition: background var(--aur-fast) var(--aur-ease), color var(--aur-fast) var(--aur-ease);
+}
+
+.aur-user-item:hover {
+	background: var(--aur-grad-soft);
+}
+
+.aur-user-item.aur-user-danger {
+	color: #be123c;
+}
+
+.aur-user-item.aur-user-danger:hover {
+	background: color-mix(in oklab, #be123c 10%, transparent);
+}
+
+[data-theme="dark"] .aur-user-item.aur-user-danger {
+	color: #fda4af;
+}
+
+.aur-user-glyph {
+	width: 16px;
+	height: 16px;
+	flex: none;
+	opacity: 0.72;
+}
+
+.aur-user-label {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 /* Appearance — all three on screen, one click each. */
