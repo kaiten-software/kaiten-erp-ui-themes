@@ -51,6 +51,7 @@
 
 	--aur-nav-h: 60px;
 	--aur-bar-h: 48px;
+	--aur-rate-h: 0px;
 	--aur-scroll: 0;
 
 	/* The selected sidebar row. A skin that paints that row light instead of
@@ -813,6 +814,7 @@
 	letter-spacing: 0.02em;
 	text-transform: uppercase;
 	padding: 5px 11px;
+	overflow: visible;
 	border-radius: 999px;
 	color: #fff;
 	background: var(--aur-grad);
@@ -2143,10 +2145,42 @@ a.aur-item:focus {
    8. Page head + titles
    ---------------------------------------------------------------------- */
 
+/* Stock v17 has no classic navbar in this desk: page-head is sticky at
+   top: 0 and never moves. The Kaiten bar sits in that same scrollport, so
+   every stock sticky layer must start under the bar and stay there.
+   --aur-chrome-h is the bar (+ rate strip). JS overwrites it with the
+   measured height when the bar paints. */
+html:has(.aur-bar) {
+	--aur-chrome-h: calc(var(--aur-bar-h) + var(--aur-rate-h));
+	--navbar-height: var(--aur-chrome-h);
+}
+
+html:has(.aur-bar) .page-head {
+	top: var(--aur-chrome-h);
+}
+
+/* Frappe toggles sticky-up (cover the title) vs sticky-down (sit under it).
+   Keep Details/Save visible: tabs always park under the page-head. */
+html:has(.aur-bar) .form-tabs-list,
+html:has(.aur-bar) .form-tabs-list.form-tabs-sticky-up,
+html:has(.aur-bar) .form-tabs-list.form-tabs-sticky-down,
+html:has(.aur-bar) .form-tabs-list.form-tabs-sticky-down.show-navbar {
+	top: calc(var(--aur-chrome-h) + var(--page-head-height) - 1px);
+}
+
+html:has(.aur-bar) .form-tab-content {
+	scroll-margin-top: calc(var(--aur-chrome-h) + var(--page-head-height) + 52px);
+}
+
+html:has(.aur-bar) body[data-route^="Form"] .layout-side-section {
+	top: calc(var(--aur-chrome-h) + var(--page-head-height));
+	height: calc(100dvh - var(--aur-chrome-h) - var(--page-head-height));
+}
+
 .aurora-on .page-head {
-	background: transparent;
-	backdrop-filter: blur(10px);
-	-webkit-backdrop-filter: blur(10px);
+	background: var(--aur-surface, var(--bg-color));
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
 	border-bottom: 1px solid var(--aur-line);
 }
 
@@ -3061,12 +3095,21 @@ a.aur-item:focus {
 	background: var(--aur-grad-soft);
 }
 
+/* Query-report / DataTable freeze the first columns (dt-cell--sticky).
+   Those cells must stay opaque so columns that scrolled left cannot show
+   through on hover. A translucent gradient made voucher text sit on top
+   of Party / Account. Same idea as the list sticky rail. */
 .aurora-on .datatable .dt-row:hover .dt-cell {
-	background: var(--aur-grad-soft) !important;
+	background: color-mix(in oklab, var(--aur-accent) 11%, var(--aur-sheet, #fff)) !important;
 }
 
 .aurora-on .datatable .dt-row-header .dt-cell {
-	background: linear-gradient(180deg, rgba(99, 102, 241, 0.12), transparent) !important;
+	background: linear-gradient(
+			180deg,
+			color-mix(in oklab, var(--aur-accent) 12%, var(--aur-sheet, #fff)),
+			var(--aur-sheet, #fff)
+		)
+		!important;
 	font-weight: 650;
 }
 
@@ -4372,7 +4415,7 @@ a.aur-item:focus {
 }
 
 .aurora-on .datatable .dt-row:hover .dt-cell {
-	background: color-mix(in oklab, var(--aur-accent) 8%, transparent);
+	background: color-mix(in oklab, var(--aur-accent) 11%, var(--aur-sheet, #fff)) !important;
 }
 
 .aurora-on .datatable .dt-cell--focus {
@@ -5091,12 +5134,12 @@ a.aur-item:focus {
 }
 
 .aur-brand-logo {
-	height: 18px;
+	height: 22px;
 	width: auto;
-	max-width: 36px;
+	max-width: 48px;
 	border-radius: 5px;
 	object-fit: contain;
-	background: var(--aur-surface);
+	background: transparent;
 	flex: none;
 }
 
@@ -5124,6 +5167,10 @@ a.aur-item:focus {
 
 html.kaiten-rate-on .krate {
 	display: flex;
+}
+
+html.kaiten-rate-on {
+	--aur-rate-h: 28px;
 }
 
 .krate-live {
@@ -5450,8 +5497,13 @@ html.aurora-on .kside .kside-collapse:focus-visible,
 	font-size: 13px;
 }
 
+.kside-items + .kside-area {
+	margin-top: 16px;
+}
+
 .kside-item.is-active {
-	background: color-mix(in oklab, var(--aur-accent) 18%, transparent);
+	background: color-mix(in oklab, var(--aur-accent) 22%, transparent);
+	box-shadow: inset 3px 0 0 var(--aur-accent);
 	font-weight: 700;
 }
 
@@ -5911,4 +5963,21 @@ iframe.print-format-container {
 	white-space: normal !important;
 	pointer-events: auto;
 	transform: none !important;
+}
+
+/* Sticky title/tabs must hide the form that scrolls underneath. Stock uses
+   --bg-color. Skins (Cast/Halo/Lumen) paint the head glass; this selector
+   is one class stronger so those files cannot reopen the hole. */
+html.aurora-on:has(.aur-bar) .page-head.page-head,
+html:has(.aur-bar) .page-head.page-head,
+html:has(.aur-bar) .page-head .page-head-content {
+	background-color: var(--aur-surface, var(--bg-color));
+	background-image: none;
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+}
+
+html:has(.aur-bar) .form-tabs-list.form-tabs-list {
+	background-color: var(--aur-surface, var(--card-bg, var(--bg-color)));
+	background-image: none;
 }

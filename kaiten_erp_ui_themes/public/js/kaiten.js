@@ -577,6 +577,9 @@
 		// href — there is no desk route to build.
 		if (desc.act === "url") return desc.url || "#";
 		if (desc.act === "new") return prefix() + "/" + slugify(desc.doctype) + "/new";
+		if (route[0] === "List" && route[2] === "Report") {
+			return prefix() + "/" + slugify(route[1]) + "/view/report/" + encodeURIComponent(route[3] || "");
+		}
 		if (route[0] === "List") return prefix() + "/" + slugify(route[1]);
 		if (route[0] === "Form") return prefix() + "/" + slugify(route[1]) + "/" + encodeURIComponent(route[2]);
 		if (route[0] === "query-report") return prefix() + "/query-report/" + encodeURIComponent(route[1]);
@@ -591,6 +594,20 @@
 	function runItem(desc) {
 		if (!desc) return;
 
+		// Same doctype can live in more than one menu (ToDo is in Masters and
+		// in HRMS Inbox). Remember which menu/area opened this
+		// page so the left rail does not jump to whichever menu was registered
+		// first.
+		if (desc.menuName && menuByName(desc.menuName)) {
+			nav.active = desc.menuName;
+			if (desc.areaIndex === "all" || typeof desc.areaIndex === "number") {
+				nav.area[desc.menuName] = {
+					index: desc.areaIndex,
+					route: itemKey(desc) || routeTargetKey(),
+				};
+			}
+		}
+
 		if (desc.act === "url") {
 			window.open(desc.url, "_blank", "noopener");
 			closeMega();
@@ -604,6 +621,7 @@
 			window.location.href = hrefFor(desc);
 		}
 		closeMega();
+		scheduleSideRefresh();
 	}
 
 	function doctypeItem(dt, module) {
@@ -1061,7 +1079,7 @@
 		// knowable yet. Look again once it has had time to load.
 		setTimeout(refineRecent, 700);
 		setTimeout(refineRecent, 2200);
-		if (typeof renderSide === "function") renderSide();
+		scheduleSideRefresh();
 	}
 
 	function formRef(item) {
@@ -1326,6 +1344,7 @@
 			// card it sits under is already the group heading beside it, so
 			// repeating it here would only say the same thing twice.
 			sub: link.type || "",
+			kind: link.kind || "operate",
 			hue: hue(link.to || link.label),
 			icon: resolveIcon(link.icon, link.label, context),
 			search: link.label + " " + (link.to || ""),
@@ -1384,7 +1403,10 @@
 
 		(menu.columns || []).forEach(function (column, index) {
 			var items = (column.items || []).map(function (link) {
-				return configItem(link, menu.label);
+				var item = configItem(link, menu.label);
+				item.menuName = menu.name;
+				item.areaIndex = index;
+				return item;
 			});
 			if (!items.length) return;
 
@@ -1399,6 +1421,10 @@
 		});
 
 		var overview = overviewItem(menu);
+		if (overview) {
+			overview.menuName = menu.name;
+			overview.areaIndex = 0;
+		}
 		if (overview && groups.length) groups[0].items.unshift(overview);
 
 		return groups;
@@ -1492,6 +1518,7 @@
 	function itemKey(item) {
 		if (!item || item.act === "url") return "";
 		var route = item.route || [];
+		if (route[0] === "List" && route[2] === "Report") return "rep:" + route[3];
 		if (route[0] === "List" || route[0] === "Form" || route[0] === "Tree") return "dt:" + route[1];
 		if (route[0] === "query-report") return "rep:" + route[1];
 		if (route[0] === "dashboard-view" || route[0] === "Dashboard") return "dash:" + (route[1] || "");
@@ -1503,16 +1530,50 @@
 		return item.id || "";
 	}
 
+	function itemPathMatch(item) {
+		if (!item || item.act === "url") return null;
+		var href = hrefFor(item);
+		if (!href || href === "#") return null;
+		var path = "";
+		var nowPath = "";
+		try {
+			path = new URL(href, location.origin).pathname.replace(/\/$/, "");
+			nowPath = String(location.pathname || "").replace(/\/$/, "");
+		} catch (e) {
+			return null;
+		}
+		if (!path || !nowPath) return null;
+		if (nowPath === path) return true;
+		if (nowPath.indexOf(path + "/") === 0) {
+			var rest = nowPath.slice(path.length + 1);
+			// /desk/item/ITEM-0001 is the form. /desk/item/view/report|kanban is not.
+			if (rest.split("/")[0] === "view") return false;
+			return true;
+		}
+		var root = prefix();
+		if (nowPath === root || nowPath.indexOf(root + "/") === 0) return false;
+		return null;
+	}
+
 	function itemMatchesRoute(item, here) {
 		if (!item) return false;
+		var pathHit = itemPathMatch(item);
+		if (pathHit === true) return true;
+		if (pathHit === false) return false;
 		if (item.key && here && (item.key === here || slugify(item.key) === slugify(here))) return true;
 		var mine = (item.route || []).map(String);
-		if (!mine.length) return false;
 		var now = [];
 		try {
 			now = (frappe.get_route() || []).map(String);
 		} catch (e) {}
-		if (!now.length) return false;
+		if (mine[2] === "Report" || now[2] === "Report") {
+			return mine[2] === "Report" && now[2] === "Report" && slugify(mine[3] || "") === slugify(now[3] || "");
+		}
+		var desk = { List: 1, Form: 1, Tree: 1, print: 1 };
+		if (mine[1] && now[1] && desk[mine[0]] && desk[now[0]] && slugify(mine[1]) === slugify(now[1])) {
+			return true;
+		}
+		if (!mine.length || !now.length) return false;
 		if (mine.length === 1 || now.length === 1) {
 			return mine.length === now.length && slugify(mine[0]) === slugify(now[0]);
 		}
@@ -1563,19 +1624,24 @@
 						label: menu.label,
 						icon: resolveIcon(menu.icon, menu.label),
 						hue: hue(menu.name),
-						columns: (menu.columns || []).map(function (column) {
+						columns: (menu.columns || []).map(function (column, index) {
 							return {
 								title: column.title || menu.label,
 								items: (column.items || []).map(function (link) {
 									var item = configItem(link, menu.label);
 									item.key = itemKey(item);
+									item.menuName = menu.name;
+									item.areaIndex = index;
 									return item;
 								}),
 							};
 						}),
 					};
 					built.overview = overviewItem(menu);
-					if (built.overview) built.overview.key = itemKey(built.overview);
+					if (built.overview) {
+						built.overview.key = itemKey(built.overview);
+						built.overview.menuName = menu.name;
+					}
 					return built;
 				} catch (e) {
 					console.warn("Kaiten: skipped a nav menu that could not be built", menu && menu.name, e);
@@ -1624,10 +1690,31 @@
 		return "ws:" + slug;
 	}
 
+	function menuOwnsKey(menu, key) {
+		if (!menu || !key) return false;
+		if (menu.overview && menu.overview.key === key) return true;
+		return (menu.columns || []).some(function (column) {
+			return (column.items || []).some(function (item) {
+				return item.key === key;
+			});
+		});
+	}
+
+	function columnsOwningKey(menu, key) {
+		var out = [];
+		if (!menu || !key) return out;
+		(menu.columns || []).forEach(function (column, index) {
+			if ((column.items || []).some(function (item) { return item.key === key; })) out.push(index);
+		});
+		return out;
+	}
+
 	function activeMenuName() {
-		var found = nav.byKey[routeTargetKey()];
-		if (found) return found;
-		return nav.active && menuByName(nav.active) ? nav.active : "";
+		var key = routeTargetKey();
+		var current = nav.active && menuByName(nav.active) ? nav.active : "";
+		if (current && menuOwnsKey(menuByName(current), key)) return current;
+		if (key && nav.byKey[key]) return nav.byKey[key];
+		return current;
 	}
 
 	function ingestShellNav(menu) {
@@ -1791,6 +1878,38 @@
 		}
 	}
 
+	var sideRefreshTimers = [];
+
+	function scheduleSideRefresh() {
+		sideRefreshTimers.forEach(function (id) {
+			clearTimeout(id);
+		});
+		// Tree doctypes (Warehouse, Item Group, Account) settle after the first
+		// route event. Paint again once Frappe has swapped List → Tree.
+		sideRefreshTimers = [0, 80, 250].map(function (ms) {
+			return setTimeout(function () {
+				renderSide();
+			}, ms);
+		});
+	}
+
+	function paintSideColumn(column, here, areaIndex) {
+		if (!column) return;
+		el.sideBody.appendChild(make("div", { class: "kside-area", text: column.title }));
+		eachKind(column.items, areaIsMixed(column.items), function (bucket, rows, heading) {
+			if (heading) el.sideBody.appendChild(make("div", { class: "kside-sub", text: heading }));
+			var list = make("div", { class: "kside-items" });
+			rows.forEach(function (item) {
+				var row = item;
+				if (areaIndex === "all") {
+					row = Object.assign({}, item, { areaIndex: "all" });
+				}
+				list.appendChild(sideLink(row, itemMatchesRoute(row, here)));
+			});
+			el.sideBody.appendChild(list);
+		});
+	}
+
 	function renderSide() {
 		if (!el.sideBody) return;
 		ensureSideMounted();
@@ -1822,23 +1941,37 @@
 		var here = routeTargetKey();
 		el.sideBody.innerHTML = "";
 
-		var holder = menu.columns.findIndex(function (column) {
-			return column.items.some(function (item) {
-				return itemMatchesRoute(item, here);
-			});
-		});
-
+		var owners = columnsOwningKey(menu, here);
 		var picked = nav.area[menu.name];
 		var chosen;
-		if (picked && picked.route === here) chosen = picked.index;
-		else if (holder > -1) chosen = holder;
+		// Stay on All until the user picks another pill. A stale first paint
+		// (List still showing the previous doctype) must not drop All.
+		if (picked && picked.index === "all") chosen = "all";
+		// A pill click stores the current route. Honour that so the user can
+		// browse another area without the rail snapping back to the open page.
+		else if (picked && picked.route === here) chosen = picked.index;
+		else if (picked && owners.indexOf(picked.index) !== -1) chosen = picked.index;
+		else if (owners.length) chosen = owners[0];
 		else if (picked) chosen = picked.index;
 		else chosen = 0;
-		if (chosen >= menu.columns.length) chosen = 0;
+		if (chosen !== "all" && (typeof chosen !== "number" || chosen >= menu.columns.length || chosen < 0)) {
+			chosen = 0;
+		}
 		nav.area[menu.name] = { index: chosen, route: here };
 
 		if (menu.columns.length > 1) {
 			var pills = make("div", { class: "kside-pills" });
+			var allPill = make("button", {
+				class: "kside-pill" + (chosen === "all" ? " is-on" : ""),
+				type: "button",
+				title: "All areas",
+				text: "All",
+			});
+			allPill.addEventListener("click", function () {
+				nav.area[menu.name] = { index: "all", route: routeTargetKey() };
+				renderSide();
+			});
+			pills.appendChild(allPill);
 			menu.columns.forEach(function (column, index) {
 				var pill = make("button", {
 					class: "kside-pill" + (index === chosen ? " is-on" : ""),
@@ -1856,21 +1989,21 @@
 			el.sideBody.appendChild(pills);
 		}
 
+		if (chosen === "all") {
+			menu.columns.forEach(function (column) {
+				paintSideColumn(column, here, "all");
+			});
+			applySideCollapsed();
+			return;
+		}
+
 		var column = menu.columns[chosen];
 		if (!column) {
 			applySideCollapsed();
 			return;
 		}
 
-		el.sideBody.appendChild(make("div", { class: "kside-area", text: column.title }));
-		eachKind(column.items, areaIsMixed(column.items), function (bucket, rows, heading) {
-			if (heading) el.sideBody.appendChild(make("div", { class: "kside-sub", text: heading }));
-			var list = make("div", { class: "kside-items" });
-			rows.forEach(function (item) {
-				list.appendChild(sideLink(item, itemMatchesRoute(item, here)));
-			});
-			el.sideBody.appendChild(list);
-		});
+		paintSideColumn(column, here, chosen);
 		applySideCollapsed();
 	}
 
@@ -4662,8 +4795,10 @@
 		document.body.appendChild(el.mega);
 
 		paintNavOverflow();
+		syncChromeHeight();
 
 		window.addEventListener("resize", function () {
+			syncChromeHeight();
 			// A popover that knows how to place itself is repositioned; the rest
 			// are transient and closing them is the honest answer.
 			if (el.popPlace) el.popPlace();
@@ -4825,6 +4960,7 @@
 		el.rateTrack.textContent = "";
 		if (!items.length) {
 			root.classList.remove("kaiten-rate-on");
+			syncChromeHeight();
 			return;
 		}
 		items.forEach(function (item) {
@@ -4834,6 +4970,7 @@
 			el.rateBar.setAttribute("title", "Rates as of " + payload.rate_date);
 		}
 		root.classList.add("kaiten-rate-on");
+		syncChromeHeight();
 	}
 
 	function loadRates(refresh) {
@@ -4843,7 +4980,15 @@
 			.then(renderRates)
 			.catch(function () {
 				root.classList.remove("kaiten-rate-on");
+				syncChromeHeight();
 			});
+	}
+
+	function syncChromeHeight() {
+		var bar = el.bar || document.querySelector(".aur-bar");
+		if (!bar) return;
+		var h = Math.round(bar.getBoundingClientRect().height);
+		if (h > 0) root.style.setProperty("--aur-chrome-h", h + "px");
 	}
 
 	function buildRateBar() {
@@ -5002,6 +5147,7 @@
 		root.setAttribute("data-aur-accent", accent);
 		root.setAttribute("data-aur-density", currentDensity());
 		paintCustom(accent.indexOf(CUSTOM_PREFIX) === 0 ? paletteById(accent) : null);
+		requestAnimationFrame(syncChromeHeight);
 	}
 
 	/* ---------------------------------------------------------------------

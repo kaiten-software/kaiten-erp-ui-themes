@@ -1033,14 +1033,6 @@
 				},
 				{
 					"type": "Link",
-					"label": "Karigar Rate Card",
-					"section": "Setup",
-					"icon": "banknote",
-					"link_type": "DocType",
-					"link_to": "Karigar Rate Card"
-				},
-				{
-					"type": "Link",
 					"label": "Manufacturing Process",
 					"section": "Setup",
 					"icon": "list-ordered",
@@ -1400,7 +1392,7 @@
 				},
 				{
 					"type": "Link",
-					"label": "Approvals Inbox",
+					"label": "To Do",
 					"section": "Main",
 					"icon": "inbox",
 					"link_type": "DocType",

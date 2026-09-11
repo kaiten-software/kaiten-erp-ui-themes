@@ -103,7 +103,6 @@ const SETUP_LABELS = new Set([
 	"GST Settings",
 	"HSN Code",
 	"Print Formats",
-	"Karigar Rate Card",
 	"Refinery Master",
 	"POS Profile",
 	"Department",

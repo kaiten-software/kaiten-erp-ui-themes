@@ -494,6 +494,27 @@ def _single_doctypes(names: set) -> set:
 	}
 
 
+def _table_doctypes(names: set) -> set:
+	"""Child tables have no List and no Page. A nav row that points at one
+	opens ``/desk/<slug>`` and Frappe 404s with 'Page … not found'.
+	Those rows are dropped from the rail; the parent Settings form already
+	holds the grid (Karigar Rate Card → Jewelers ERP Settings).
+	"""
+	if not names:
+		return set()
+
+	return {
+		row.name
+		for row in frappe.get_all(
+			"DocType",
+			filters={"name": ("in", list(names)), "istable": 1},
+			fields=["name"],
+			limit_page_length=0,
+			ignore_permissions=True,
+		)
+	}
+
+
 def _item_kind(row) -> str:
 	"""Which bucket a configured link belongs in.
 
@@ -515,7 +536,7 @@ def _item_kind(row) -> str:
 	return "operate"
 
 
-def _config_route(row: dict, reports: dict) -> list | None:
+def _config_route(row: dict, reports: dict, tables: set | None = None) -> list | None:
 	kind = row.get("link_type")
 	target = row.get("link_to")
 
@@ -523,6 +544,9 @@ def _config_route(row: dict, reports: dict) -> list | None:
 		return None
 
 	if kind == "DocType":
+		child_tables = tables if tables is not None else _table_doctypes({target})
+		if target in child_tables:
+			return None
 		return ["List", target]
 	if kind == "Page":
 		return [target]
@@ -544,7 +568,16 @@ def _config_route(row: dict, reports: dict) -> list | None:
 	return None
 
 
-def _config_usable(row: dict, readable: set, reports: dict, pages: set, dashboards: set, spaces: set, country: str) -> bool:
+def _config_usable(
+	row: dict,
+	readable: set,
+	reports: dict,
+	pages: set,
+	dashboards: set,
+	spaces: set,
+	country: str,
+	tables: set | None = None,
+) -> bool:
 	if row.get("hidden"):
 		return False
 
@@ -564,6 +597,9 @@ def _config_usable(row: dict, readable: set, reports: dict, pages: set, dashboar
 	if kind == "URL":
 		return bool((row.get("url") or "").strip())
 	if kind == "DocType":
+		child_tables = tables if tables is not None else _table_doctypes({target} if target else set())
+		if target in child_tables:
+			return False
 		return target in readable
 	if kind == "Page":
 		return target in pages
@@ -694,6 +730,7 @@ def _config_menus(readable: set, profile: str | None = None, all_menus: bool = F
 	dashboards = _existing("Dashboard", dash_names)
 	spaces = _existing("Workspace", space_names)
 	singles = _single_doctypes(doctype_names)
+	tables = _table_doctypes(doctype_names)
 	country = _country()
 
 	grouped: dict[str, list] = {}
@@ -704,10 +741,10 @@ def _config_menus(readable: set, profile: str | None = None, all_menus: bool = F
 			cards.append({"title": _(row.label or ""), "items": []})
 			continue
 
-		if not _config_usable(row, readable, reports, pages, dashboards, spaces, country):
+		if not _config_usable(row, readable, reports, pages, dashboards, spaces, country, tables):
 			continue
 
-		route = _config_route(row, reports)
+		route = _config_route(row, reports, tables)
 		if route is None and row.link_type != "URL":
 			continue
 
@@ -857,7 +894,7 @@ def _link_kind(row: dict, card: str) -> str:
 	return "operate"
 
 
-def _link_route(row: dict) -> list | None:
+def _link_route(row: dict, tables: set | None = None) -> list | None:
 	"""The desk route for one workspace link, or None if it cannot be reached."""
 	kind = row.get("link_type")
 	target = row.get("link_to")
@@ -865,6 +902,9 @@ def _link_route(row: dict) -> list | None:
 		return None
 
 	if kind == "DocType":
+		child_tables = tables if tables is not None else _table_doctypes({target})
+		if target in child_tables:
+			return None
 		return ["List", target]
 	if kind == "Page":
 		return [target]
@@ -877,7 +917,9 @@ def _link_route(row: dict) -> list | None:
 	return None
 
 
-def _usable_link(row: dict, readable: set, reports: set, pages: set, country: str) -> bool:
+def _usable_link(
+	row: dict, readable: set, reports: set, pages: set, country: str, tables: set | None = None
+) -> bool:
 	if row.get("hidden"):
 		return False
 
@@ -896,6 +938,9 @@ def _usable_link(row: dict, readable: set, reports: set, pages: set, country: st
 	target = row.get("link_to")
 
 	if kind == "DocType":
+		child_tables = tables if tables is not None else _table_doctypes({target} if target else set())
+		if target in child_tables:
+			return False
 		return target in readable
 	if kind == "Report":
 		if target not in reports:
@@ -939,6 +984,7 @@ def _workspace_links(names: list, readable: set) -> dict:
 
 	reports = _existing_reports({row.link_to for row in rows if row.link_type == "Report" and row.link_to})
 	pages = _existing("Page", {row.link_to for row in rows if row.link_type == "Page" and row.link_to})
+	tables = _table_doctypes({row.link_to for row in rows if row.link_type == "DocType" and row.link_to})
 	country = _country()
 
 	grouped: dict[str, list] = {}
@@ -951,10 +997,10 @@ def _workspace_links(names: list, readable: set) -> dict:
 			cards.append({"title": _(row.label or ""), "items": []})
 			continue
 
-		if not _usable_link(row, readable, reports, pages, country):
+		if not _usable_link(row, readable, reports, pages, country, tables):
 			continue
 
-		route = _link_route(row)
+		route = _link_route(row, tables)
 		if not route:
 			continue
 
