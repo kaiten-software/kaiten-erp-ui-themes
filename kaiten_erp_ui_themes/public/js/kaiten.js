@@ -597,6 +597,7 @@
 				if (typeof kaiten_desk.clearArea === "function") kaiten_desk.clearArea();
 				if (typeof kaiten_desk.showKaitenHome === "function") {
 					kaiten_desk.showKaitenHome();
+					syncRateBar();
 					return;
 				}
 			}
@@ -607,7 +608,9 @@
 	function goKaitenPortal(portal) {
 		try {
 			if (typeof kaiten_desk !== "undefined" && kaiten_desk && typeof kaiten_desk.setDeskArea === "function") {
-				kaiten_desk.setDeskArea(portal, false);
+				kaiten_desk.setDeskArea(portal, false, function () {
+					syncRateBar();
+				});
 				return;
 			}
 		} catch (e) {}
@@ -615,6 +618,7 @@
 			sessionStorage.setItem("kaiten_home_portal:" + sessionUser(), portal);
 		} catch (e2) {}
 		goKaitenHome();
+		syncRateBar();
 	}
 
 	function resetDesktopLayout() {
@@ -631,6 +635,108 @@
 			});
 		} catch (e) {
 			window.location.reload();
+		}
+	}
+
+	function deskArea() {
+		try {
+			if (typeof kaiten_desk !== "undefined" && kaiten_desk && typeof kaiten_desk.getArea === "function") {
+				return kaiten_desk.getArea() || "";
+			}
+		} catch (e) {}
+		try {
+			return sessionStorage.getItem("kaiten_desk_area") || "";
+		} catch (e2) {
+			return "";
+		}
+	}
+
+	function notificationsEnabled() {
+		try {
+			if (!window.frappe || !frappe.session || frappe.session.user === "Guest") return false;
+			var settings = frappe.boot && frappe.boot.desk_settings;
+			if (settings && (settings.notifications === 0 || settings.notifications === false)) return false;
+			return true;
+		} catch (e) {
+			return false;
+		}
+	}
+
+	function paintBellCount() {
+		if (!el.bellCount) return;
+		var count = 0;
+		try {
+			count = Number((frappe.boot && frappe.boot.notification_unread_count) || 0);
+		} catch (e) {}
+		el.bellCount.textContent = count > 99 ? "99+" : String(count);
+		el.bellCount.classList.toggle("hidden", count <= 0);
+	}
+
+	function notifyDropdown() {
+		return document.querySelector(".dropdown-notifications");
+	}
+
+	function ensureNotifyPanel() {
+		var dropdown = notifyDropdown();
+		if (dropdown) return dropdown;
+		if (!window.jQuery || !frappe.ui || !frappe.ui.Notifications) return null;
+
+		var host = make("div", { class: "aur-notify-host" });
+		host.innerHTML =
+			'<div class="dropdown-notifications hidden">' +
+			'<div class="notifications-list" role="menu">' +
+			'<div class="notification-list-header"><div class="header-items"></div><div class="header-actions"></div></div>' +
+			'<div class="notification-list-body"><div class="panel-notifications"></div><div class="panel-events"></div></div>' +
+			"</div></div>";
+		document.body.appendChild(host);
+		try {
+			state.notify = new frappe.ui.Notifications({ wrapper: window.jQuery(host), full_height: true });
+		} catch (e) {
+			console.warn("kaiten notifications", e);
+		}
+		return notifyDropdown();
+	}
+
+	function placeNotifyPanel(dropdown) {
+		if (!dropdown || !el.bellBtn) return;
+		var list = dropdown.querySelector(".notifications-list");
+		var box = el.bellBtn.getBoundingClientRect();
+		var width = (list && list.offsetWidth) || 360;
+		dropdown.classList.add("aur-notify-dock");
+		dropdown.style.position = "fixed";
+		dropdown.style.inset = "auto";
+		dropdown.style.top = Math.round(box.bottom + 8) + "px";
+		dropdown.style.left = Math.round(clamp(box.right - width, 10, window.innerWidth - width - 10)) + "px";
+		dropdown.style.right = "auto";
+		dropdown.style.zIndex = "1300";
+		dropdown.style.pointerEvents = "auto";
+		if (list) {
+			list.style.left = "0";
+			list.style.position = "relative";
+		}
+	}
+
+	function toggleNotifications(event) {
+		if (event) {
+			event.preventDefault();
+			event.stopPropagation();
+		}
+		closePop();
+		closeMega();
+		var dropdown = ensureNotifyPanel();
+		if (!dropdown) {
+			if (frappe.show_alert) {
+				frappe.show_alert({ message: "Notifications panel is not available", indicator: "orange" });
+			}
+			return;
+		}
+		var willOpen = dropdown.classList.contains("hidden");
+		dropdown.classList.toggle("hidden", !willOpen);
+		if (!dropdown.classList.contains("hidden")) {
+			var tasks = document.querySelector(".dropdown-background-tasks");
+			if (tasks) tasks.classList.add("hidden");
+			placeNotifyPanel(dropdown);
+			if (window.jQuery) window.jQuery(dropdown).trigger("show.bs.dropdown");
 		}
 	}
 
@@ -4947,6 +5053,25 @@
 		var fullBtn = make("button", { class: "aur-icon-btn", type: "button", title: "Toggle fullscreen", text: "\u26F6" });
 		fullBtn.addEventListener("click", toggleFullscreen);
 
+		/* Bell sits next to the face — stock desk hid it in the sidebar, and
+		   Kaiten Home empties that rail, so the only place it can live is here. */
+		el.bellCount = make("span", { class: "notification-count hidden", "aria-live": "polite" });
+		el.bellBtn = make(
+			"button",
+			{
+				class: "aur-icon-btn aur-bell-btn sidebar-notification desktop-notification-icon",
+				type: "button",
+				title: "Notifications",
+				"aria-label": "Notifications",
+			},
+			[iconNode(resolveIcon("bell", "Notifications", "user"), "aur-bell-glyph"), el.bellCount]
+		);
+		if (!notificationsEnabled()) el.bellBtn.hidden = true;
+		else {
+			paintBellCount();
+			el.bellBtn.addEventListener("click", toggleNotifications);
+		}
+
 		/* Last on the right, under the eye that used to look for the stock
 		   desk avatar. One face opens Edit Profile, theme, About, logout and
 		   the Kaiten Home switches. */
@@ -5088,7 +5213,7 @@
 			make("div", { class: "aur-bar-inner" }, [
 				brand,
 				el.navWrap,
-				make("div", { class: "aur-bar-right" }, [searchWrap, el.pinBtn, paletteBtn, fullBtn, el.userBtn]),
+				make("div", { class: "aur-bar-right" }, [searchWrap, el.pinBtn, paletteBtn, fullBtn, el.bellBtn, el.userBtn]),
 			]),
 			buildRateBar(),
 		]);
@@ -5277,6 +5402,7 @@
 			el.rateBar.setAttribute("title", "Rates as of " + payload.rate_date);
 		}
 		root.classList.add("kaiten-rate-on");
+		syncRateBar();
 		syncChromeHeight();
 	}
 
@@ -5298,6 +5424,14 @@
 		if (h > 0) root.style.setProperty("--aur-chrome-h", h + "px");
 	}
 
+	function syncRateBar() {
+		if (!el.rateBar) return;
+		var hide = deskArea() === "hr";
+		el.rateBar.hidden = hide;
+		if (hide) root.classList.remove("kaiten-rate-on");
+		syncChromeHeight();
+	}
+
 	function buildRateBar() {
 		el.rateTrack = make("div", { class: "krate-track" });
 		el.rateBar = make("div", { class: "krate", role: "status", "aria-live": "polite" }, [
@@ -5311,6 +5445,7 @@
 		el.rateTimer = setInterval(function () {
 			loadRates(1);
 		}, RATE_POLL_MS);
+		syncRateBar();
 		return el.rateBar;
 	}
 
@@ -6387,6 +6522,17 @@
 		// first time it opens, rather than showing a bare record id.
 		loadMenuConfigs();
 		loadRates(0);
+		syncRateBar();
+		if (window.jQuery) {
+			window.jQuery(document).on("page-change.aur-rate", function () {
+				syncRateBar();
+				paintBellCount();
+			});
+		}
+		window.addEventListener("resize", function () {
+			var dropdown = notifyDropdown();
+			if (dropdown && !dropdown.classList.contains("hidden")) placeNotifyPanel(dropdown);
+		});
 		return true;
 	}
 

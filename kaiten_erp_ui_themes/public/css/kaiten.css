@@ -1141,6 +1141,61 @@
 	transform: translateY(-2px);
 }
 
+.aur-icon-btn.aur-bell-btn {
+	position: relative;
+}
+
+.aur-icon-btn.aur-bell-btn:hover {
+	transform: translateY(-2px) rotate(0);
+}
+
+.aur-bell-glyph {
+	width: 16px;
+	height: 16px;
+}
+
+.aur-icon-btn.aur-bell-btn .notification-count {
+	position: absolute;
+	top: -3px;
+	right: -3px;
+	min-width: 15px;
+	width: auto;
+	height: 15px;
+	padding: 0 4px;
+	border-radius: 999px;
+	border: 1px solid var(--aur-surface);
+	background: #e11d48;
+	color: #fff;
+	font-size: 9px;
+	font-weight: 700;
+	line-height: 13px;
+	text-align: center;
+	overflow: visible;
+}
+
+.aur-bell-btn .notification-count.hidden {
+	display: none;
+}
+
+.dropdown-notifications.aur-notify-dock {
+	position: fixed !important;
+	inset: auto !important;
+	width: min(360px, calc(100vw - 20px));
+	pointer-events: auto !important;
+	z-index: 1300;
+}
+
+.dropdown-notifications.aur-notify-dock .notifications-list {
+	left: 0 !important;
+	position: relative !important;
+	max-height: min(70vh, 520px);
+	overflow: auto;
+	border-radius: var(--aur-r-lg);
+	border: 1px solid var(--aur-line);
+	background: var(--aur-surface);
+	box-shadow: var(--aur-shadow-lg);
+}
+
 .aur-user-face {
 	display: inline-flex;
 	align-items: center;
