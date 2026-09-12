@@ -555,6 +555,28 @@
 		return false;
 	}
 
+	function isSolarDesk() {
+		try {
+			var desk = window.frappe && frappe.boot && frappe.boot.kaiten_desk;
+			if (!desk) return false;
+			if (desk.area === "solar") return true;
+			return Array.isArray(desk.menu_portals) && desk.menu_portals.length === 0;
+		} catch (e) {
+			return false;
+		}
+	}
+
+	function relabelBrand() {
+		if (!isSolarDesk()) return;
+		document.querySelectorAll(".aur-brand-label").forEach(function (node) {
+			if (node.textContent !== "Home") node.textContent = "Home";
+		});
+		document.querySelectorAll(".aur-brand").forEach(function (brand) {
+			brand.setAttribute("title", "Home");
+			brand.setAttribute("aria-label", "Home");
+		});
+	}
+
 	function onKaitenHome() {
 		try {
 			return (window.frappe && frappe.get_route && (frappe.get_route() || [])[0] === "kaiten-home");
@@ -708,83 +730,91 @@
 		}
 	}
 
+	function unreadNotifyCount() {
+		try {
+			return Number((frappe.boot && frappe.boot.notification_unread_count) || 0);
+		} catch (e) {
+			return 0;
+		}
+	}
+
 	function paintBellCount() {
 		if (!el.bellCount) return;
-		var count = 0;
-		try {
-			count = Number((frappe.boot && frappe.boot.notification_unread_count) || 0);
-		} catch (e) {}
+		var count = unreadNotifyCount();
 		el.bellCount.textContent = count > 99 ? "99+" : String(count);
 		el.bellCount.classList.toggle("hidden", count <= 0);
+	}
+
+	function paintUserNotifyBadge(pop) {
+		if (!pop) return;
+		pop.querySelectorAll(".aur-user-item").forEach(function (btn) {
+			var label = ((btn.querySelector(".aur-user-label") || {}).textContent || "").trim();
+			if (!/^notifications?$/i.test(label)) return;
+			btn.querySelectorAll(".notification-count, .aur-user-badge, .kaiten-user-notify-inline").forEach(function (node) {
+				node.remove();
+			});
+			var count = unreadNotifyCount();
+			if (count <= 0) return;
+			var badge = document.createElement("span");
+			badge.className = "kaiten-user-notify-count kaiten-user-notify-inline";
+			badge.textContent = count > 99 ? "99+" : String(count);
+			btn.appendChild(badge);
+		});
 	}
 
 	function notifyDropdown() {
 		return (state.notifyHost && state.notifyHost.querySelector(".dropdown-notifications")) || null;
 	}
 
+	function notifyTriggerHost() {
+		var host = document.querySelector(".kaiten-notify-popover-host");
+		if (host) return host;
+		host = make("div", { class: "kaiten-notify-popover-host" });
+		host.innerHTML =
+			'<button type="button" class="desktop-notification-icon kaiten-notify-trigger" aria-label="Notifications"></button>';
+		document.body.appendChild(host);
+		return host;
+	}
+
+	function placeNotifyTrigger() {
+		var host = notifyTriggerHost();
+		var anchor = el.userBtn || el.bellBtn || document.querySelector(".aur-bar");
+		if (!anchor) {
+			host.style.top = "56px";
+			host.style.right = "16px";
+			host.style.left = "auto";
+			return;
+		}
+		var box = anchor.getBoundingClientRect();
+		host.style.top = Math.round(box.bottom) + "px";
+		host.style.left = Math.round(box.right - 1) + "px";
+		host.style.right = "auto";
+	}
+
+	function ensureNotifyPopover() {
+		if (state.notify && state.notify.popover) return state.notify;
+		if (!window.jQuery || !frappe.ui || !frappe.ui.Notifications) return null;
+		try {
+			state.notify = new frappe.ui.Notifications({
+				wrapper: window.jQuery(notifyTriggerHost()),
+				popover: true,
+			});
+		} catch (e) {
+			console.warn("kaiten notifications", e);
+			state.notify = null;
+		}
+		return state.notify;
+	}
+
 	function closeNotify() {
+		if (state.notify && state.notify.popover && state.notify.popover.is_open) {
+			try {
+				state.notify.popover.close("owner");
+			} catch (e) {}
+		}
 		var dropdown = notifyDropdown();
 		if (dropdown) dropdown.classList.add("hidden");
 		if (el.bellBtn) el.bellBtn.setAttribute("aria-expanded", "false");
-	}
-
-	function ensureNotifyPanel() {
-		var existing = notifyDropdown();
-		if (existing) return existing;
-
-		/* Kaiten Home hides `.body-sidebar-container` (`display: none`). The
-		   stock dropdown lives in that rail, so toggling `hidden` there looks
-		   like a dead bell. Adopt the already-wired panel onto <body>. */
-		var host = state.notifyHost;
-		if (!host) {
-			host = make("div", { class: "aur-notify-host" });
-			document.body.appendChild(host);
-			state.notifyHost = host;
-		}
-
-		var stock =
-			document.querySelector(".body-sidebar .dropdown-notifications") ||
-			document.querySelector(".body-sidebar-container .dropdown-notifications") ||
-			document.querySelector(".dropdown-notifications");
-		if (stock && !stock.closest(".aur-notify-host")) {
-			host.appendChild(stock);
-			stock.classList.add("hidden");
-			return stock;
-		}
-
-		if (!window.jQuery || !frappe.ui || !frappe.ui.Notifications) return null;
-
-		host.innerHTML =
-			'<div class="dropdown-notifications hidden">' +
-			'<div class="notifications-list" role="menu">' +
-			'<div class="notification-list-header"><div class="header-items"></div><div class="header-actions"></div></div>' +
-			'<div class="notification-list-body"><div class="panel-notifications"></div><div class="panel-events"></div></div>' +
-			"</div></div>";
-		try {
-			state.notify = new frappe.ui.Notifications({ wrapper: window.jQuery(host), full_height: true });
-		} catch (e) {
-			console.warn("kaiten notifications", e);
-		}
-		return notifyDropdown();
-	}
-
-	function placeNotifyPanel(dropdown) {
-		var host = state.notifyHost;
-		if (!dropdown || !el.bellBtn || !host) return;
-		var box = el.bellBtn.getBoundingClientRect();
-		var width = Math.min(360, window.innerWidth - 20);
-		var left = clamp(box.right - width, 10, window.innerWidth - width - 10);
-		dropdown.classList.add("aur-notify-dock");
-		dropdown.style.removeProperty("position");
-		dropdown.style.removeProperty("top");
-		dropdown.style.removeProperty("left");
-		dropdown.style.removeProperty("right");
-		dropdown.style.removeProperty("bottom");
-		dropdown.style.removeProperty("inset");
-		host.style.setProperty("--aur-notify-top", Math.round(box.bottom + 8) + "px");
-		host.style.setProperty("--aur-notify-left", Math.round(left) + "px");
-		host.style.setProperty("--aur-notify-right", "auto");
-		host.style.width = width + "px";
 	}
 
 	function toggleNotifications(event) {
@@ -795,24 +825,22 @@
 		}
 		closePop();
 		closeMega();
-		var dropdown = ensureNotifyPanel();
-		if (!dropdown) {
-			if (frappe.show_alert) {
-				frappe.show_alert({ message: "Notifications panel is not available", indicator: "orange" });
-			}
-			return;
+		placeNotifyTrigger();
+		var app = ensureNotifyPopover();
+		if (app && app.popover) {
+			try {
+				if (app.popover.is_open) {
+					app.popover.close("owner");
+					if (el.bellBtn) el.bellBtn.setAttribute("aria-expanded", "false");
+					return;
+				}
+				app.popover.open();
+				if (el.bellBtn) el.bellBtn.setAttribute("aria-expanded", "true");
+				return;
+			} catch (e) {}
 		}
-		var willOpen = dropdown.classList.contains("hidden");
-		dropdown.classList.toggle("hidden", !willOpen);
-		if (el.bellBtn) el.bellBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
-		if (!dropdown.classList.contains("hidden")) {
-			var tasks = document.querySelector(".dropdown-background-tasks");
-			if (tasks) tasks.classList.add("hidden");
-			placeNotifyPanel(dropdown);
-			if (window.jQuery) window.jQuery(dropdown).trigger("show.bs.dropdown");
-			requestAnimationFrame(function () {
-				placeNotifyPanel(dropdown);
-			});
+		if (window.frappe && typeof frappe.set_route === "function") {
+			frappe.set_route("List", "Notification Log");
 		}
 	}
 
@@ -2080,6 +2108,82 @@
 		document.body.appendChild(el.side);
 	}
 
+	function isStockFooterVisible() {
+		var btn = document.querySelector(".body-sidebar .sidebar-user-button");
+		if (!btn) return false;
+		var container = btn.closest(".body-sidebar-container");
+		if (!container || !container.classList.contains("expanded")) return false;
+		var containerStyle = window.getComputedStyle(container);
+		if (containerStyle.display === "none" || containerStyle.visibility === "hidden") return false;
+		var sidebar = btn.closest(".body-sidebar");
+		if (sidebar) {
+			var sidebarStyle = window.getComputedStyle(sidebar);
+			if (sidebarStyle.pointerEvents === "none") return false;
+			if (parseFloat(sidebarStyle.opacity) === 0) return false;
+		}
+		var bottom = btn.closest(".body-sidebar-bottom");
+		if (bottom && parseFloat(window.getComputedStyle(bottom).opacity) === 0) return false;
+		var rect = btn.getBoundingClientRect();
+		return rect.width > 2 && rect.height > 2;
+	}
+
+	function buildSideUserFooter() {
+		var session = (window.frappe && frappe.session) || {};
+		var name = session.user_fullname || "User";
+		var email = session.user_email || "";
+		var avatar = "";
+		try {
+			if (typeof frappe.avatar === "function" && session.user) {
+				avatar = frappe.avatar(session.user, "avatar-medium-2");
+			}
+		} catch (e) {}
+		var wrap = make("div", { class: "kaiten-sidebar-user dropdown-navbar-user nav-item" });
+		wrap.innerHTML =
+			'<a class="align-center btn-reset flex nav-link sidebar-user-button" style="width: 100%; min-height: 40px;" aria-label="User Menu">' +
+			"<div>" +
+			avatar +
+			"</div>" +
+			'<div class="avatar-name-email text-small overflow-hidden w-75" style="margin-left: 8px;">' +
+			'<span class="d-block text-truncate"></span>' +
+			'<span class="d-block text-secondary text-truncate" style="margin-top: -1px;"></span>' +
+			"</div></a>";
+		var labels = wrap.querySelectorAll(".avatar-name-email span");
+		if (labels[0]) labels[0].textContent = name;
+		if (labels[1]) labels[1].textContent = email;
+		return wrap;
+	}
+
+	function wireSideUserFooter() {
+		if (!el.sideUser) return;
+		if (isStockFooterVisible()) {
+			el.sideUser.style.display = "none";
+			return;
+		}
+		el.sideUser.style.display = "";
+		if (el.sideUser.dataset.kaitenUserMenu === "1") return;
+		if (
+			!window.jQuery ||
+			!window.frappe ||
+			!frappe.app ||
+			!frappe.app.sidebar ||
+			typeof frappe.app.sidebar.create_user_menu !== "function"
+		) {
+			return;
+		}
+		var $footer = window.jQuery(el.sideUser);
+		frappe.app.sidebar.create_user_menu({
+			parent: $footer,
+			button: $footer.find(".sidebar-user-button"),
+		});
+		el.sideUser.dataset.kaitenUserMenu = "1";
+	}
+
+	function scheduleSideUserFooter() {
+		wireSideUserFooter();
+		setTimeout(wireSideUserFooter, 200);
+		setTimeout(wireSideUserFooter, 800);
+	}
+
 	function buildSide() {
 		if (el.side) return;
 		el.sideIcon = make("span", { class: "kside-head-icon" });
@@ -2103,9 +2207,11 @@
 		});
 		el.sidePin = make("span", { class: "kside-pin-slot" });
 		el.sideBody = make("div", { class: "kside-body" });
+		el.sideUser = buildSideUserFooter();
 		el.side = make("aside", { class: "kside", "aria-label": "Module navigation" }, [
 			make("div", { class: "kside-top" }, [head, el.sidePin, collapse]),
 			el.sideBody,
+			el.sideUser,
 		]);
 		el.sideScrim = make("button", { class: "kside-scrim", type: "button", hidden: "hidden", "aria-label": "Close module menu" });
 		el.sideScrim.addEventListener("click", function () {
@@ -2115,6 +2221,7 @@
 		document.body.appendChild(el.sideScrim);
 		mountSide();
 		applySideCollapsed();
+		scheduleSideUserFooter();
 		if (!el.sideResizeBound) {
 			el.sideResizeBound = true;
 			window.addEventListener("resize", function () {
@@ -4354,6 +4461,7 @@
 		renderTones();
 
 		DENSITIES.forEach(function (option) {
+			if (option.label === "Full" || option.id === "full") return;
 			var button = make("button", {
 				class: currentDensity() === option.id ? "aur-on" : "",
 				type: "button",
@@ -4614,6 +4722,13 @@
 				},
 			}),
 			userMenuItem({
+				label: "Notifications",
+				icon: "bell",
+				onClick: function () {
+					toggleNotifications();
+				},
+			}),
+			userMenuItem({
 				label: "Toggle Theme",
 				icon: isDark ? "sun" : "moon",
 				onClick: function () {
@@ -4672,14 +4787,16 @@
 
 		if (kaitenHomeAvailable()) {
 			var portals = kaitenMenuPortals();
-			rows.push(userMenuRule());
-			rows.push(
-				userMenuItem({
-					label: "Home (choose area)",
-					icon: "house",
-					onClick: goKaitenChooseArea,
-				})
-			);
+			if (!isSolarDesk()) {
+				rows.push(userMenuRule());
+				rows.push(
+					userMenuItem({
+						label: "Home (choose area)",
+						icon: "house",
+						onClick: goKaitenChooseArea,
+					})
+				);
+			}
 			if (portals.indexOf("jewellery") >= 0) {
 				rows.push(
 					userMenuItem({
@@ -4706,6 +4823,7 @@
 
 		el.pop = make("div", { class: "aur-pop aur-user-pop", role: "menu", "aria-label": "Account" }, rows);
 		document.body.appendChild(el.pop);
+		paintUserNotifyBadge(el.pop);
 
 		el.popPlace = function () {
 			var box = anchor.getBoundingClientRect();
@@ -4888,6 +5006,13 @@
 		}
 	}
 
+	function applySelectOption(select, option) {
+		select.value = option.value;
+		select.dispatchEvent(new Event("input", { bubbles: true }));
+		select.dispatchEvent(new Event("change", { bubbles: true }));
+		closeSelect();
+	}
+
 	function openSelect(select) {
 		closeSelect();
 
@@ -4896,17 +5021,32 @@
 
 		if (!options.length) pop.appendChild(make("div", { class: "aur-select-empty", text: "No options" }));
 
+		/* The list is parked on document.body so it can overflow the filter
+		   card. Frappe's FilterGroup treats any mousedown outside
+		   .filter-popover as "close" (datepicker is the only exception), so
+		   In / Not Equals / Like would dismiss the whole panel. Keep the
+		   pointer events here, and apply on mousedown so the value sticks
+		   even if the click is swallowed later. */
+		["mousedown", "pointerdown", "touchstart"].forEach(function (type) {
+			pop.addEventListener(type, function (event) {
+				event.stopPropagation();
+			});
+		});
+
 		options.forEach(function (option) {
 			var row = make("div", { class: "aur-select-opt" + (option.selected ? " aur-selected" : "") }, [
 				make("span", { class: "aur-select-dot" }),
 				make("span", { text: option.textContent.trim() || "\u2014" }),
 			]);
 
-			row.addEventListener("click", function () {
-				select.value = option.value;
-				select.dispatchEvent(new Event("input", { bubbles: true }));
-				select.dispatchEvent(new Event("change", { bubbles: true }));
-				closeSelect();
+			row.addEventListener("mousedown", function (event) {
+				event.preventDefault();
+				event.stopPropagation();
+				applySelectOption(select, option);
+			});
+			row.addEventListener("click", function (event) {
+				event.stopPropagation();
+				if (el.selectPop) applySelectOption(select, option);
 			});
 
 			pop.appendChild(row);
@@ -5615,8 +5755,8 @@
 	function currentDensity() {
 		var stored = localStorage.getItem(KEY.density);
 		if (knownDensity(stored)) return stored;
-		// Prefs written before the three-step scale.
-		if (stored === "cozy" || stored === "normal") return "standard";
+		// Prefs written before the three-step scale. Theme Full is gone.
+		if (stored === "cozy" || stored === "normal" || stored === "full") return "standard";
 		if (stored === "compact") return "sleek";
 		return "standard";
 	}
@@ -6583,6 +6723,7 @@
 		if (!anchor || !window.frappe || !frappe.xcall) return false;
 
 		buildBar(anchor);
+		relabelBrand();
 		buildSide();
 		watchSidebar();
 		bindKeys();
@@ -6608,17 +6749,21 @@
 			window.jQuery(document).on("page-change.aur-rate", function () {
 				syncRateBar();
 				paintBellCount();
+				relabelBrand();
+				scheduleSideUserFooter();
 			});
 		}
 		window.addEventListener("resize", function () {
-			var dropdown = notifyDropdown();
-			if (dropdown && !dropdown.classList.contains("hidden")) placeNotifyPanel(dropdown);
+			if (state.notify && state.notify.popover && state.notify.popover.is_open) {
+				placeNotifyTrigger();
+			}
 		});
 		document.addEventListener("click", function (event) {
-			var dropdown = notifyDropdown();
-			if (!dropdown || dropdown.classList.contains("hidden")) return;
+			if (event.target.closest(".kaiten-notify-popover-host")) return;
+			if (event.target.closest(".es-popover.notifications-popover")) return;
+			if (event.target.closest(".sidebar-user-button, .dropdown-navbar-user, .kaiten-sidebar-user")) return;
+			if (event.target.closest(".aur-bell-btn, .aur-user-item")) return;
 			if (el.bellBtn && (el.bellBtn === event.target || el.bellBtn.contains(event.target))) return;
-			if (dropdown.contains(event.target)) return;
 			closeNotify();
 		});
 		return true;
