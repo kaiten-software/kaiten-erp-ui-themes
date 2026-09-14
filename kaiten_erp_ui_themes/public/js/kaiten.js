@@ -14,6 +14,13 @@
 	if (window.__kaitenUI) return;
 	window.__kaitenUI = true;
 
+	/* Hide Frappe's leftover rail before the first paint we can own. The URL
+	   is known now; Frappe's data-route and hide_sidebar are not. */
+	document.documentElement.classList.toggle(
+		"kaiten-home-route",
+		/kaiten-home/.test(location.pathname + location.hash)
+	);
+
 	var KEY = {
 		enabled: "kaiten_ui_enabled",
 		skin: "kaiten_ui_skin",
@@ -390,6 +397,7 @@
 		// The single choke point for pins, shelves and history, so the server copy
 		// follows along without every caller having to remember to ask.
 		if (SYNC_KEYS.concat(SYNC_MAPS).some(function (name) { return KEY[name] === key; })) schedulePush();
+		if ((key === KEY.pins || key === KEY.pinGroups) && el.sideBody) scheduleSideRefresh();
 	}
 
 	function adopt(from, to) {
@@ -585,6 +593,14 @@
 		}
 	}
 
+	function homeUrl() {
+		return /kaiten-home/.test(location.pathname + location.hash);
+	}
+
+	function markHomeRoute(on) {
+		document.documentElement.classList.toggle("kaiten-home-route", on !== false && (on === true || onKaitenHome() || homeUrl()));
+	}
+
 	/* MJERP's older desk helper only does set_route("kaiten-home"). That is a
 	   no-op when Home is already open, so Jewellery / HR / choose-area looked
 	   dead. Redraw the page that is already on screen; reload only if it was
@@ -621,6 +637,7 @@
 	}
 
 	function goKaitenHome() {
+		markHomeRoute(true);
 		redrawKaitenHome();
 	}
 
@@ -1333,6 +1350,7 @@
 	}
 
 	function noteRoute() {
+		markHomeRoute();
 		var desc = currentDesc();
 		syncPinButton();
 		if (!desc) return;
@@ -2191,6 +2209,10 @@
 		var head = make("button", { class: "kside-head", type: "button", title: "Open this module" }, [el.sideIcon, el.sideTitle]);
 		el.sideHead = head;
 		head.addEventListener("click", function () {
+			if (onKaitenHome()) {
+				goKaitenHome();
+				return;
+			}
 			var landing = menuLanding(menuByName(activeMenuName()));
 			if (landing) runItem(landing);
 		});
@@ -2262,22 +2284,97 @@
 		});
 	}
 
-	function renderSide() {
-		if (!el.sideBody) return;
-		ensureSideMounted();
+	function homePage() {
+		try {
+			var wrap = window.frappe && frappe.container && frappe.container.page;
+			if (!wrap || wrap.label !== "kaiten-home") return null;
+			return wrap.page || null;
+		} catch (e) {
+			return null;
+		}
+	}
 
-		var name = activeMenuName();
-		if (name) nav.active = name;
-		var menu = menuByName(name);
-		root.classList.toggle("kaiten-side-on", Boolean(menu));
-
-		if (!menu) {
-			el.sideBody.innerHTML = "";
-			el.sideTitle.textContent = "";
-			el.sideIcon.textContent = "";
-			if (el.sidePin) el.sidePin.innerHTML = "";
-			applySideCollapsed();
+	function hideFrappeRailOnHome() {
+		if (!onKaitenHome()) return;
+		var page = homePage();
+		if (!page) return;
+		page.hide_sidebar = true;
+		var sidebar = window.frappe && frappe.app && frappe.app.sidebar;
+		if (!sidebar) return;
+		if (typeof sidebar.apply_page_visibility === "function") {
+			sidebar.apply_page_visibility();
 			return;
+		}
+		if (typeof sidebar.toggle === "function") sidebar.toggle(true);
+	}
+
+	function pinSideGroups() {
+		var groups = groupsFor("pinned");
+		var customHasItems = groups.some(function (group) {
+			return group.pinGroup !== DEFAULT_PIN_GROUP.id && group.items.length;
+		});
+		return groups.filter(function (group) {
+			if (group.pinGroup === DEFAULT_PIN_GROUP.id && !group.items.length && customHasItems) {
+				return false;
+			}
+			return true;
+		});
+	}
+
+	function paintPinSide() {
+		root.classList.toggle("kaiten-side-on", true);
+		el.sideTitle.textContent = "";
+		el.sideIcon.textContent = "";
+		if (el.sideHead) el.sideHead.hidden = true;
+		if (el.sidePin) el.sidePin.innerHTML = "";
+		if (el.side) {
+			el.side.classList.add("is-pin-side");
+			el.side.setAttribute("aria-label", "Pinned shelves");
+		}
+		el.sideBody.innerHTML = "";
+
+		var groups = pinSideGroups();
+		var hasItems = groups.some(function (group) {
+			return group.items.length;
+		});
+		var hasCustom = groups.some(function (group) {
+			return group.pinGroup !== DEFAULT_PIN_GROUP.id;
+		});
+
+		if (!hasItems && !hasCustom) {
+			el.sideBody.appendChild(
+				make("div", {
+					class: "kside-empty",
+					text: "Nothing pinned yet. Open Pinned in the bar and add a shelf.",
+				})
+			);
+			applySideCollapsed();
+			scheduleSideUserFooter();
+			return;
+		}
+
+		var here = routeTargetKey();
+		groups.forEach(function (group) {
+			el.sideBody.appendChild(
+				make("div", { class: group.depth ? "kside-sub" : "kside-area", text: group.label })
+			);
+			if (!group.items.length) return;
+			var list = make("div", { class: "kside-items" });
+			group.items.forEach(function (item) {
+				list.appendChild(sideLink(item, itemMatchesRoute(item, here)));
+			});
+			el.sideBody.appendChild(list);
+		});
+		applySideCollapsed();
+		scheduleSideUserFooter();
+	}
+
+	function paintMenuSide(menu) {
+		root.classList.toggle("kaiten-side-on", true);
+		if (el.sideHead) el.sideHead.hidden = false;
+		if (el.side) {
+			el.side.classList.remove("is-pin-side");
+			el.side.setAttribute("aria-label", "Module navigation");
 		}
 
 		el.sideTitle.textContent = /overview$/i.test(String(menu.label || "").trim())
@@ -2346,16 +2443,52 @@
 				paintSideColumn(column, here, "all");
 			});
 			applySideCollapsed();
+			scheduleSideUserFooter();
 			return;
 		}
 
 		var column = menu.columns[chosen];
 		if (!column) {
 			applySideCollapsed();
+			scheduleSideUserFooter();
 			return;
 		}
 
 		paintSideColumn(column, here, chosen);
+		applySideCollapsed();
+		scheduleSideUserFooter();
+	}
+
+	function renderSide() {
+		if (!el.sideBody) return;
+		ensureSideMounted();
+		markHomeRoute();
+		hideFrappeRailOnHome();
+
+		var name = activeMenuName();
+		if (name) nav.active = name;
+		var menu = menuByName(name);
+
+		if (onKaitenHome()) {
+			paintPinSide();
+			return;
+		}
+
+		if (menu) {
+			paintMenuSide(menu);
+			return;
+		}
+
+		root.classList.toggle("kaiten-side-on", false);
+		el.sideBody.innerHTML = "";
+		el.sideTitle.textContent = "";
+		el.sideIcon.textContent = "";
+		if (el.sideHead) el.sideHead.hidden = false;
+		if (el.sidePin) el.sidePin.innerHTML = "";
+		if (el.side) {
+			el.side.classList.remove("is-pin-side");
+			el.side.setAttribute("aria-label", "Module navigation");
+		}
 		applySideCollapsed();
 	}
 
@@ -6750,6 +6883,9 @@
 				syncRateBar();
 				paintBellCount();
 				relabelBrand();
+				markHomeRoute();
+				hideFrappeRailOnHome();
+				scheduleSideRefresh();
 				scheduleSideUserFooter();
 			});
 		}

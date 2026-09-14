@@ -5521,7 +5521,13 @@ html:not(.kaiten-side-on) .kside {
 }
 
 html.kaiten-side-on .body-sidebar-container,
-html.kaiten-side-on .dock {
+html.kaiten-side-on .dock,
+html.kaiten-home-route .body-sidebar-container,
+html.kaiten-home-route .dock,
+body:not([data-route]) .body-sidebar-container,
+body:not([data-route]) .dock,
+body[data-route="kaiten-home"] .body-sidebar-container,
+body[data-route="kaiten-home"] .dock {
 	display: none !important;
 }
 
@@ -5626,6 +5632,16 @@ html.aurora-on .kside .kside-collapse:focus-visible,
 	font-weight: 800;
 	letter-spacing: 0.07em;
 	text-transform: uppercase;
+}
+
+.kside-empty {
+	margin: 12px 10px;
+	color: var(--aur-ink-soft);
+	font-size: 12px;
+	font-weight: 500;
+	letter-spacing: 0;
+	line-height: 1.45;
+	text-transform: none;
 }
 
 .kside-pills {
@@ -5748,12 +5764,17 @@ html[data-aur-density="sleek"] .kside.is-collapsed {
 	overflow: hidden;
 }
 
+.kside.is-pin-side .kside-head {
+	display: none;
+}
+
 .kside.is-collapsed .kside-title,
 .kside.is-collapsed .kside-label,
 .kside.is-collapsed .kside-pills,
 .kside.is-collapsed .kside-area,
 .kside.is-collapsed .kside-sub,
 .kside.is-collapsed .kside-item-label,
+.kside.is-collapsed .kside-empty,
 .kside.is-collapsed .knav-star,
 .kside.is-collapsed .kside-pin-slot {
 	display: none;
