@@ -2155,7 +2155,9 @@ a.aur-item:focus {
 /* The ripple needs the button to clip, but v17 nests dropdown menus inside
    the button that opens them (the sort selector, the list menu, the grid row
    menus). Clipping those buttons swallows the menu whole, so any button that
-   carries one opts out. */
+   carries one opts out. Hover lift is also off: transform on the host creates
+   a stacking context that traps the menu's z-index, and the list sheet (sticky
+   rail, later in the DOM) then paints through Created On and friends. */
 .aurora-on .btn:has(.dropdown-menu),
 .aurora-on .es-button:has(.dropdown-menu),
 .aurora-on .btn[data-toggle="dropdown"],
@@ -2163,6 +2165,36 @@ a.aur-item:focus {
 .aurora-on .btn.dropdown-toggle,
 .aurora-on .es-button.dropdown-toggle {
 	overflow: visible;
+	transform: none;
+}
+
+.aurora-on .btn:has(.dropdown-menu):hover,
+.aurora-on .es-button:has(.dropdown-menu):hover,
+.aurora-on .btn[data-toggle="dropdown"]:hover,
+.aurora-on .es-button[data-toggle="dropdown"]:hover,
+.aurora-on .btn.dropdown-toggle:hover,
+.aurora-on .es-button.dropdown-toggle:hover,
+.aurora-on .btn:has(.dropdown-menu):active,
+.aurora-on .es-button:has(.dropdown-menu):active,
+.aurora-on .btn[data-toggle="dropdown"]:active,
+.aurora-on .es-button[data-toggle="dropdown"]:active {
+	transform: none;
+}
+
+/* While the nested menu is open, lift the host above the list sheet. The
+   menu's own z-index cannot escape a stacking context created later.
+   Desk still uses Bootstrap 3 (.open on the group) as well as .show. */
+.aurora-on .btn:has(.dropdown-menu.show),
+.aurora-on .es-button:has(.dropdown-menu.show),
+.aurora-on .btn-group:has(.dropdown-menu.show),
+.aurora-on .btn-group.open,
+.aurora-on .dropdown.open,
+.aurora-on .sort-selector:has(.dropdown-menu.show),
+.aurora-on .sort-selector:has(.open),
+.aurora-on .filter-selector:has(.dropdown-menu.show),
+.aurora-on .filter-selector:has(.open) {
+	z-index: 1300;
+	isolation: isolate;
 }
 
 .aurora-on .btn:hover {
@@ -3195,9 +3227,23 @@ html:has(.aur-bar) body[data-route^="Form"] .layout-side-section {
 	max-height: min(60vh, 420px);
 	overflow-x: hidden;
 	overflow-y: auto;
-	/* Opacity only. aur-mega-in writes transform, which wipes Popper's
-	   placement and makes Created On / sort menus jump on item hover. */
-	animation: aur-fade-in var(--aur-fast) var(--aur-ease) backwards;
+	/* Sheet colour over an opaque floor: skins may give --aur-sheet alpha,
+	   and a glass menu lets the lead list show through on item hover. */
+	background:
+		linear-gradient(var(--aur-sheet), var(--aur-sheet)),
+		#fff;
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+	isolation: isolate;
+	/* No enter animation. aur-mega-in writes transform (fights Popper);
+	   aur-fade-in retriggers on hover restyle and flashes the list through. */
+	animation: none;
+}
+
+.aurora-on[data-theme="dark"] .dropdown-menu {
+	background:
+		linear-gradient(var(--aur-sheet), var(--aur-sheet)),
+		#111;
 }
 
 .aurora-on .dropdown-item {
@@ -3205,8 +3251,11 @@ html:has(.aur-bar) body[data-route^="Form"] .layout-side-section {
 	transition: background var(--aur-fast) var(--aur-ease);
 }
 
-.aurora-on .dropdown-item:hover {
-	background: var(--aur-grad-soft);
+.aurora-on .dropdown-item:hover,
+.aurora-on .dropdown-item:focus,
+.aurora-on .dropdown-item:active,
+.aurora-on .dropdown-item.active {
+	background: color-mix(in oklab, var(--aur-accent) 20%, var(--aur-sheet));
 }
 
 /* Query-report / DataTable freeze the first columns (dt-cell--sticky).
