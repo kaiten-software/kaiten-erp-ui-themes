@@ -167,6 +167,13 @@
 		{ id: "sleek", label: "Compact", note: "Tight and sharp" },
 	];
 
+	/* Form canvas width — Frappe's own Compact / Full Width (body.full-width).
+	   Independent of Density (spacing) and of the mega-menu Split/Columns layout. */
+	var FORM_WIDTHS = [
+		{ id: "compact", label: "Compact", full: false, note: "Forms at a readable width" },
+		{ id: "full", label: "Full Width", full: true, note: "Forms stretch across the page" },
+	];
+
 	/* The two tabs that belong to the person rather than to the content. They
 	   bracket the strip and survive a content switch, because a pin made under
 	   one profile is still that user's pin under another. */
@@ -4545,6 +4552,7 @@
 			var add = make("button", { class: "aur-swatch aur-swatch-add", type: "button", title: "Mix a colour", text: "+" });
 			add.addEventListener("click", function () {
 				editor.classList.toggle("aur-open");
+				if (el.popPlace) el.popPlace();
 			});
 			tones.appendChild(add);
 		};
@@ -4609,6 +4617,38 @@
 				button.classList.add("aur-on");
 			});
 			density.appendChild(button);
+		});
+
+		// Same Frappe switch as User Settings → Appearance → Layout.
+		var formWidth = make("div", { class: "aur-seg", role: "radiogroup", "aria-label": "Layout" });
+		var formWidthLabel = make("div", { class: "aur-pop-label", text: "Layout" });
+		var formWidthRow = make("div", { class: "aur-pop-row" }, [formWidth]);
+
+		function paintFormWidth() {
+			var full = isFormFullWidth();
+			Array.prototype.forEach.call(formWidth.children, function (node) {
+				var on = (node.getAttribute("data-full") === "1") === full;
+				node.classList.toggle("aur-on", on);
+				node.setAttribute("aria-checked", on ? "true" : "false");
+			});
+		}
+
+		FORM_WIDTHS.forEach(function (option) {
+			var on = isFormFullWidth() === option.full;
+			var button = make("button", {
+				class: on ? "aur-on" : "",
+				type: "button",
+				role: "radio",
+				title: option.note,
+				text: option.label,
+				"data-full": option.full ? "1" : "0",
+				"aria-checked": on ? "true" : "false",
+			});
+			button.addEventListener("click", function () {
+				setFormFullWidth(option.full);
+				paintFormWidth();
+			});
+			formWidth.appendChild(button);
 		});
 
 		var refresh = make("div", { class: "aur-seg" });
@@ -4705,6 +4745,8 @@
 				editor,
 				densityLabel,
 				densityRow,
+				formWidthLabel,
+				formWidthRow,
 
 				make("div", { class: "aur-pop-label", text: "Menu" }),
 				make("div", { class: "aur-pop-row" }, [refresh]),
@@ -4714,15 +4756,19 @@
 
 		document.body.appendChild(el.pop);
 
-		/* This panel is where the theme, the colour and the density are changed,
-		   and each of those resizes the document — which used to close it after
-		   a single click. It follows its anchor instead, so a look can be tried
-		   on, adjusted and compared without reopening anything. */
+		/* This panel is where the theme, the colour, the density and the form
+		   width are changed, and each of those resizes the document — which used
+		   to close it after a single click. It follows its anchor instead, so a
+		   look can be tried on, adjusted and compared without reopening anything. */
 		el.popPlace = function () {
 			var box = anchor.getBoundingClientRect();
+			var pad = 10;
 			var width = el.pop.offsetWidth || 300;
-			el.pop.style.top = Math.round(box.bottom + 8) + "px";
-			el.pop.style.left = Math.round(clamp(box.right - width, 10, window.innerWidth - width - 10)) + "px";
+			var height = el.pop.offsetHeight || 0;
+			var left = clamp(box.right - width, pad, window.innerWidth - width - pad);
+			var top = clamp(box.bottom + 8, pad, window.innerHeight - height - pad);
+			el.pop.style.top = Math.round(top) + "px";
+			el.pop.style.left = Math.round(left) + "px";
 		};
 		el.popPlace();
 
@@ -6013,6 +6059,31 @@
 		localStorage.setItem(KEY.density, id);
 		applyPrefs();
 		schedulePush();
+	}
+
+	function isFormFullWidth() {
+		try {
+			return Boolean(JSON.parse(localStorage.container_fullwidth || "false"));
+		} catch (e) {
+			return false;
+		}
+	}
+
+	function setFormFullWidth(full) {
+		full = Boolean(full);
+		if (isFormFullWidth() === full) return;
+		try {
+			if (frappe.ui && frappe.ui.toolbar && typeof frappe.ui.toolbar.toggle_full_width === "function") {
+				frappe.ui.toolbar.toggle_full_width();
+			} else {
+				localStorage.container_fullwidth = full;
+				document.body.classList.toggle("full-width", full);
+			}
+		} catch (e) {
+			localStorage.container_fullwidth = full;
+			document.body.classList.toggle("full-width", full);
+		}
+		if (el.popPlace) el.popPlace();
 	}
 
 	function addPalette(stops, label) {
