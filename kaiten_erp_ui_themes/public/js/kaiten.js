@@ -601,6 +601,12 @@
 	}
 
 	function homeUrl() {
+		try {
+			var route = window.frappe && frappe.get_route && frappe.get_route();
+			if (route && route.length && route[0] && route[0] !== "kaiten-home") {
+				return false;
+			}
+		} catch (e) {}
 		return /kaiten-home/.test(location.pathname + location.hash);
 	}
 
@@ -631,7 +637,17 @@
 			}
 		} catch (e2) {}
 		if (onKaitenHome()) {
-			window.location.assign(prefix() + "/kaiten-home");
+			try {
+				if (window.frappe && frappe.views && frappe.views.pageview && frappe.views.pageview.show) {
+					frappe.views.pageview.show("kaiten-home");
+					return;
+				}
+			} catch (eShow) {}
+			try {
+				if (window.frappe && typeof frappe.set_route === "function") {
+					frappe.set_route("kaiten-home");
+				}
+			} catch (eRoute) {}
 			return;
 		}
 		try {
@@ -916,6 +932,10 @@
 			else frappe.set_route.apply(frappe, desc.route);
 		} catch (e) {
 			window.location.href = hrefFor(desc);
+		}
+		if (isNarrow()) {
+			nav.drawerOpen = false;
+			applySideCollapsed();
 		}
 		closeMega();
 		scheduleSideRefresh();
@@ -2232,6 +2252,11 @@
 		});
 		collapse.addEventListener("click", function (event) {
 			event.stopPropagation();
+			if (isNarrow()) {
+				nav.drawerOpen = !nav.drawerOpen;
+				applySideCollapsed();
+				return;
+			}
 			setSideCollapsed(!sideCollapsed());
 		});
 		el.sidePin = make("span", { class: "kside-pin-slot" });
@@ -4846,8 +4871,39 @@
 		return make("div", { class: "aur-user-rule", role: "separator" });
 	}
 
+	function openUserSettings() {
+		if (!window.frappe || !frappe.require) return;
+		frappe
+			.require("user_settings_dialog.bundle.js")
+			.then(function () {
+				if (frappe.ui && typeof frappe.ui.show_user_settings === "function") {
+					frappe.ui.show_user_settings("profile");
+				}
+			})
+			.catch(function (err) {
+				console.error("Could not open Settings", err);
+			});
+	}
+
+	function openDockManager() {
+		if (window.frappe && frappe.ui && frappe.ui.DockManager) {
+			new frappe.ui.DockManager();
+		}
+	}
+
+	function reloadDesk() {
+		if (window.frappe && frappe.ui && frappe.ui.toolbar && frappe.ui.toolbar.clear_cache) {
+			frappe.ui.toolbar.clear_cache();
+		} else {
+			window.location.reload();
+		}
+	}
+
 	function navbarExtraItems() {
 		var builtins = {
+			Settings: 1,
+			"Manage Dock": 1,
+			Reload: 1,
 			"Edit Profile": 1,
 			"Toggle Theme": 1,
 			"About": 1,
@@ -4890,6 +4946,22 @@
 					email && email !== name ? make("div", { class: "aur-user-email", text: email }) : null,
 				].filter(Boolean)),
 			]),
+			userMenuRule(),
+			userMenuItem({
+				label: "Settings",
+				icon: "settings",
+				onClick: openUserSettings,
+			}),
+			userMenuItem({
+				label: "Manage Dock",
+				icon: "monitor",
+				onClick: openDockManager,
+			}),
+			userMenuItem({
+				label: "Reload",
+				icon: "refresh-cw",
+				onClick: reloadDesk,
+			}),
 			userMenuRule(),
 			userMenuItem({
 				label: "Edit Profile",
