@@ -6839,10 +6839,28 @@
 		return node && node.classList && (node.classList.contains("filter-popover") || node.classList.contains("group-by-popover"));
 	}
 
+	// The popover lives on document.body, so it carries no link back to the
+	// button that opened it. Frappe keeps every list view visited this session
+	// in the DOM, so a document-wide lookup returns the first one ever opened,
+	// whose button is inside a display:none page and measures 0x0. Bootstrap
+	// fires show.bs.popover on the real button before inserting the tip.
+	var lastToolbarBtn = null;
+
+	function isLaidOut(el) {
+		if (!el) return false;
+		var r = el.getBoundingClientRect();
+		return !!(r.width && r.height);
+	}
+
 	function popoverButtonFor(pop) {
 		if (!pop) return null;
-		if (pop.classList.contains("group-by-popover")) return document.querySelector(".group-by-button");
-		return document.querySelector(".filter-button");
+		var selector = pop.classList.contains("group-by-popover") ? ".group-by-button" : ".filter-button";
+		if (lastToolbarBtn && lastToolbarBtn.matches(selector) && isLaidOut(lastToolbarBtn)) return lastToolbarBtn;
+		var nodes = document.querySelectorAll(selector);
+		for (var i = 0; i < nodes.length; i++) {
+			if (isLaidOut(nodes[i])) return nodes[i];
+		}
+		return null;
 	}
 
 	function placeToolbarPopover(pop, btn) {
@@ -6851,6 +6869,9 @@
 		var h = pop.offsetHeight;
 		if (!w || !h) return false;
 		var br = btn.getBoundingClientRect();
+		// Anchoring to a 0x0 button clamps the popover into the top-left
+		// corner. Bail out so the CSS guard keeps it hidden instead.
+		if (!br.width || !br.height) return false;
 		var left = br.left + br.width / 2 - w / 2;
 		left = Math.max(8, Math.min(left, window.innerWidth - w - 8));
 		var top = br.bottom + 8;
@@ -6869,31 +6890,44 @@
 
 	function watchFilters() {
 		var run = function (btn, pop) {
+			if (!pop && btn) {
+				pop = document.querySelector(btn.classList.contains("group-by-button") ? ".group-by-popover" : ".filter-popover");
+			}
 			pop = pop || document.querySelector("body > .filter-popover, body > .group-by-popover, .filter-popover, .group-by-popover");
 			btn = btn || popoverButtonFor(pop);
 			if (!pop || !btn) return;
 			requestAnimationFrame(function () {
 				placeToolbarPopover(pop, btn);
 				requestAnimationFrame(function () {
-					placeToolbarPopover(pop, btn);
+					// Never leave it stuck behind the guard: Frappe's own
+					// placement is a sane fallback if the button cannot be read.
+					if (!placeToolbarPopover(pop, btn)) pop.classList.add("aur-pop-ready");
 				});
+			});
+		};
+
+		// Bootstrap detaches the tip on hide and reuses the same element on the
+		// next open, so a document query cannot reach it to reset the guard.
+		var unready = function (btn) {
+			var inst = window.jQuery && window.jQuery(btn).data("bs.popover");
+			if (inst && inst.tip) inst.tip.classList.remove("aur-pop-ready");
+			document.querySelectorAll(".filter-popover, .group-by-popover").forEach(function (node) {
+				node.classList.remove("aur-pop-ready");
 			});
 		};
 
 		// Frappe fires these through jQuery, which never reaches addEventListener.
 		if (window.jQuery) {
 			window.jQuery(document).on("show.bs.popover", ".filter-button, .group-by-button", function () {
-				document.querySelectorAll(".filter-popover, .group-by-popover").forEach(function (node) {
-					node.classList.remove("aur-pop-ready");
-				});
+				lastToolbarBtn = this;
+				unready(this);
 			});
 			window.jQuery(document).on("shown.bs.popover", ".filter-button, .group-by-button", function () {
 				run(this);
 			});
 			window.jQuery(document).on("hidden.bs.popover", ".filter-button, .group-by-button", function () {
-				document.querySelectorAll(".filter-popover, .group-by-popover").forEach(function (node) {
-					node.classList.remove("aur-pop-ready");
-				});
+				lastToolbarBtn = null;
+				unready(this);
 			});
 		}
 
@@ -6905,6 +6939,9 @@
 					if (node.nodeType !== 1) continue;
 					var pop = isToolbarPopover(node) ? node : node.querySelector && node.querySelector(".filter-popover, .group-by-popover");
 					if (pop) {
+						// Runs before the frame is painted, so a reused tip
+						// cannot show at its stale spot while we re-place it.
+						pop.classList.remove("aur-pop-ready");
 						run(popoverButtonFor(pop), pop);
 						return;
 					}
