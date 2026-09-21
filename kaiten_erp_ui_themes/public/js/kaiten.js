@@ -175,8 +175,8 @@
 	];
 
 	/* The two tabs that belong to the person rather than to the content. They
-	   bracket the strip and survive a content switch, because a pin made under
-	   one profile is still that user's pin under another. */
+	   lead the strip (Pinned, then Recent) and survive a content switch, because
+	   a pin made under one profile is still that user's pin under another. */
 	var PINNED_TAB = { id: "pinned", label: "Pinned", icon: "star" };
 	var RECENT_TAB = { id: "recent", label: "Recent", icon: "history" };
 
@@ -194,7 +194,7 @@
 	var RATE_POLL_MS = 60000;
 
 	function siteTabList() {
-		return [PINNED_TAB].concat(SITE_TABS, [RECENT_TAB]);
+		return [PINNED_TAB, RECENT_TAB].concat(SITE_TABS);
 	}
 
 	// The strip as it stands. Read through tabs() everywhere, never as a
@@ -1642,8 +1642,8 @@
 
 	   Which is why Workspaces, Modules, Create, Insights and Tools go away
 	   under a profile: those five are what a site offers when nobody has said
-	   what it should offer, and a profile is that saying. Pinned and Recent stay,
-	   bracketing the profile's menus, because they belong to the user.
+	   what it should offer, and a profile is that saying. Pinned and Recent stay
+	   at the front of the bar, because they belong to the user.
 
 	   Everything below produces the shapes the renderer already draws, so a
 	   profile cannot alter the layout, let alone the paint.
@@ -1774,7 +1774,7 @@
 
 		if (state.source === "config") {
 			var menuTabs = configTabs(menu.menus);
-			state.tabList = [PINNED_TAB].concat(menuTabs, [RECENT_TAB]);
+			state.tabList = [PINNED_TAB, RECENT_TAB].concat(menuTabs);
 			state.tabs = {};
 			(menu.menus || []).forEach(function (entry) {
 				state.tabs[menuTabId(entry)] = configRail(entry);
@@ -3956,8 +3956,8 @@
 		return false;
 	}
 
-	/* Tab walks the high-level bar in its own order — Pinned, Workspaces,
-	   Modules, and so on — and stops at both ends rather than wrapping, so the
+	/* Tab walks the high-level bar in its own order — Pinned, Recent,
+	   Workspaces, and so on — and stops at both ends rather than wrapping, so the
 	   row has a felt beginning and end. Left and Right do the same while the
 	   cursor is on the bar. */
 	function stepTab(delta) {
@@ -4384,7 +4384,7 @@
 				return;
 			}
 
-			// Tab only walks the high-level bar (Pinned → Workspaces → …).
+			// Tab only walks the high-level bar (Pinned → Recent → …).
 			if (event.key === "Tab") {
 				event.preventDefault();
 				stepTab(event.shiftKey ? -1 : 1);
