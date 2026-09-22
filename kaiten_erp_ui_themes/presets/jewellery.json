@@ -1668,6 +1668,14 @@
 				},
 				{
 					"type": "Link",
+					"label": "Weekly Off Request",
+					"section": "Main",
+					"icon": "calendar-off",
+					"link_type": "DocType",
+					"link_to": "Weekly Off Request"
+				},
+				{
+					"type": "Link",
 					"label": "Leave Encashment",
 					"section": "Main",
 					"icon": "wallet",
@@ -1721,6 +1729,14 @@
 					"icon": "calendar-off",
 					"link_type": "Report",
 					"link_to": "Employee Leave Balance Summary"
+				},
+				{
+					"type": "Link",
+					"label": "Weekly Off Ledger",
+					"section": "Reports",
+					"icon": "list",
+					"link_type": "DocType",
+					"link_to": "Weekly Off Ledger"
 				},
 				{
 					"type": "Link",
@@ -3230,6 +3246,14 @@
 					"icon": "calendar-off",
 					"link_type": "Report",
 					"link_to": "Employee Leave Balance Summary"
+				},
+				{
+					"type": "Link",
+					"label": "Weekly Off Ledger",
+					"section": "Reports",
+					"icon": "list",
+					"link_type": "DocType",
+					"link_to": "Weekly Off Ledger"
 				},
 				{
 					"type": "Link",
