@@ -1376,7 +1376,91 @@
 		}
 	}
 
+	/* Desk writes the address and this sidebar before the main area changes.
+	   The page for the current address is already in memory under its own id:
+	   a form uses the DocType, a list or tree uses the full route, a page uses
+	   the page name. Show that page when the main area is still the previous
+	   one. Home is drawn by kaiten_hrms, so this only asks that app to mount it. */
+	var visibleTimers = [];
+	var rerenderedRoute = "";
+
+	function pageLabelForRoute() {
+		var route;
+		try {
+			route = (frappe.get_route && frappe.get_route()) || [];
+		} catch (e) {
+			return null;
+		}
+		var head = route[0];
+		if (!head || !frappe.pages) return null;
+		if (head === "Form" && route[1]) {
+			var layout = frappe.router && frappe.router.doctype_layout;
+			var label = layout || route[1];
+			return frappe.pages[label] ? label : null;
+		}
+		var full = "";
+		try {
+			full = frappe.get_route_str() || "";
+		} catch (e2) {
+			full = "";
+		}
+		if ((head === "List" || head === "Tree") && full && frappe.pages[full]) return full;
+		if (frappe.pages[head]) return head;
+		if (full && frappe.pages[full]) return full;
+		return null;
+	}
+
+	function ensureVisiblePage(allowRebuild) {
+		if (window.cur_dialog && cur_dialog.display) return;
+		if (document.querySelector(".modal.show")) return;
+		if (onKaitenHome()) {
+			if (window.kaiten_desk && typeof kaiten_desk.mountHomeIfBlank === "function") {
+				kaiten_desk.mountHomeIfBlank();
+			}
+			return;
+		}
+		var label = pageLabelForRoute();
+		var page = label && frappe.pages[label];
+		if (page && document.body.contains(page)) {
+			var showing =
+				frappe.container && frappe.container.page === page && window.jQuery(page).is(":visible");
+			if (!showing && frappe.container && frappe.container.change_to) {
+				frappe.container.change_to(label);
+			}
+			return;
+		}
+		if (!allowRebuild) return;
+		var key = "";
+		try {
+			key = frappe.get_route_str() || "";
+		} catch (e3) {
+			return;
+		}
+		if (!key || rerenderedRoute === key) return;
+		rerenderedRoute = key;
+		if (frappe.router && typeof frappe.router.render === "function") {
+			frappe.router.render();
+		}
+	}
+
+	function scheduleVisiblePage() {
+		visibleTimers.forEach(clearTimeout);
+		visibleTimers = [0, 300, 900].map(function (ms) {
+			return setTimeout(function () {
+				try {
+					ensureVisiblePage(ms === 900);
+				} catch (e) {
+					/* ignore */
+				}
+			}, ms);
+		});
+	}
+
+	window.kaiten_ensure_visible_page = ensureVisiblePage;
+	window.kaiten_page_label_for_route = pageLabelForRoute;
+
 	function noteRoute() {
+		scheduleVisiblePage();
 		markHomeRoute();
 		var desc = currentDesc();
 		syncPinButton();
@@ -7065,6 +7149,7 @@
 				relabelBrand();
 				markHomeRoute();
 				hideFrappeRailOnHome();
+				scheduleVisiblePage();
 				scheduleSideRefresh();
 				scheduleSideUserFooter();
 			});
