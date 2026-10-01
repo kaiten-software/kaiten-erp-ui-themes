@@ -288,6 +288,31 @@ def _wordmark_fallback() -> str:
 	return "Kaiten"
 
 
+def _logo_data_uri(logo_url: str) -> str:
+	"""Embed a private company logo so the Guest login page can show it."""
+	if not logo_url or not str(logo_url).startswith("/private/files/"):
+		return ""
+	try:
+		import base64
+		import mimetypes
+		from pathlib import Path
+		from urllib.parse import unquote
+
+		name = unquote(str(logo_url).split("/private/files/", 1)[-1])
+		if not name or ".." in name or "/" in name or "\\" in name:
+			return ""
+		path = Path(frappe.get_site_path("private", "files", name))
+		if not path.is_file():
+			return ""
+		data = path.read_bytes()
+		if not data or len(data) > 2_000_000:
+			return ""
+		mime = mimetypes.guess_type(name)[0] or "image/png"
+		return f"data:{mime};base64,{base64.b64encode(data).decode('ascii')}"
+	except Exception:
+		return ""
+
+
 def resolve_company_brand() -> dict:
 	"""Desk pill: default Company name + its logo, then the app wordmark/logo."""
 	company = _default_company()
@@ -304,7 +329,13 @@ def resolve_brand() -> str:
 @frappe.whitelist(allow_guest=True)
 def get_brand() -> dict:
 	info = resolve_company_brand()
-	return {"brand": info["name"], "logo": info["logo"]}
+	logo = info["logo"]
+	# Login runs as Guest; /private/files/* are not readable there. Embed the
+	# company logo as a data URI so the card shows Company branding, not the
+	# app wordmark.
+	if frappe.session.user == "Guest" and str(logo).startswith("/private/"):
+		logo = _logo_data_uri(logo) or _app_logo() or ""
+	return {"brand": info["name"], "logo": logo}
 
 
 @frappe.whitelist()

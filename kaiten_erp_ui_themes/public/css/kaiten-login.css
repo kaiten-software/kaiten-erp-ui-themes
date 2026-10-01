@@ -353,6 +353,13 @@ body:has(.aur-lg-bg) {
 	animation: aur-lg-float 6s ease-in-out infinite;
 }
 
+.aur-lg-logo {
+	object-fit: contain;
+	background: #fff;
+	padding: 4px;
+	box-sizing: border-box;
+}
+
 @keyframes aur-lg-float {
 	0%,
 	100% {

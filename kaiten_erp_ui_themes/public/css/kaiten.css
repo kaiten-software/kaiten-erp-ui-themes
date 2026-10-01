@@ -5455,27 +5455,17 @@ html:has(.aur-bar) body[data-route^="Form"] .layout-side-section {
 	min-width: 0;
 }
 
-/* Rate ticker — content, not a skin. Hidden until html.kaiten-rate-on. */
+/* Rate ticker retired from the desk chrome. */
 .krate {
-	display: none;
-	align-items: center;
-	gap: 10px;
-	height: 28px;
-	padding: 0 12px;
-	border-top: 1px solid var(--aur-line);
-	background: color-mix(in oklab, var(--aur-surface) 92%, var(--aur-accent) 8%);
-	font-size: 11px;
-	line-height: 1;
-	white-space: nowrap;
-	color: var(--aur-ink);
+	display: none !important;
 }
 
 html.kaiten-rate-on .krate {
-	display: flex;
+	display: none !important;
 }
 
 html.kaiten-rate-on {
-	--aur-rate-h: 28px;
+	--aur-rate-h: 0px;
 }
 
 .krate-live {

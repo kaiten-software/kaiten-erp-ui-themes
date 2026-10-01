@@ -33,5 +33,5 @@ class TestNavTabOrder(unittest.TestCase):
 		hooks = _read("hooks.py")
 		match = re.search(r'ASSET_VERSION = "(\d+)"', hooks)
 		self.assertIsNotNone(match)
-		self.assertGreaterEqual(int(match.group(1)), 84)
+		self.assertGreaterEqual(int(match.group(1)), 87)
 		self.assertIn("kaiten.js?v={ASSET_VERSION}", hooks)

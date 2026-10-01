@@ -5071,22 +5071,6 @@
 				},
 			}),
 			userMenuItem({
-				label: "About",
-				icon: "info",
-				onClick: function () {
-					if (frappe.ui && frappe.ui.toolbar && frappe.ui.toolbar.show_about) {
-						frappe.ui.toolbar.show_about();
-					}
-				},
-			}),
-			userMenuItem({
-				label: "Frappe Support",
-				icon: "life-buoy",
-				onClick: function () {
-					window.open("https://support.frappe.io/help", "_blank");
-				},
-			}),
-			userMenuItem({
 				label: "Reset Desktop Layout",
 				icon: "rotate-ccw",
 				onClick: resetDesktopLayout,
@@ -5629,7 +5613,7 @@
 		}
 
 		/* Last on the right, under the eye that used to look for the stock
-		   desk avatar. One face opens Edit Profile, theme, About, logout and
+		   desk avatar. One face opens Edit Profile, theme, logout and
 		   the Kaiten Home switches. */
 		el.userBtn = make("button", {
 			class: "aur-icon-btn aur-user-btn",
@@ -5771,7 +5755,6 @@
 				el.navWrap,
 				make("div", { class: "aur-bar-right" }, [searchWrap, el.pinBtn, paletteBtn, fullBtn, el.bellBtn, el.userBtn]),
 			]),
-			buildRateBar(),
 		]);
 
 		// v17 puts the content in .main-section (no navbar); older desks have a
@@ -5963,14 +5946,7 @@
 	}
 
 	function loadRates(refresh) {
-		if (!window.frappe || !frappe.xcall) return;
-		frappe
-			.xcall("kaiten_erp_ui_themes.api.get_rate_ticker", refresh ? { refresh: 1 } : {})
-			.then(renderRates)
-			.catch(function () {
-				root.classList.remove("kaiten-rate-on");
-				syncChromeHeight();
-			});
+		/* Rate strip removed from the desk chrome. */
 	}
 
 	function syncChromeHeight() {
@@ -5981,28 +5957,14 @@
 	}
 
 	function syncRateBar() {
-		if (!el.rateBar) return;
-		var hide = deskArea() === "hr";
-		el.rateBar.hidden = hide;
-		if (hide) root.classList.remove("kaiten-rate-on");
+		if (el.rateBar) el.rateBar.hidden = true;
+		root.classList.remove("kaiten-rate-on");
 		syncChromeHeight();
 	}
 
 	function buildRateBar() {
-		el.rateTrack = make("div", { class: "krate-track" });
-		el.rateBar = make("div", { class: "krate", role: "status", "aria-live": "polite" }, [
-			make("span", { class: "krate-live" }, [
-				make("span", { class: "krate-pulse" }),
-				make("span", { text: "Live" }),
-			]),
-			make("div", { class: "krate-viewport" }, [el.rateTrack]),
-		]);
-		if (el.rateTimer) clearInterval(el.rateTimer);
-		el.rateTimer = setInterval(function () {
-			loadRates(1);
-		}, RATE_POLL_MS);
-		syncRateBar();
-		return el.rateBar;
+		/* Intentionally empty: metal rates no longer sit under the nav bar. */
+		return null;
 	}
 
 	function skinById(id) {

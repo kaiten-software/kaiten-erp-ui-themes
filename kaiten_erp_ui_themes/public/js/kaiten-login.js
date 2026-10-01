@@ -24,12 +24,7 @@
 		{ id: "grape", label: "Grape", swatch: "linear-gradient(135deg,#a855f7,#6366f1)" },
 	];
 
-	var TAGLINES = [
-		"Your whole business, one keystroke away.",
-		"512 doctypes. One menu. No hunting.",
-		"Pin what you use. Forget the rest.",
-		"Press ⌘K anywhere once you are in.",
-	];
+	var BRAND_LOGO = "";
 
 	function read(key, fallback) {
 		try {
@@ -145,7 +140,7 @@
 	}
 
 	/* --------------------------------------------------------------------
-	   Brand block and the rotating line
+	   Brand block
 	   ------------------------------------------------------------------ */
 
 	function markup() {
@@ -169,6 +164,17 @@
 		);
 	}
 
+	function brandMarkHtml() {
+		if (BRAND_LOGO) {
+			return (
+				'<img class="aur-lg-mark aur-lg-logo" src="' +
+				BRAND_LOGO.replace(/"/g, "&quot;") +
+				'" alt="" />'
+			);
+		}
+		return markup();
+	}
+
 	function greeting() {
 		var hour = new Date().getHours();
 		if (hour < 5) return "Still up?";
@@ -182,29 +188,11 @@
 		if (head.querySelector(".aur-lg-brand")) return;
 
 		var brand = make("div", "aur-lg-brand");
-		brand.innerHTML = markup() + '<div><div class="aur-lg-word">' + BRAND + "</div></div>";
+		brand.innerHTML = brandMarkHtml() + '<div><div class="aur-lg-word">' + BRAND + "</div></div>";
 		head.insertBefore(brand, head.firstChild);
 
 		var subtitle = head.querySelector(".page-card-subtitle");
 		if (subtitle) subtitle.textContent = greeting() + ". Sign in to pick up where you left off.";
-
-		var text = head.querySelector(".page-card-head-text") || head;
-		if (!text.querySelector(".aur-lg-tag")) text.appendChild(make("span", "aur-lg-tag"));
-	}
-
-	function rotateTaglines() {
-		var index = 0;
-
-		function tick() {
-			document.querySelectorAll(".aur-lg-tag").forEach(function (node) {
-				node.innerHTML = "";
-				node.appendChild(make("span", null, { text: TAGLINES[index] }));
-			});
-			index = (index + 1) % TAGLINES.length;
-		}
-
-		tick();
-		setInterval(tick, 4200);
 	}
 
 	/* --------------------------------------------------------------------
@@ -386,12 +374,35 @@
 		});
 	}
 
-	function applyBrand(name) {
-		if (!name) return;
-		BRAND = name;
-		document.querySelectorAll(".aur-lg-word").forEach(function (node) {
-			node.textContent = BRAND;
-		});
+	function applyBrand(name, logo) {
+		if (name) {
+			BRAND = name;
+			document.querySelectorAll(".aur-lg-word").forEach(function (node) {
+				node.textContent = BRAND;
+			});
+		}
+		if (logo) {
+			BRAND_LOGO = logo;
+			document.querySelectorAll(".aur-lg-brand").forEach(function (node) {
+				var mark = node.querySelector(".aur-lg-mark");
+				if (!mark) return;
+				if (mark.tagName === "IMG") {
+					mark.setAttribute("src", logo);
+					return;
+				}
+				var img = document.createElement("img");
+				img.className = "aur-lg-mark aur-lg-logo";
+				img.src = logo;
+				img.alt = "";
+				img.addEventListener("error", function () {
+					if (!img.parentNode) return;
+					var wrap = document.createElement("div");
+					wrap.innerHTML = markup();
+					img.replaceWith(wrap.firstChild);
+				});
+				mark.replaceWith(img);
+			});
+		}
 	}
 
 	function loadBrand() {
@@ -399,7 +410,8 @@
 		frappe.call({
 			method: "kaiten_erp_ui_themes.api.get_brand",
 			callback: function (r) {
-				if (r && r.message && r.message.brand) applyBrand(r.message.brand);
+				if (!(r && r.message)) return;
+				applyBrand(r.message.brand, r.message.logo);
 			},
 		});
 	}
@@ -413,7 +425,6 @@
 		buildBackdrop();
 		decorate();
 		loadBrand();
-		rotateTaglines();
 		buildFooter();
 		bindPointer();
 		bindRipple();
