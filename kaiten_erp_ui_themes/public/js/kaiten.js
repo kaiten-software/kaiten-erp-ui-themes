@@ -729,23 +729,6 @@
 		syncRateBar();
 	}
 
-	function resetDesktopLayout() {
-		try {
-			frappe.call({
-				method: "frappe.desk.doctype.desktop_layout.desktop_layout.delete_layout",
-				callback: function () {
-					if (frappe.ui && frappe.ui.toolbar && frappe.ui.toolbar.clear_cache) {
-						frappe.ui.toolbar.clear_cache();
-					} else {
-						window.location.reload();
-					}
-				},
-			});
-		} catch (e) {
-			window.location.reload();
-		}
-	}
-
 	function deskArea() {
 		try {
 			if (typeof kaiten_desk !== "undefined" && kaiten_desk && typeof kaiten_desk.getArea === "function") {
@@ -802,56 +785,132 @@
 		});
 	}
 
-	function notifyDropdown() {
-		return (state.notifyHost && state.notifyHost.querySelector(".dropdown-notifications")) || null;
-	}
+	var NOTIFY_MARKUP =
+		'<div class="dropdown-notifications hidden">' +
+			'<div class="notifications-list" role="menu">' +
+				'<div class="notification-list-header">' +
+					'<div class="header-items"></div>' +
+					'<div class="header-actions"></div>' +
+				'</div>' +
+				'<div class="notification-list-body">' +
+					'<div class="panel-notifications"></div>' +
+					'<div class="panel-events"></div>' +
+					'<div class="panel-changelog-feed"></div>' +
+				'</div>' +
+			'</div>' +
+		'</div>';
 
-	function notifyTriggerHost() {
-		var host = document.querySelector(".kaiten-notify-popover-host");
-		if (host) return host;
-		host = make("div", { class: "kaiten-notify-popover-host" });
-		host.innerHTML =
-			'<button type="button" class="desktop-notification-icon kaiten-notify-trigger" aria-label="Notifications"></button>';
-		document.body.appendChild(host);
+	function notifyHost() {
+		if (state.notifyHost && document.body.contains(state.notifyHost)) return state.notifyHost;
+		var host = document.querySelector(".aur-notify-host");
+		if (!host) {
+			host = make("div", { class: "aur-notify-host", "aria-label": "Notifications" });
+			document.body.appendChild(host);
+		}
+		state.notifyHost = host;
 		return host;
 	}
 
-	function placeNotifyTrigger() {
-		var host = notifyTriggerHost();
-		var anchor = el.userBtn || el.bellBtn || document.querySelector(".aur-bar");
-		if (!anchor) {
-			host.style.top = "56px";
-			host.style.right = "16px";
-			host.style.left = "auto";
-			return;
-		}
-		var box = anchor.getBoundingClientRect();
-		host.style.top = Math.round(box.bottom) + "px";
-		host.style.left = Math.round(box.right - 1) + "px";
-		host.style.right = "auto";
+	function notifyDropdown() {
+		var host = state.notifyHost || document.querySelector(".aur-notify-host");
+		return (host && host.querySelector(".dropdown-notifications")) || null;
 	}
 
-	function ensureNotifyPopover() {
-		if (state.notify && state.notify.popover) return state.notify;
-		if (!window.jQuery || !frappe.ui || !frappe.ui.Notifications) return null;
-		try {
-			state.notify = new frappe.ui.Notifications({
-				wrapper: window.jQuery(notifyTriggerHost()),
-				popover: true,
-			});
-		} catch (e) {
-			console.warn("kaiten notifications", e);
-			state.notify = null;
+	function shapeNotifyHeader(dropdown) {
+		if (!dropdown) return;
+		var list = dropdown.querySelector(".notifications-list");
+		if (!list) return;
+		var header = list.querySelector(".notification-list-header");
+		if (header && !header.querySelector(".aur-notify-title")) {
+			var title = document.createElement("div");
+			title.className = "aur-notify-title";
+			title.textContent = "Notifications";
+			header.insertBefore(title, header.firstChild);
 		}
-		return state.notify;
+		var allTab = list.querySelector("#notifications.notifications-category");
+		if (allTab) allTab.textContent = "All";
+		var whatsNew = list.querySelector("#changelog_feed.notifications-category");
+		if (whatsNew) {
+			whatsNew.hidden = true;
+			if (whatsNew.classList.contains("active") && allTab) allTab.click();
+		}
+		var feed = list.querySelector(".panel-changelog-feed");
+		if (feed) feed.hidden = true;
+		var closeBtn = list.querySelector(".close-notification-dialogue");
+		if (closeBtn && !closeBtn.dataset.aurBound) {
+			closeBtn.dataset.aurBound = "1";
+			closeBtn.addEventListener("click", function () {
+				if (el.bellBtn) el.bellBtn.setAttribute("aria-expanded", "false");
+			});
+		}
+	}
+
+	function notifyRailLeft() {
+		if (window.innerWidth <= 640) return 0;
+		var kside = document.querySelector(".kside");
+		if (kside) {
+			var sideBox = kside.getBoundingClientRect();
+			if (sideBox.width > 40 && sideBox.right > 0) return Math.round(sideBox.right);
+		}
+		var rail = document.querySelector(".body-sidebar");
+		if (rail) {
+			var railBox = rail.getBoundingClientRect();
+			if (railBox.width > 40 && railBox.right > 0) return Math.round(railBox.right);
+		}
+		return 0;
+	}
+
+	function placeNotifyHost() {
+		var host = notifyHost();
+		if (window.innerWidth <= 640) {
+			host.style.top = "8px";
+			host.style.left = "8px";
+			host.style.right = "8px";
+			host.style.width = "auto";
+			host.style.height = "calc(100vh - 16px)";
+			return;
+		}
+		host.style.top = "0";
+		host.style.left = notifyRailLeft() + "px";
+		host.style.right = "auto";
+		host.style.width = "360px";
+		host.style.height = "100vh";
+	}
+
+	function ensureNotifyPanel() {
+		var host = notifyHost();
+		var dropdown = host.querySelector(".dropdown-notifications");
+		if (!dropdown) {
+			var existing = document.querySelector(".standard-items-sections .dropdown-notifications");
+			if (existing) {
+				host.appendChild(existing);
+				dropdown = existing;
+			} else {
+				host.insertAdjacentHTML("beforeend", NOTIFY_MARKUP);
+				dropdown = host.querySelector(".dropdown-notifications");
+			}
+		}
+		if (!dropdown) return null;
+		if (!dropdown.querySelector(".notification-item-tabs")) {
+			if (!window.jQuery || !window.frappe || !frappe.ui || !frappe.ui.Notifications) return null;
+			if (!state.notify) {
+				try {
+					state.notify = new frappe.ui.Notifications({
+						wrapper: window.jQuery(host),
+						full_height: true,
+					});
+				} catch (e) {
+					console.warn("kaiten notifications", e);
+					state.notify = null;
+					return null;
+				}
+			}
+		}
+		shapeNotifyHeader(dropdown);
+		return dropdown;
 	}
 
 	function closeNotify() {
-		if (state.notify && state.notify.popover && state.notify.popover.is_open) {
-			try {
-				state.notify.popover.close("owner");
-			} catch (e) {}
-		}
 		var dropdown = notifyDropdown();
 		if (dropdown) dropdown.classList.add("hidden");
 		if (el.bellBtn) el.bellBtn.setAttribute("aria-expanded", "false");
@@ -865,23 +924,15 @@
 		}
 		closePop();
 		closeMega();
-		placeNotifyTrigger();
-		var app = ensureNotifyPopover();
-		if (app && app.popover) {
-			try {
-				if (app.popover.is_open) {
-					app.popover.close("owner");
-					if (el.bellBtn) el.bellBtn.setAttribute("aria-expanded", "false");
-					return;
-				}
-				app.popover.open();
-				if (el.bellBtn) el.bellBtn.setAttribute("aria-expanded", "true");
-				return;
-			} catch (e) {}
+		var dropdown = ensureNotifyPanel();
+		if (!dropdown) return;
+		if (!dropdown.classList.contains("hidden")) {
+			closeNotify();
+			return;
 		}
-		if (window.frappe && typeof frappe.set_route === "function") {
-			frappe.set_route("List", "Notification Log");
-		}
+		placeNotifyHost();
+		dropdown.classList.remove("hidden");
+		if (el.bellBtn) el.bellBtn.setAttribute("aria-expanded", "true");
 	}
 
 	function hrefFor(desc) {
@@ -4944,9 +4995,9 @@
 			},
 			kids
 		);
-		button.addEventListener("click", function () {
+		button.addEventListener("click", function (event) {
 			closePop();
-			if (opts.onClick) opts.onClick();
+			if (opts.onClick) opts.onClick(event);
 		});
 		return button;
 	}
@@ -4993,6 +5044,7 @@
 			"About": 1,
 			"Frappe Support": 1,
 			"Reset Desktop Layout": 1,
+			"Delete Demo Data": 1,
 			Logout: 1,
 			"Home (choose area)": 1,
 			"Kaiten Home — Jewellery": 1,
@@ -5059,8 +5111,8 @@
 			userMenuItem({
 				label: "Notifications",
 				icon: "bell",
-				onClick: function () {
-					toggleNotifications();
+				onClick: function (event) {
+					toggleNotifications(event);
 				},
 			}),
 			userMenuItem({
@@ -5069,11 +5121,6 @@
 				onClick: function () {
 					if (frappe.ui && frappe.ui.ThemeSwitcher) new frappe.ui.ThemeSwitcher().show();
 				},
-			}),
-			userMenuItem({
-				label: "Reset Desktop Layout",
-				icon: "rotate-ccw",
-				onClick: resetDesktopLayout,
 			}),
 		];
 
@@ -7106,6 +7153,7 @@
 		syncRateBar();
 		if (window.jQuery) {
 			window.jQuery(document).on("page-change.aur-rate", function () {
+				closeNotify();
 				syncRateBar();
 				paintBellCount();
 				relabelBrand();
@@ -7117,18 +7165,27 @@
 			});
 		}
 		window.addEventListener("resize", function () {
-			if (state.notify && state.notify.popover && state.notify.popover.is_open) {
-				placeNotifyTrigger();
-			}
+			var dropdown = notifyDropdown();
+			if (dropdown && !dropdown.classList.contains("hidden")) placeNotifyHost();
 		});
 		document.addEventListener("click", function (event) {
-			if (event.target.closest(".kaiten-notify-popover-host")) return;
+			if (event.target.closest(".aur-notify-host, .notifications-list")) return;
 			if (event.target.closest(".es-popover.notifications-popover")) return;
 			if (event.target.closest(".sidebar-user-button, .dropdown-navbar-user, .kaiten-sidebar-user")) return;
 			if (event.target.closest(".aur-bell-btn, .aur-user-item")) return;
 			if (el.bellBtn && (el.bellBtn === event.target || el.bellBtn.contains(event.target))) return;
 			closeNotify();
 		});
+		document.addEventListener(
+			"click",
+			function (event) {
+				var sideBtn = event.target.closest(".body-sidebar .sidebar-notification");
+				if (!sideBtn) return;
+				if (el.bellBtn && (sideBtn === el.bellBtn || el.bellBtn.contains(sideBtn))) return;
+				toggleNotifications(event);
+			},
+			true
+		);
 		return true;
 	}
 
