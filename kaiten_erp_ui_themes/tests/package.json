@@ -1,0 +1,8 @@
+{
+  "name": "kaiten-notification-smoke",
+  "private": true,
+  "description": "jsdom for the notification panel smoke test",
+  "dependencies": {
+    "jsdom": "25.0.1"
+  }
+}

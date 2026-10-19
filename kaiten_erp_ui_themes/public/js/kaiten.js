@@ -916,6 +916,119 @@
 		if (el.bellBtn) el.bellBtn.setAttribute("aria-expanded", "false");
 	}
 
+	/* Newer Frappe draws the list itself (a side panel, or a popover when that
+	   panel has nowhere to sit). Older Frappe still fills the box above. Tell
+	   them apart by the objects, not by a version number. */
+	function nativeNotifyUi() {
+		var ui = window.frappe && frappe.ui;
+		if (!ui || !ui.SidebarPanel || !ui.sidebar_panels) return null;
+		if (typeof ui.sidebar_panels.get !== "function" || typeof ui.sidebar_panels.toggle !== "function") return null;
+		return ui;
+	}
+
+	function nativeNotifyPanel() {
+		var ui = nativeNotifyUi();
+		if (!ui) return null;
+		return ui.sidebar_panels.get("notifications") || null;
+	}
+
+	function nativeNotifyPanelConnected() {
+		var panel = nativeNotifyPanel();
+		return !!(panel && panel.$panel && panel.$panel[0] && panel.$panel[0].isConnected);
+	}
+
+	function syncBellExpanded(open) {
+		if (!el.bellBtn) return;
+		el.bellBtn.setAttribute("aria-expanded", open ? "true" : "false");
+	}
+
+	/* The desktop home already built this. Reuse it. A second Notifications
+	   object would listen for the same alert and add two to the bell. */
+	function frappeDesktopPopover() {
+		try {
+			var page = window.frappe && frappe.pages && frappe.pages.desktop && frappe.pages.desktop.desktop_page;
+			var pop = page && page.notifications && page.notifications.popover;
+			if (pop && typeof pop.toggle === "function") return pop;
+		} catch (e) {}
+		return null;
+	}
+
+	function closePopover(pop) {
+		if (pop && pop.is_open && typeof pop.close === "function") pop.close("owner");
+	}
+
+	/* Our own popover, only when Frappe has not built a panel or a popover.
+	   The trigger is the real bell, so Escape returns focus there. The bell's
+	   own click handler stops the extra click Frappe binds on that trigger,
+	   which would otherwise open and close the popover on one press. */
+	function openNotifyPopover() {
+		var existing = frappeDesktopPopover();
+		if (existing) {
+			existing.toggle();
+			syncBellExpanded(!!existing.is_open);
+			return true;
+		}
+
+		var ui = nativeNotifyUi();
+		if (!ui || !window.jQuery || !ui.Notifications || !el.bellBtn || !el.bellBtn.parentNode) return false;
+		if (!state.notifyPopover) {
+			try {
+				var view = new ui.Notifications({
+					wrapper: window.jQuery(el.bellBtn.parentNode),
+					popover: true,
+				});
+				state.notifyPopover = view && view.popover;
+			} catch (e) {
+				console.warn("kaiten notifications", e);
+				return false;
+			}
+			if (!state.notifyPopover || typeof state.notifyPopover.toggle !== "function") {
+				state.notifyPopover = null;
+				return false;
+			}
+		}
+		state.notifyPopover.toggle();
+		syncBellExpanded(!!state.notifyPopover.is_open);
+		return true;
+	}
+
+	function toggleNativeNotifications() {
+		var ui = nativeNotifyUi();
+		if (!ui) return false;
+		/* The old column sits above the real panel. Keep it closed. */
+		closeNotify();
+
+		if (nativeNotifyPanelConnected()) {
+			closePopover(state.notifyPopover);
+			closePopover(frappeDesktopPopover());
+			ui.sidebar_panels.toggle("notifications");
+			return true;
+		}
+
+		/* Desktop already has a list. Do not build another listener beside it. */
+		if (frappeDesktopPopover()) return openNotifyPopover();
+
+		/* The desk already registered this panel. Building another one deletes
+		   that live panel. A panel that never attaches still listens for alerts,
+		   so a popover next to it would count each new alert twice. */
+		if (!nativeNotifyPanel() && document.querySelector(".body-sidebar-container")) {
+			try {
+				new ui.Notifications();
+			} catch (e) {
+				console.warn("kaiten notifications", e);
+			}
+		}
+
+		if (nativeNotifyPanelConnected()) {
+			ui.sidebar_panels.toggle("notifications");
+			return true;
+		}
+
+		if (nativeNotifyPanel()) return false;
+
+		return openNotifyPopover();
+	}
+
 	function toggleNotifications(event) {
 		if (event) {
 			event.preventDefault();
@@ -924,6 +1037,10 @@
 		}
 		closePop();
 		closeMega();
+		if (nativeNotifyUi()) {
+			toggleNativeNotifications();
+			return;
+		}
 		var dropdown = ensureNotifyPanel();
 		if (!dropdown) return;
 		if (!dropdown.classList.contains("hidden")) {
@@ -7170,7 +7287,7 @@
 		});
 		document.addEventListener("click", function (event) {
 			if (event.target.closest(".aur-notify-host, .notifications-list")) return;
-			if (event.target.closest(".es-popover.notifications-popover")) return;
+			if (event.target.closest(".es-popover.notifications-popover, .sidebar-panel-notifications")) return;
 			if (event.target.closest(".sidebar-user-button, .dropdown-navbar-user, .kaiten-sidebar-user")) return;
 			if (event.target.closest(".aur-bell-btn, .aur-user-item")) return;
 			if (el.bellBtn && (el.bellBtn === event.target || el.bellBtn.contains(event.target))) return;
