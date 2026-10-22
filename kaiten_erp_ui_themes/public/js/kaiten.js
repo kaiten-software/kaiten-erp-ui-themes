@@ -6951,15 +6951,26 @@
 		return data;
 	}
 
+	function signedIn() {
+		var user = sessionUser();
+		return !!user && user !== "Guest" && user !== "None";
+	}
+
 	function pushPrefs() {
-		if (!SYNC.ready || SYNC.applying) return;
+		if (!SYNC.ready || SYNC.applying || !signedIn()) return;
 
 		var rev = Date.now();
 		var payload = JSON.stringify(snapshot());
 
 		try {
+			// silent: a failed menu sync must not open a dialog over the form.
 			frappe
-				.xcall("kaiten_erp_ui_themes.api.set_prefs", { payload: payload, rev: String(rev) })
+				.xcall(
+					"kaiten_erp_ui_themes.api.set_prefs",
+					{ payload: payload, rev: String(rev) },
+					"POST",
+					{ silent: true }
+				)
 				.then(function () {
 					SYNC.rev = rev;
 					localStorage.setItem(KEY.rev, String(rev));
@@ -7009,9 +7020,10 @@
 	}
 
 	function pullPrefs() {
+		if (!signedIn()) return;
 		var request;
 		try {
-			request = frappe.xcall("kaiten_erp_ui_themes.api.get_prefs");
+			request = frappe.xcall("kaiten_erp_ui_themes.api.get_prefs", {}, "POST", { silent: true });
 		} catch (e) {
 			return;
 		}

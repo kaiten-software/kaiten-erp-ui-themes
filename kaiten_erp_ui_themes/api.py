@@ -1455,15 +1455,28 @@ PREF_DOCTYPE = "Kaiten UI Preference"
 PREF_LIMIT = 400_000
 
 
-@frappe.whitelist()
+def _prefs_user() -> str | None:
+	"""A real desk user. Guest and a missing session must not touch User."""
+	user = frappe.session.user
+	if not user or user in ("Guest", "None"):
+		return None
+	return user
+
+
+@frappe.whitelist(allow_guest=True)
 def get_prefs() -> dict:
-	"""This user's stored menu state, or empty when nothing is saved yet."""
-	if frappe.session.user == "Guest":
+	"""This user's stored menu state, or empty when nothing is saved yet.
+
+	allow_guest keeps a missing session from raising Method Not Allowed.
+	That dialog was covering the desk form and looked like the page had hung.
+	"""
+	frappe.clear_messages()
+	if not _prefs_user():
 		return {}
 
 	row = frappe.db.get_value(
 		PREF_DOCTYPE,
-		{"user": frappe.session.user},
+		{"user": _prefs_user()},
 		["rev", "payload"],
 		as_dict=True,
 	)
@@ -1473,11 +1486,17 @@ def get_prefs() -> dict:
 	return {"rev": row.get("rev") or "0", "payload": row.get("payload") or ""}
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def set_prefs(payload: str, rev: str = "0") -> dict:
-	"""Store this user's menu state, keeping whichever revision is newer."""
-	if frappe.session.user == "Guest":
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	"""Store this user's menu state, keeping whichever revision is newer.
+
+	A request with no user used to be rejected as Guest. Frappe then opened
+	"Method Not Allowed / set_prefs is not whitelisted" on top of the form.
+	"""
+	frappe.clear_messages()
+	user = _prefs_user()
+	if not user:
+		return {"rev": "0"}
 
 	payload = str(payload or "")
 	if len(payload) > PREF_LIMIT:
@@ -1493,13 +1512,13 @@ def set_prefs(payload: str, rev: str = "0") -> dict:
 	if not isinstance(parsed, dict):
 		frappe.throw(_("Preferences must be a JSON object."))
 
-	name = frappe.db.get_value(PREF_DOCTYPE, {"user": frappe.session.user}, "name")
+	name = frappe.db.get_value(PREF_DOCTYPE, {"user": user}, "name")
 
 	if name:
 		doc = frappe.get_doc(PREF_DOCTYPE, name)
 	else:
 		doc = frappe.new_doc(PREF_DOCTYPE)
-		doc.user = frappe.session.user
+		doc.user = user
 
 	doc.rev = str(rev or "0")
 	doc.payload = payload
