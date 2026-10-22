@@ -509,6 +509,14 @@ body:has(.aur-lg-bg) {
 	height: 100%;
 }
 
+/* Frappe v16 already paints .field-icon (email / lock) in the same box.
+   Keep the theme glyph and drop the stock one once it is in place. The
+   eye toggle is .toggle-password, so it stays. */
+.aur-lg-on .page-card .email-field:has(.aur-lg-icon) > .field-icon,
+.aur-lg-on .page-card .password-field:has(.aur-lg-icon) > .field-icon {
+	display: none !important;
+}
+
 .aur-lg-caps svg {
 	width: 14px;
 	height: 14px;
