@@ -1210,6 +1210,23 @@
 	display: none !important;
 }
 
+/* The live list is Frappe's sidebar panel. Kaiten hides the rail it is born
+   in, so the panel is moved onto this host and must fill that host. */
+.aur-notify-host .sidebar-panel.aur-notify-dock {
+	position: absolute !important;
+	inset: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+	min-height: 0 !important;
+	display: flex !important;
+	pointer-events: auto !important;
+	z-index: 1;
+}
+
+.aur-notify-host .sidebar-panel.aur-notify-dock.hidden {
+	display: none !important;
+}
+
 .aur-notify-host .notifications-list {
 	position: relative !important;
 	left: auto !important;
@@ -5777,6 +5794,12 @@ body:not([data-route]) .body-sidebar-container,
 body:not([data-route]) .dock,
 body[data-route="kaiten-home"] .body-sidebar-container,
 body[data-route="kaiten-home"] .dock {
+	display: none !important;
+}
+
+/* The desk home draws its own bar (search, bell, avatar) under ours.
+   Hide that bar so /desk/ does not show a second bell. */
+html:has(.aur-bar) .desktop-navbar {
 	display: none !important;
 }
 

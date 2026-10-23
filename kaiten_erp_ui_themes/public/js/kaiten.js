@@ -881,17 +881,24 @@
 		var host = notifyHost();
 		var dropdown = host.querySelector(".dropdown-notifications");
 		if (!dropdown) {
-			var existing = document.querySelector(".standard-items-sections .dropdown-notifications");
-			if (existing) {
+			/* 16.35 keeps this box in the stock rail. Always lift that copy,
+			   which is what already works there. A later build may put the
+			   same box somewhere else that this theme has hidden. Do not
+			   invent a box when this Frappe draws a side panel instead. */
+			var inRail = document.querySelector(".standard-items-sections .dropdown-notifications");
+			var existing = inRail || document.querySelector(".dropdown-notifications");
+			if (existing && (existing === inRail || ancestorHidden(existing))) {
 				host.appendChild(existing);
 				dropdown = existing;
-			} else {
+			} else if (existing) {
+				dropdown = existing;
+			} else if (!nativeNotifyUi()) {
 				host.insertAdjacentHTML("beforeend", NOTIFY_MARKUP);
 				dropdown = host.querySelector(".dropdown-notifications");
 			}
 		}
 		if (!dropdown) return null;
-		if (!dropdown.querySelector(".notification-item-tabs")) {
+		if (!dropdown.querySelector(".notification-item-tabs") && !nativeNotifyUi()) {
 			if (!window.jQuery || !window.frappe || !frappe.ui || !frappe.ui.Notifications) return null;
 			if (!state.notify) {
 				try {
@@ -932,9 +939,55 @@
 		return ui.sidebar_panels.get("notifications") || null;
 	}
 
-	function nativeNotifyPanelConnected() {
-		var panel = nativeNotifyPanel();
-		return !!(panel && panel.$panel && panel.$panel[0] && panel.$panel[0].isConnected);
+	function notifyPanelNode(panel) {
+		return (panel && panel.$panel && panel.$panel[0]) || null;
+	}
+
+	/* The node itself can be display:none while it is closed. That is not the
+	   bug. The bug is a parent the theme (or the page) has hidden, which gives
+	   the open list a size of zero. Check parents only. */
+	function ancestorHidden(node) {
+		if (!node || !node.isConnected) return true;
+		var el = node.parentElement;
+		while (el) {
+			var style = window.getComputedStyle(el);
+			if (style.display === "none" || style.visibility === "hidden") return true;
+			el = el.parentElement;
+		}
+		return false;
+	}
+
+	function boxHidden(node) {
+		if (!node || !node.isConnected) return true;
+		var style = window.getComputedStyle(node);
+		if (style.display === "none" || style.visibility === "hidden") return true;
+		return ancestorHidden(node);
+	}
+
+	/* Newer Frappe mounts the list in the stock rail. Kaiten hides that rail,
+	   so the open list cannot be seen. Park that same node on our column.
+	   When the rail is on screen again, put the node back where Frappe left it.
+	   Older Frappe has no such node; this does nothing. */
+	function seatNotifyPanel(panel) {
+		var node = notifyPanelNode(panel);
+		if (!node) return;
+		var parked = node.classList.contains("aur-notify-dock");
+		if (!parked && ancestorHidden(node)) {
+			state.notifyHome = node.parentNode;
+			var host = notifyHost();
+			if (node.parentNode !== host) host.appendChild(node);
+			node.classList.add("aur-notify-dock");
+			placeNotifyHost();
+			return;
+		}
+		if (!parked) return;
+		var home = state.notifyHome;
+		if (home && home.isConnected && !boxHidden(home)) {
+			if (node.parentNode !== home) home.appendChild(node);
+			node.classList.remove("aur-notify-dock");
+			return;
+		}
+		placeNotifyHost();
 	}
 
 	function syncBellExpanded(open) {
@@ -977,6 +1030,7 @@
 					wrapper: window.jQuery(el.bellBtn.parentNode),
 					popover: true,
 				});
+				state.notifyView = view;
 				state.notifyPopover = view && view.popover;
 			} catch (e) {
 				console.warn("kaiten notifications", e);
@@ -992,41 +1046,132 @@
 		return true;
 	}
 
-	function toggleNativeNotifications() {
+	function hideSidebarNotifyPanel() {
 		var ui = nativeNotifyUi();
-		if (!ui) return false;
+		if (!ui || !ui.sidebar_panels) return;
+		var open = ui.sidebar_panels.open_panel;
+		if (open && open.name === "notifications" && typeof ui.sidebar_panels.hide === "function") {
+			ui.sidebar_panels.hide("notifications");
+		}
+	}
+
+	/* The home popup is anchored to Frappe's own bell. That bell is hidden,
+	   so aim the same popup at the bell in our bar. */
+	function aimPopoverAtBell(pop) {
+		if (!pop || !el.bellBtn || pop.trigger_el === el.bellBtn) return;
+		if (pop.trigger_el) pop.trigger_el.setAttribute("aria-expanded", "false");
+		pop.trigger_el = el.bellBtn;
+	}
+
+	function notifyDialog() {
+		return frappeDesktopPopover() || state.notifyPopover || null;
+	}
+
+	/* One popup for every page. The side column stays closed. */
+	function showNotifyDialog() {
+		if (!nativeNotifyUi()) return false;
+		hideSidebarNotifyPanel();
+		closeNotify();
+		var pop = notifyDialog();
+		if (!pop) {
+			if (!openNotifyPopover()) return false;
+			shareNotifyCount();
+			return true;
+		}
+		if (state.notifyPopover && state.notifyPopover !== pop) closePopover(state.notifyPopover);
+		if (frappeDesktopPopover() && frappeDesktopPopover() !== pop) closePopover(frappeDesktopPopover());
+		aimPopoverAtBell(pop);
+		pop.toggle();
+		syncBellExpanded(!!pop.is_open);
+		shareNotifyCount();
+		return true;
+	}
+
+	function showSidebarNotifyPanel() {
+		var ui = nativeNotifyUi();
+		var panel = nativeNotifyPanel();
+		if (!ui || !notifyPanelNode(panel)) return false;
 		/* The old column sits above the real panel. Keep it closed. */
 		closeNotify();
+		closePopover(state.notifyPopover);
+		closePopover(frappeDesktopPopover());
+		seatNotifyPanel(panel);
+		ui.sidebar_panels.toggle("notifications");
+		shareNotifyCount();
+		return true;
+	}
 
-		if (nativeNotifyPanelConnected()) {
-			closePopover(state.notifyPopover);
-			closePopover(frappeDesktopPopover());
-			ui.sidebar_panels.toggle("notifications");
-			return true;
-		}
-
-		/* Desktop already has a list. Do not build another listener beside it. */
-		if (frappeDesktopPopover()) return openNotifyPopover();
-
-		/* The desk already registered this panel. Building another one deletes
-		   that live panel. A panel that never attaches still listens for alerts,
-		   so a popover next to it would count each new alert twice. */
-		if (!nativeNotifyPanel() && document.querySelector(".body-sidebar-container")) {
-			try {
-				new ui.Notifications();
-			} catch (e) {
-				console.warn("kaiten notifications", e);
+	/* The side list and the home popup each listen for the same alert and
+	   each keep their own unread number. After one of them marks the list
+	   read, the next alert was written from the stale number. One write
+	   updates every copy. A second write of that same number, in the same
+	   moment, is ignored. */
+	function shareNotifyCount() {
+		var views = [];
+		try {
+			var side = window.frappe && frappe.app && frappe.app.sidebar && frappe.app.sidebar.notifications;
+			var deskPage = window.frappe && frappe.pages && frappe.pages.desktop && frappe.pages.desktop.desktop_page;
+			var desk = deskPage && deskPage.notifications;
+			if (side && side.tabs && side.tabs.notifications) views.push(side.tabs.notifications);
+			if (desk && desk.tabs && desk.tabs.notifications) views.push(desk.tabs.notifications);
+			if (state.notifyView && state.notifyView.tabs && state.notifyView.tabs.notifications) {
+				views.push(state.notifyView.tabs.notifications);
 			}
+		} catch (e) {
+			return;
 		}
+		if (views.length < 2) return;
+		var shared = views[0]._kaitenCountShare;
+		if (!shared) {
+			shared = { at: 0, count: null };
+			views[0]._kaitenCountShare = shared;
+		}
+		views.forEach(function (view) {
+			if (view._kaitenCountWrapped) {
+				view._kaitenCountShare = shared;
+				return;
+			}
+			var original = view.update_count_badge;
+			if (typeof original !== "function") return;
+			view._kaitenCountShare = shared;
+			view._kaitenCountWrapped = true;
+			view.update_count_badge = function (count) {
+				var now = Date.now();
+				var bucket = this._kaitenCountShare;
+				if (bucket && bucket.count === count && now - bucket.at < 50) {
+					this.unread_count = count;
+					return;
+				}
+				if (bucket) {
+					bucket.at = now;
+					bucket.count = count;
+				}
+				original.call(this, count);
+				var written = count;
+				setTimeout(function () {
+					views.forEach(function (other) {
+						other.unread_count = written;
+					});
+				}, 0);
+			};
+		});
+	}
 
-		if (nativeNotifyPanelConnected()) {
-			ui.sidebar_panels.toggle("notifications");
+	function showOldNotifyDropdown() {
+		var dropdown = ensureNotifyPanel();
+		if (!dropdown) return false;
+		if (!dropdown.classList.contains("hidden")) {
+			closeNotify();
 			return true;
 		}
-
-		if (nativeNotifyPanel()) return false;
-
-		return openNotifyPopover();
+		if (ancestorHidden(dropdown)) {
+			var host = notifyHost();
+			if (dropdown.parentNode !== host) host.appendChild(dropdown);
+		}
+		placeNotifyHost();
+		dropdown.classList.remove("hidden");
+		if (el.bellBtn) el.bellBtn.setAttribute("aria-expanded", "true");
+		return true;
 	}
 
 	function toggleNotifications(event) {
@@ -1037,19 +1182,31 @@
 		}
 		closePop();
 		closeMega();
-		if (nativeNotifyUi()) {
-			toggleNativeNotifications();
+
+		/* The popup is the list users read. The side column stays shut.
+		   Older Frappe has no popup, so it still uses its own dropdown. */
+		if (showNotifyDialog()) return;
+
+		if (document.querySelector(".dropdown-notifications") || !nativeNotifyUi()) {
+			showOldNotifyDropdown();
 			return;
 		}
-		var dropdown = ensureNotifyPanel();
-		if (!dropdown) return;
-		if (!dropdown.classList.contains("hidden")) {
-			closeNotify();
-			return;
+
+		/* The new list is registered on desk load. If this page has the
+		   panel API but the list is not built yet, build that one list.
+		   Skip this when an older dropdown is already on the page. */
+		var ui = nativeNotifyUi();
+		if (ui && !nativeNotifyPanel() && document.querySelector(".body-sidebar-container, .body-sidebar")) {
+			try {
+				new ui.Notifications();
+			} catch (e) {
+				console.warn("kaiten notifications", e);
+			}
+			if (showSidebarNotifyPanel()) return;
+			if (openNotifyPopover()) return;
 		}
-		placeNotifyHost();
-		dropdown.classList.remove("hidden");
-		if (el.bellBtn) el.bellBtn.setAttribute("aria-expanded", "true");
+
+		showOldNotifyDropdown();
 	}
 
 	function hrefFor(desc) {
@@ -2346,13 +2503,14 @@
 			root.classList.toggle("kaiten-side-collapsed", !open);
 			if (el.sideScrim) el.sideScrim.hidden = !open;
 			labelSideHandle(!open);
-			return;
+		} else {
+			if (el.sideScrim) el.sideScrim.hidden = true;
+			var on = sideCollapsed();
+			if (el.side) el.side.classList.toggle("is-collapsed", on);
+			root.classList.toggle("kaiten-side-collapsed", on);
+			labelSideHandle(on);
 		}
-		if (el.sideScrim) el.sideScrim.hidden = true;
-		var on = sideCollapsed();
-		if (el.side) el.side.classList.toggle("is-collapsed", on);
-		root.classList.toggle("kaiten-side-collapsed", on);
-		labelSideHandle(on);
+		seatNotifyPanel(nativeNotifyPanel());
 	}
 
 	function setSideCollapsed(on) {
@@ -7283,6 +7441,7 @@
 		if (window.jQuery) {
 			window.jQuery(document).on("page-change.aur-rate", function () {
 				closeNotify();
+				shareNotifyCount();
 				syncRateBar();
 				paintBellCount();
 				relabelBrand();
@@ -7295,7 +7454,9 @@
 		}
 		window.addEventListener("resize", function () {
 			var dropdown = notifyDropdown();
-			if (dropdown && !dropdown.classList.contains("hidden")) placeNotifyHost();
+			var docked = notifyPanelNode(nativeNotifyPanel());
+			var dockedOpen = docked && docked.classList.contains("aur-notify-dock") && !docked.classList.contains("hidden");
+			if ((dropdown && !dropdown.classList.contains("hidden")) || dockedOpen) placeNotifyHost();
 		});
 		document.addEventListener("click", function (event) {
 			if (event.target.closest(".aur-notify-host, .notifications-list")) return;
