@@ -2471,6 +2471,12 @@ html:has(.aur-bar) .form-tabs-list.form-tabs-sticky-down.show-navbar {
 	top: calc(var(--aur-chrome-h) + var(--page-head-height) - 1px);
 }
 
+/* Ask ALYF reuses .form-tabs-list inside its floating panel; it must not
+   inherit the page-head sticky offset. */
+html:has(.aur-bar) .ask_alyf-panel .ask_alyf-tabs-list.form-tabs-list {
+	top: auto;
+}
+
 html:has(.aur-bar) .form-tab-content {
 	scroll-margin-top: calc(var(--aur-chrome-h) + var(--page-head-height) + 52px);
 }
