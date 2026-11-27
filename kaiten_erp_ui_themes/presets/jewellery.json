@@ -13,14 +13,6 @@
 				},
 				{
 					"type": "Link",
-					"label": "To Do",
-					"section": "Main",
-					"icon": "check-square",
-					"link_type": "DocType",
-					"link_to": "ToDo"
-				},
-				{
-					"type": "Link",
 					"label": "Company",
 					"section": "Main",
 					"icon": "building-2",
@@ -58,6 +50,14 @@
 					"icon": "shield-check",
 					"link_type": "DocType",
 					"link_to": "Role"
+				},
+				{
+					"type": "Link",
+					"label": "To Do",
+					"section": "Main",
+					"icon": "check-square",
+					"link_type": "DocType",
+					"link_to": "ToDo"
 				},
 				{
 					"type": "Link",
@@ -274,6 +274,62 @@
 					"icon": "globe",
 					"link_type": "DocType",
 					"link_to": "Gem Origin"
+				},
+				{
+					"type": "Card Break",
+					"label": "Factory"
+				},
+				{
+					"type": "Link",
+					"label": "Worker",
+					"section": "Setup",
+					"icon": "hard-hat",
+					"link_type": "DocType",
+					"link_to": "Worker"
+				},
+				{
+					"type": "Link",
+					"label": "Design",
+					"section": "Setup",
+					"icon": "pencil",
+					"link_type": "DocType",
+					"link_to": "Design"
+				},
+				{
+					"type": "Link",
+					"label": "Manufacturing Route",
+					"section": "Setup",
+					"icon": "git-branch",
+					"link_type": "DocType",
+					"link_to": "Manufacturing Route"
+				},
+				{
+					"type": "Link",
+					"label": "Wastage Norm",
+					"section": "Setup",
+					"icon": "percent",
+					"link_type": "DocType",
+					"link_to": "Manufacturing Stage Wastage Norm"
+				},
+				{
+					"type": "Card Break",
+					"label": "Showroom"
+				},
+				{
+					"type": "Link",
+					"label": "Showroom Screen",
+					"section": "Setup",
+					"icon": "monitor",
+					"link_type": "DocType",
+					"link_to": "Showroom Screen"
+				},
+				{
+					"type": "Link",
+					"label": "Showroom Signage",
+					"section": "Setup",
+					"icon": "settings",
+					"link_type": "DocType",
+					"link_to": "Showroom Signage Settings"
 				}
 			],
 			"overview_link_type": "DocType",
@@ -1126,14 +1182,6 @@
 				},
 				{
 					"type": "Link",
-					"label": "Manufacturing Stage",
-					"section": "Main",
-					"icon": "list",
-					"link_type": "DocType",
-					"link_to": "Manufacturing Stage"
-				},
-				{
-					"type": "Link",
 					"label": "Material Demand",
 					"section": "Main",
 					"icon": "inbox",
@@ -1158,8 +1206,32 @@
 				},
 				{
 					"type": "Link",
-					"label": "Manufacturing Process",
+					"label": "Karigar Liability",
 					"section": "Main",
+					"icon": "scale",
+					"link_type": "DocType",
+					"link_to": "Karigar Liability Entry"
+				},
+				{
+					"type": "Link",
+					"label": "Karigar Payable",
+					"section": "Main",
+					"icon": "wallet",
+					"link_type": "DocType",
+					"link_to": "Karigar Payable Entry"
+				},
+				{
+					"type": "Link",
+					"label": "Manufacturing Stage",
+					"section": "Setup",
+					"icon": "list",
+					"link_type": "DocType",
+					"link_to": "Manufacturing Stage"
+				},
+				{
+					"type": "Link",
+					"label": "Manufacturing Process",
+					"section": "Setup",
 					"icon": "settings",
 					"link_type": "DocType",
 					"link_to": "Manufacturing Process"
@@ -1297,14 +1369,6 @@
 				},
 				{
 					"type": "Link",
-					"label": "Label History",
-					"section": "Main",
-					"icon": "history",
-					"link_type": "DocType",
-					"link_to": "Jewellery Label History"
-				},
-				{
-					"type": "Link",
 					"label": "Label Branch Transfer",
 					"section": "Main",
 					"icon": "arrow-left-right",
@@ -1362,6 +1426,22 @@
 					"icon": "recycle",
 					"link_type": "DocType",
 					"link_to": "Metal Recovery Receipt"
+				},
+				{
+					"type": "Link",
+					"label": "Refinery Source Ledger",
+					"section": "Main",
+					"icon": "list",
+					"link_type": "DocType",
+					"link_to": "Refinery Source Ledger"
+				},
+				{
+					"type": "Link",
+					"label": "Refinery WIP Allocation",
+					"section": "Main",
+					"icon": "layers",
+					"link_type": "DocType",
+					"link_to": "Refinery WIP Allocation"
 				},
 				{
 					"type": "Link",
