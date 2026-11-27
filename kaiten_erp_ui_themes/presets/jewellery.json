@@ -1,5 +1,6 @@
 {
 	"label": "Jewellery",
+	"use_case": "Jewellery ERP",
 	"menus": [
 		{
 			"title": "Masters",
@@ -279,150 +280,29 @@
 			"overview_link_to": "Company"
 		},
 		{
-			"title": "Purchase",
-			"icon": "shopping-cart",
+			"title": "Sales",
+			"icon": "shopping-bag",
 			"sequence": 20,
 			"items": [
 				{
 					"type": "Card Break",
-					"label": "Buying"
-				},
-				{
-					"type": "Link",
-					"label": "Purchase Order",
-					"section": "Main",
-					"icon": "clipboard-list",
-					"link_type": "DocType",
-					"link_to": "Purchase Order"
-				},
-				{
-					"type": "Link",
-					"label": "Purchase Receipt",
-					"section": "Main",
-					"icon": "file-input",
-					"link_type": "DocType",
-					"link_to": "Purchase Receipt"
-				},
-				{
-					"type": "Link",
-					"label": "Purchase Invoice",
-					"section": "Main",
-					"icon": "file-text",
-					"link_type": "DocType",
-					"link_to": "Purchase Invoice"
-				},
-				{
-					"type": "Link",
-					"label": "Material Request",
-					"section": "Main",
-					"icon": "clipboard-list",
-					"link_type": "DocType",
-					"link_to": "Material Request"
-				},
-				{
-					"type": "Link",
-					"label": "Supplier",
-					"section": "Main",
-					"icon": "truck",
-					"link_type": "DocType",
-					"link_to": "Supplier"
-				},
-				{
-					"type": "Link",
-					"label": "Purchase Register",
-					"section": "Reports",
-					"icon": "file-spreadsheet",
-					"link_type": "Report",
-					"link_to": "Purchase Register"
-				},
-				{
-					"type": "Link",
-					"label": "Item-wise Purchase Register",
-					"section": "Reports",
-					"icon": "shopping-bag",
-					"link_type": "Report",
-					"link_to": "Item-wise Purchase Register"
-				},
-				{
-					"type": "Link",
-					"label": "Supplier Ledger",
-					"section": "Reports",
-					"icon": "truck",
-					"link_type": "Report",
-					"link_to": "Supplier Ledger Summary"
-				},
-				{
-					"type": "Card Break",
-					"label": "Jewellery Purchase"
-				},
-				{
-					"type": "Link",
-					"label": "URD Purchase",
-					"section": "Main",
-					"icon": "recycle",
-					"link_type": "DocType",
-					"link_to": "URD Purchase"
-				},
-				{
-					"type": "Link",
-					"label": "Gem Purchase",
-					"section": "Main",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Gem Purchase"
-				},
-				{
-					"type": "Link",
-					"label": "Gem Rate Approval",
-					"section": "Main",
-					"icon": "badge-check",
-					"link_type": "Page",
-					"link_to": "gem-rate-approval"
-				},
-				{
-					"type": "Link",
-					"label": "Supplier Metal Transaction",
-					"section": "Main",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Supplier Metal Transaction"
-				},
-				{
-					"type": "Link",
-					"label": "URD Purchase Register",
-					"section": "Reports",
-					"icon": "recycle",
-					"link_type": "Report",
-					"link_to": "URD Purchase Register"
-				},
-				{
-					"type": "Link",
-					"label": "Supplier Metal Balance",
-					"section": "Reports",
-					"icon": "scale",
-					"link_type": "Report",
-					"link_to": "Supplier Metal Balance"
-				}
-			],
-			"overview_link_type": "DocType",
-			"overview_link_to": "Purchase Order"
-		},
-		{
-			"title": "Sales",
-			"icon": "indian-rupee",
-			"sequence": 30,
-			"items": [
-				{
-					"type": "Card Break",
-					"label": "Selling"
+					"label": "Counter"
 				},
 				{
 					"type": "Link",
 					"label": "Jewellery POS",
 					"section": "Main",
-					"icon": "store",
+					"icon": "gem",
 					"link_type": "Page",
 					"link_to": "jewellery-pos"
+				},
+				{
+					"type": "Link",
+					"label": "Branch Repair",
+					"section": "Main",
+					"icon": "wrench",
+					"link_type": "Page",
+					"link_to": "branch-repair-desk"
 				},
 				{
 					"type": "Link",
@@ -460,7 +340,7 @@
 					"type": "Link",
 					"label": "Quotation",
 					"section": "Main",
-					"icon": "calculator",
+					"icon": "file-text",
 					"link_type": "DocType",
 					"link_to": "Quotation"
 				},
@@ -476,7 +356,7 @@
 					"type": "Link",
 					"label": "Sales Invoice",
 					"section": "Main",
-					"icon": "file-text",
+					"icon": "receipt",
 					"link_type": "DocType",
 					"link_to": "Sales Invoice"
 				},
@@ -498,6 +378,14 @@
 				},
 				{
 					"type": "Link",
+					"label": "Cash Invoice Split",
+					"section": "Main",
+					"icon": "split",
+					"link_type": "DocType",
+					"link_to": "Cash Invoice Split"
+				},
+				{
+					"type": "Link",
 					"label": "Loyalty Point Entry",
 					"section": "Main",
 					"icon": "star",
@@ -507,15 +395,15 @@
 				{
 					"type": "Link",
 					"label": "POS Profile",
-					"section": "Setup",
-					"icon": "monitor",
+					"section": "Main",
+					"icon": "settings",
 					"link_type": "DocType",
 					"link_to": "POS Profile"
 				},
 				{
 					"type": "Link",
 					"label": "POS Settings",
-					"section": "Setup",
+					"section": "Main",
 					"icon": "settings",
 					"link_type": "DocType",
 					"link_to": "POS Settings"
@@ -524,7 +412,7 @@
 					"type": "Link",
 					"label": "Sales Register",
 					"section": "Reports",
-					"icon": "file-spreadsheet",
+					"icon": "list",
 					"link_type": "Report",
 					"link_to": "Sales Register"
 				},
@@ -532,7 +420,7 @@
 					"type": "Link",
 					"label": "Item-wise Sales Register",
 					"section": "Reports",
-					"icon": "shopping-bag",
+					"icon": "list",
 					"link_type": "Report",
 					"link_to": "Item-wise Sales Register"
 				},
@@ -546,7 +434,127 @@
 				},
 				{
 					"type": "Card Break",
-					"label": "Promotions & Loyalty"
+					"label": "Gold Booking"
+				},
+				{
+					"type": "Link",
+					"label": "Gold Booking",
+					"section": "Main",
+					"icon": "coins",
+					"link_type": "DocType",
+					"link_to": "Gold Booking"
+				},
+				{
+					"type": "Link",
+					"label": "Lifecycle Studio",
+					"section": "Main",
+					"icon": "map",
+					"link_type": "Page",
+					"link_to": "lifecycle-maps"
+				},
+				{
+					"type": "Link",
+					"label": "Gold Booking Ledger",
+					"section": "Reports",
+					"icon": "list",
+					"link_type": "Report",
+					"link_to": "Gold Booking Ledger"
+				},
+				{
+					"type": "Link",
+					"label": "Gold Booking Status",
+					"section": "Reports",
+					"icon": "list",
+					"link_type": "Report",
+					"link_to": "Gold Booking Status Summary"
+				},
+				{
+					"type": "Link",
+					"label": "Gold Booking Liability",
+					"section": "Reports",
+					"icon": "list",
+					"link_type": "Report",
+					"link_to": "Gold Booking Liability Summary"
+				},
+				{
+					"type": "Link",
+					"label": "Gold Booking Type Analysis",
+					"section": "Reports",
+					"icon": "list",
+					"link_type": "Report",
+					"link_to": "Gold Booking Type Analysis"
+				},
+				{
+					"type": "Link",
+					"label": "Gold Booking Expiry",
+					"section": "Reports",
+					"icon": "bell",
+					"link_type": "Report",
+					"link_to": "Gold Booking Expiry Alert"
+				},
+				{
+					"type": "Card Break",
+					"label": "Saving Scheme"
+				},
+				{
+					"type": "Link",
+					"label": "Saving Scheme",
+					"section": "Main",
+					"icon": "wallet",
+					"link_type": "DocType",
+					"link_to": "Saving Scheme"
+				},
+				{
+					"type": "Link",
+					"label": "Saving Scheme Entry",
+					"section": "Main",
+					"icon": "list",
+					"link_type": "DocType",
+					"link_to": "Saving Scheme Entry"
+				},
+				{
+					"type": "Link",
+					"label": "Saving Scheme Summary",
+					"section": "Reports",
+					"icon": "list",
+					"link_type": "Report",
+					"link_to": "Saving Scheme Summary"
+				},
+				{
+					"type": "Link",
+					"label": "Scheme Members",
+					"section": "Reports",
+					"icon": "users",
+					"link_type": "Report",
+					"link_to": "Saving Scheme Member Register"
+				},
+				{
+					"type": "Link",
+					"label": "Scheme Maturity",
+					"section": "Reports",
+					"icon": "calendar",
+					"link_type": "Report",
+					"link_to": "Saving Scheme Maturity Report"
+				},
+				{
+					"type": "Link",
+					"label": "Scheme Overdue",
+					"section": "Reports",
+					"icon": "bell",
+					"link_type": "Report",
+					"link_to": "Saving Scheme Overdue Installments"
+				},
+				{
+					"type": "Link",
+					"label": "Gold Gullak",
+					"section": "Reports",
+					"icon": "coins",
+					"link_type": "Report",
+					"link_to": "Gold Gullak Tracker"
+				},
+				{
+					"type": "Card Break",
+					"label": "Promotions"
 				},
 				{
 					"type": "Link",
@@ -560,7 +568,7 @@
 					"type": "Link",
 					"label": "Loyalty Program",
 					"section": "Main",
-					"icon": "award",
+					"icon": "star",
 					"link_type": "DocType",
 					"link_to": "Loyalty Program"
 				},
@@ -568,7 +576,7 @@
 					"type": "Link",
 					"label": "Promotional Scheme",
 					"section": "Main",
-					"icon": "percent",
+					"icon": "megaphone",
 					"link_type": "DocType",
 					"link_to": "Promotional Scheme"
 				},
@@ -576,7 +584,7 @@
 					"type": "Link",
 					"label": "Pricing Rule",
 					"section": "Main",
-					"icon": "tags",
+					"icon": "percent",
 					"link_type": "DocType",
 					"link_to": "Pricing Rule"
 				},
@@ -589,43 +597,128 @@
 					"link_to": "Campaign"
 				},
 				{
-					"type": "Card Break",
-					"label": "Repair"
-				},
-				{
 					"type": "Link",
-					"label": "Repair Order",
+					"label": "Gift Voucher",
 					"section": "Main",
-					"icon": "hammer",
+					"icon": "ticket",
 					"link_type": "DocType",
-					"link_to": "Repair Order"
+					"link_to": "Gift Voucher"
+				}
+			]
+		},
+		{
+			"title": "Purchase",
+			"icon": "truck",
+			"sequence": 30,
+			"items": [
+				{
+					"type": "Card Break",
+					"label": "Buying"
 				},
 				{
 					"type": "Link",
-					"label": "Repair Workshop Status",
+					"label": "Purchase Order",
+					"section": "Main",
+					"icon": "file-text",
+					"link_type": "DocType",
+					"link_to": "Purchase Order"
+				},
+				{
+					"type": "Link",
+					"label": "Purchase Receipt",
+					"section": "Main",
+					"icon": "package",
+					"link_type": "DocType",
+					"link_to": "Purchase Receipt"
+				},
+				{
+					"type": "Link",
+					"label": "Purchase Invoice",
+					"section": "Main",
+					"icon": "receipt",
+					"link_type": "DocType",
+					"link_to": "Purchase Invoice"
+				},
+				{
+					"type": "Link",
+					"label": "Return Desk",
+					"section": "Main",
+					"icon": "undo-2",
+					"link_type": "Page",
+					"link_to": "return-desk"
+				},
+				{
+					"type": "Link",
+					"label": "Material Request",
+					"section": "Main",
+					"icon": "inbox",
+					"link_type": "DocType",
+					"link_to": "Material Request"
+				},
+				{
+					"type": "Link",
+					"label": "Supplier",
+					"section": "Main",
+					"icon": "truck",
+					"link_type": "DocType",
+					"link_to": "Supplier"
+				},
+				{
+					"type": "Link",
+					"label": "Gem Purchase",
+					"section": "Main",
+					"icon": "gem",
+					"link_type": "DocType",
+					"link_to": "Gem Purchase"
+				},
+				{
+					"type": "Link",
+					"label": "Gem Rate Approval",
+					"section": "Main",
+					"icon": "badge-check",
+					"link_type": "Page",
+					"link_to": "gem-rate-approval"
+				},
+				{
+					"type": "Link",
+					"label": "Purchase Register",
 					"section": "Reports",
-					"icon": "hammer",
+					"icon": "list",
 					"link_type": "Report",
-					"link_to": "Repair Workshop Status"
+					"link_to": "Purchase Register"
+				},
+				{
+					"type": "Link",
+					"label": "Item-wise Purchase Register",
+					"section": "Reports",
+					"icon": "list",
+					"link_type": "Report",
+					"link_to": "Item-wise Purchase Register"
+				},
+				{
+					"type": "Link",
+					"label": "Supplier Ledger",
+					"section": "Reports",
+					"icon": "truck",
+					"link_type": "Report",
+					"link_to": "Supplier Ledger Summary"
 				}
-			],
-			"overview_link_type": "DocType",
-			"overview_link_to": "Sales Invoice"
+			]
 		},
 		{
 			"title": "Stock",
-			"icon": "package",
+			"icon": "warehouse",
 			"sequence": 40,
 			"items": [
 				{
 					"type": "Card Break",
-					"label": "Stock Transactions"
+					"label": "Stock"
 				},
 				{
 					"type": "Link",
 					"label": "Item",
 					"section": "Main",
-					"icon": "package",
+					"icon": "box",
 					"link_type": "DocType",
 					"link_to": "Item"
 				},
@@ -649,31 +742,15 @@
 					"type": "Link",
 					"label": "Stock Reconciliation",
 					"section": "Main",
-					"icon": "sliders-horizontal",
+					"icon": "clipboard-check",
 					"link_type": "DocType",
 					"link_to": "Stock Reconciliation"
 				},
 				{
 					"type": "Link",
-					"label": "Purchase Receipt",
-					"section": "Main",
-					"icon": "file-input",
-					"link_type": "DocType",
-					"link_to": "Purchase Receipt"
-				},
-				{
-					"type": "Link",
-					"label": "Delivery Note",
-					"section": "Main",
-					"icon": "truck",
-					"link_type": "DocType",
-					"link_to": "Delivery Note"
-				},
-				{
-					"type": "Link",
 					"label": "Metal Ledger Entry",
 					"section": "Main",
-					"icon": "book-marked",
+					"icon": "scale",
 					"link_type": "DocType",
 					"link_to": "Metal Ledger Entry"
 				},
@@ -681,7 +758,7 @@
 					"type": "Link",
 					"label": "Stock Ledger",
 					"section": "Reports",
-					"icon": "",
+					"icon": "list",
 					"link_type": "Report",
 					"link_to": "Stock Ledger"
 				},
@@ -695,9 +772,17 @@
 				},
 				{
 					"type": "Link",
+					"label": "Warehouse Wise Stock Balance",
+					"section": "Reports",
+					"icon": "warehouse",
+					"link_type": "Report",
+					"link_to": "Warehouse Wise Stock Balance"
+				},
+				{
+					"type": "Link",
 					"label": "Stock Ageing",
 					"section": "Reports",
-					"icon": "timer",
+					"icon": "clock",
 					"link_type": "Report",
 					"link_to": "Stock Ageing"
 				},
@@ -705,28 +790,50 @@
 					"type": "Link",
 					"label": "Stock Analytics",
 					"section": "Reports",
-					"icon": "chart-column",
+					"icon": "trending-up",
 					"link_type": "Report",
 					"link_to": "Stock Analytics"
+				},
+				{
+					"type": "Link",
+					"label": "Metal Locker Reconciliation",
+					"section": "Reports",
+					"icon": "scale",
+					"link_type": "Report",
+					"link_to": "Metal Locker Reconciliation"
+				},
+				{
+					"type": "Link",
+					"label": "Department Fine Position",
+					"section": "Reports",
+					"icon": "scale",
+					"link_type": "Report",
+					"link_to": "Department Fine Position"
+				},
+				{
+					"type": "Link",
+					"label": "Repair Locker Balance",
+					"section": "Reports",
+					"icon": "scale",
+					"link_type": "Report",
+					"link_to": "Repair Locker Balance"
 				}
-			],
-			"overview_link_type": "DocType",
-			"overview_link_to": "Stock Entry"
+			]
 		},
 		{
 			"title": "Accounts",
-			"icon": "book-open",
+			"icon": "landmark",
 			"sequence": 50,
 			"items": [
 				{
 					"type": "Card Break",
-					"label": "Transactions"
+					"label": "Vouchers"
 				},
 				{
 					"type": "Link",
 					"label": "Journal Entry",
 					"section": "Main",
-					"icon": "notebook-pen",
+					"icon": "book-open",
 					"link_type": "DocType",
 					"link_to": "Journal Entry"
 				},
@@ -758,7 +865,7 @@
 					"type": "Link",
 					"label": "Opening Invoice Tool",
 					"section": "Main",
-					"icon": "circle-play",
+					"icon": "file-plus",
 					"link_type": "DocType",
 					"link_to": "Opening Invoice Creation Tool"
 				},
@@ -766,7 +873,7 @@
 					"type": "Link",
 					"label": "General Ledger",
 					"section": "Reports",
-					"icon": "book-marked",
+					"icon": "list",
 					"link_type": "Report",
 					"link_to": "General Ledger"
 				},
@@ -780,7 +887,7 @@
 				},
 				{
 					"type": "Link",
-					"label": "Profit & Loss",
+					"label": "Profit and Loss",
 					"section": "Reports",
 					"icon": "trending-up",
 					"link_type": "Report",
@@ -798,7 +905,7 @@
 					"type": "Link",
 					"label": "Accounts Receivable",
 					"section": "Reports",
-					"icon": "user-round",
+					"icon": "list",
 					"link_type": "Report",
 					"link_to": "Accounts Receivable"
 				},
@@ -806,27 +913,43 @@
 					"type": "Link",
 					"label": "Accounts Payable",
 					"section": "Reports",
-					"icon": "handshake",
+					"icon": "list",
 					"link_type": "Report",
 					"link_to": "Accounts Payable"
 				},
 				{
 					"type": "Card Break",
-					"label": "Setup & GST"
+					"label": "GST"
+				},
+				{
+					"type": "Link",
+					"label": "GST Settings",
+					"section": "Main",
+					"icon": "settings",
+					"link_type": "DocType",
+					"link_to": "GST Settings"
+				},
+				{
+					"type": "Link",
+					"label": "HSN Code",
+					"section": "Main",
+					"icon": "hash",
+					"link_type": "DocType",
+					"link_to": "GST HSN Code"
 				},
 				{
 					"type": "Link",
 					"label": "GSTR-1",
-					"section": "Reports",
-					"icon": "receipt",
+					"section": "Main",
+					"icon": "file",
 					"link_type": "DocType",
 					"link_to": "GSTR-1"
 				},
 				{
 					"type": "Link",
 					"label": "GSTR-3B",
-					"section": "Reports",
-					"icon": "receipt",
+					"section": "Main",
+					"icon": "file",
 					"link_type": "DocType",
 					"link_to": "GSTR 3B Report"
 				},
@@ -834,7 +957,7 @@
 					"type": "Link",
 					"label": "HSN Summary",
 					"section": "Reports",
-					"icon": "hash",
+					"icon": "list",
 					"link_type": "Report",
 					"link_to": "HSN-wise-summary of outward supplies"
 				},
@@ -842,7 +965,7 @@
 					"type": "Link",
 					"label": "GST Sales Register",
 					"section": "Reports",
-					"icon": "receipt",
+					"icon": "list",
 					"link_type": "Report",
 					"link_to": "GST Sales Register"
 				},
@@ -850,30 +973,34 @@
 					"type": "Link",
 					"label": "GST Purchase Register",
 					"section": "Reports",
-					"icon": "shopping-cart",
+					"icon": "list",
 					"link_type": "Report",
 					"link_to": "GST Purchase Register"
 				},
 				{
+					"type": "Card Break",
+					"label": "Setup"
+				},
+				{
 					"type": "Link",
 					"label": "Chart of Accounts",
-					"section": "Setup",
-					"icon": "book-open",
+					"section": "Main",
+					"icon": "list",
 					"link_type": "DocType",
 					"link_to": "Account"
 				},
 				{
 					"type": "Link",
 					"label": "Mode of Payment",
-					"section": "Setup",
-					"icon": "credit-card",
+					"section": "Main",
+					"icon": "banknote",
 					"link_type": "DocType",
 					"link_to": "Mode of Payment"
 				},
 				{
 					"type": "Link",
 					"label": "Bank Account",
-					"section": "Setup",
+					"section": "Main",
 					"icon": "landmark",
 					"link_type": "DocType",
 					"link_to": "Bank Account"
@@ -881,46 +1008,28 @@
 				{
 					"type": "Link",
 					"label": "Cost Center",
-					"section": "Setup",
-					"icon": "target",
+					"section": "Main",
+					"icon": "network",
 					"link_type": "DocType",
 					"link_to": "Cost Center"
 				},
 				{
 					"type": "Link",
 					"label": "Fiscal Year",
-					"section": "Setup",
-					"icon": "calendar-range",
+					"section": "Main",
+					"icon": "calendar",
 					"link_type": "DocType",
 					"link_to": "Fiscal Year"
 				},
 				{
 					"type": "Link",
-					"label": "GST Settings",
-					"section": "Setup",
-					"icon": "receipt",
-					"link_type": "DocType",
-					"link_to": "GST Settings"
-				},
-				{
-					"type": "Link",
-					"label": "HSN Code",
-					"section": "Setup",
-					"icon": "hash",
-					"link_type": "DocType",
-					"link_to": "GST HSN Code"
-				},
-				{
-					"type": "Link",
 					"label": "Print Formats",
-					"section": "Setup",
+					"section": "Main",
 					"icon": "printer",
 					"link_type": "DocType",
 					"link_to": "Print Format"
 				}
-			],
-			"overview_link_type": "DocType",
-			"overview_link_to": "Journal Entry"
+			]
 		},
 		{
 			"title": "Manufacturing",
@@ -929,13 +1038,121 @@
 			"items": [
 				{
 					"type": "Card Break",
+					"label": "Departments"
+				},
+				{
+					"type": "Link",
+					"label": "Gold Department",
+					"section": "Main",
+					"icon": "coins",
+					"link_type": "Page",
+					"link_to": "gold-issue-desk"
+				},
+				{
+					"type": "Link",
+					"label": "Casting Department",
+					"section": "Main",
+					"icon": "flame",
+					"link_type": "Page",
+					"link_to": "casting-desk"
+				},
+				{
+					"type": "Link",
+					"label": "Model Department",
+					"section": "Main",
+					"icon": "pencil",
+					"link_type": "Page",
+					"link_to": "model-desk"
+				},
+				{
+					"type": "Link",
+					"label": "Semi Polish Department",
+					"section": "Main",
+					"icon": "sparkles",
+					"link_type": "Page",
+					"link_to": "semi-polish-desk"
+				},
+				{
+					"type": "Link",
+					"label": "Setting Department",
+					"section": "Main",
+					"icon": "gem",
+					"link_type": "Page",
+					"link_to": "setting-desk"
+				},
+				{
+					"type": "Link",
+					"label": "Enamel Department",
+					"section": "Main",
+					"icon": "palette",
+					"link_type": "Page",
+					"link_to": "enamel-desk"
+				},
+				{
+					"type": "Link",
+					"label": "Puwai Department",
+					"section": "Main",
+					"icon": "gem",
+					"link_type": "Page",
+					"link_to": "puwai-desk"
+				},
+				{
+					"type": "Link",
+					"label": "Jadai Department",
+					"section": "Main",
+					"icon": "gem",
+					"link_type": "Page",
+					"link_to": "jadai-desk"
+				},
+				{
+					"type": "Link",
+					"label": "Final Polish Department",
+					"section": "Main",
+					"icon": "sparkles",
+					"link_type": "Page",
+					"link_to": "final-polish-desk"
+				},
+				{
+					"type": "Link",
+					"label": "QC Department",
+					"section": "Main",
+					"icon": "badge-check",
+					"link_type": "Page",
+					"link_to": "qc-desk"
+				},
+				{
+					"type": "Link",
+					"label": "Hallmark Department",
+					"section": "Main",
+					"icon": "stamp",
+					"link_type": "Page",
+					"link_to": "hallmark-desk"
+				},
+				{
+					"type": "Link",
+					"label": "Labelling Department",
+					"section": "Main",
+					"icon": "tag",
+					"link_type": "Page",
+					"link_to": "labelling-desk"
+				},
+				{
+					"type": "Link",
+					"label": "Cost Approval Department",
+					"section": "Main",
+					"icon": "calculator",
+					"link_type": "Page",
+					"link_to": "cost-desk"
+				},
+				{
+					"type": "Card Break",
 					"label": "Production"
 				},
 				{
 					"type": "Link",
 					"label": "Manufacturing Job",
 					"section": "Main",
-					"icon": "",
+					"icon": "box",
 					"link_type": "DocType",
 					"link_to": "Manufacturing Job"
 				},
@@ -957,9 +1174,49 @@
 				},
 				{
 					"type": "Link",
+					"label": "Manufacturing Stage",
+					"section": "Main",
+					"icon": "list",
+					"link_type": "DocType",
+					"link_to": "Manufacturing Stage"
+				},
+				{
+					"type": "Link",
+					"label": "Material Demand",
+					"section": "Main",
+					"icon": "inbox",
+					"link_type": "DocType",
+					"link_to": "Manufacturing Material Demand"
+				},
+				{
+					"type": "Link",
+					"label": "Department Material Request",
+					"section": "Main",
+					"icon": "inbox",
+					"link_type": "DocType",
+					"link_to": "Department Material Request"
+				},
+				{
+					"type": "Link",
+					"label": "Karigar Job Card",
+					"section": "Main",
+					"icon": "id-card",
+					"link_type": "DocType",
+					"link_to": "Karigar Job Card"
+				},
+				{
+					"type": "Link",
+					"label": "Manufacturing Process",
+					"section": "Main",
+					"icon": "settings",
+					"link_type": "DocType",
+					"link_to": "Manufacturing Process"
+				},
+				{
+					"type": "Link",
 					"label": "Manufacturing Job Register",
 					"section": "Reports",
-					"icon": "factory",
+					"icon": "list",
 					"link_type": "Report",
 					"link_to": "Manufacturing Job Register"
 				},
@@ -967,7 +1224,7 @@
 					"type": "Link",
 					"label": "Bag Tracking",
 					"section": "Reports",
-					"icon": "package",
+					"icon": "map",
 					"link_type": "Report",
 					"link_to": "Bag Tracking"
 				},
@@ -975,7 +1232,7 @@
 					"type": "Link",
 					"label": "Daily Production WIP",
 					"section": "Reports",
-					"icon": "hourglass",
+					"icon": "activity",
 					"link_type": "Report",
 					"link_to": "Daily Production WIP"
 				},
@@ -983,7 +1240,7 @@
 					"type": "Link",
 					"label": "Manufacturing WIP Aging",
 					"section": "Reports",
-					"icon": "hourglass",
+					"icon": "clock",
 					"link_type": "Report",
 					"link_to": "Manufacturing WIP Aging"
 				},
@@ -997,96 +1254,22 @@
 				},
 				{
 					"type": "Link",
-					"label": "Manufacturing Stage",
-					"section": "Setup",
-					"icon": "list-ordered",
-					"link_type": "DocType",
-					"link_to": "Manufacturing Stage"
-				},
-				{
-					"type": "Card Break",
-					"label": "Karigar & Material"
-				},
-				{
-					"type": "Link",
-					"label": "Material Demand",
-					"section": "Main",
-					"icon": "clipboard-list",
-					"link_type": "DocType",
-					"link_to": "Manufacturing Material Demand"
-				},
-				{
-					"type": "Link",
-					"label": "Karigar Job Card",
-					"section": "Main",
-					"icon": "hammer",
-					"link_type": "DocType",
-					"link_to": "Karigar Job Card"
-				},
-				{
-					"type": "Link",
 					"label": "Karigar Metal Balance",
 					"section": "Reports",
-					"icon": "hammer",
+					"icon": "scale",
 					"link_type": "Report",
 					"link_to": "Karigar Metal Balance"
-				},
-				{
-					"type": "Link",
-					"label": "Manufacturing Process",
-					"section": "Setup",
-					"icon": "list-ordered",
-					"link_type": "DocType",
-					"link_to": "Manufacturing Process"
 				}
-			],
-			"overview_link_type": "DocType",
-			"overview_link_to": "Manufacturing Job"
+			]
 		},
 		{
 			"title": "Operations",
-			"icon": "wrench",
+			"icon": "cog",
 			"sequence": 70,
 			"items": [
 				{
 					"type": "Card Break",
-					"label": "Labelling"
-				},
-				{
-					"type": "Link",
-					"label": "Purchase Receipt",
-					"section": "Main",
-					"icon": "file-input",
-					"link_type": "DocType",
-					"link_to": "Purchase Receipt"
-				},
-				{
-					"type": "Link",
-					"label": "Packing List",
-					"section": "Main",
-					"icon": "list",
-					"link_type": "DocType",
-					"link_to": "Jewellery Packing List"
-				},
-				{
-					"type": "Link",
-					"label": "Labelling Sheet",
-					"section": "Main",
-					"icon": "tag",
-					"link_type": "DocType",
-					"link_to": "Jewellery Labelling Sheet"
-				},
-				{
-					"type": "Link",
-					"label": "Label History",
-					"section": "Main",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Jewellery Label History"
-				},
-				{
-					"type": "Card Break",
-					"label": "Refinery"
+					"label": "Old gold"
 				},
 				{
 					"type": "Link",
@@ -1098,91 +1281,15 @@
 				},
 				{
 					"type": "Link",
-					"label": "Sent to Refinery",
-					"section": "Main",
-					"icon": "send",
-					"link_type": "DocType",
-					"link_to": "Sent to Refinery"
-				},
-				{
-					"type": "Link",
-					"label": "Refinery Process",
-					"section": "Main",
-					"icon": "flame",
-					"link_type": "DocType",
-					"link_to": "Refinery Process"
-				},
-				{
-					"type": "Link",
-					"label": "Refinery Master",
-					"section": "Setup",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Refinery Master"
-				},
-				{
-					"type": "Link",
-					"label": "Refinery Pipeline",
+					"label": "URD Purchase Register",
 					"section": "Reports",
-					"icon": "flame",
+					"icon": "list",
 					"link_type": "Report",
-					"link_to": "Refinery Pipeline Status"
-				},
-				{
-					"type": "Link",
-					"label": "Refinery Loss",
-					"section": "Reports",
-					"icon": "trending-down",
-					"link_type": "Report",
-					"link_to": "Refinery Loss Analysis"
-				},
-				{
-					"type": "Link",
-					"label": "Refinery Batch Summary",
-					"section": "Reports",
-					"icon": "boxes",
-					"link_type": "Report",
-					"link_to": "Refinery Batch Summary"
+					"link_to": "URD Purchase Register"
 				},
 				{
 					"type": "Card Break",
-					"label": "Vendor Metal"
-				},
-				{
-					"type": "Link",
-					"label": "Vendor Metal Issue",
-					"section": "Main",
-					"icon": "arrow-up-right",
-					"link_type": "DocType",
-					"link_to": "Vendor Metal Issue"
-				},
-				{
-					"type": "Link",
-					"label": "Vendor Metal Receive",
-					"section": "Main",
-					"icon": "arrow-down-right",
-					"link_type": "DocType",
-					"link_to": "Vendor Metal Receive"
-				},
-				{
-					"type": "Link",
-					"label": "Supplier Metal Transaction",
-					"section": "Main",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Supplier Metal Transaction"
-				},
-				{
-					"type": "Link",
-					"label": "Supplier Metal Balance",
-					"section": "Reports",
-					"icon": "scale",
-					"link_type": "Report",
-					"link_to": "Supplier Metal Balance"
-				},
-				{
-					"type": "Card Break",
-					"label": "Gold Booking & Rates"
+					"label": "Rates"
 				},
 				{
 					"type": "Link",
@@ -1196,65 +1303,9 @@
 					"type": "Link",
 					"label": "Rate Sheet",
 					"section": "Main",
-					"icon": "tag",
+					"icon": "file-spreadsheet",
 					"link_type": "DocType",
 					"link_to": "Daily Metal Rate Sheet"
-				},
-				{
-					"type": "Link",
-					"label": "Gold Booking",
-					"section": "Main",
-					"icon": "list",
-					"link_type": "DocType",
-					"link_to": "Gold Booking"
-				},
-				{
-					"type": "Link",
-					"label": "Lifecycle Studio",
-					"section": "Main",
-					"icon": "map",
-					"link_type": "Page",
-					"link_to": "lifecycle-maps"
-				},
-				{
-					"type": "Link",
-					"label": "Gold Booking Ledger",
-					"section": "Reports",
-					"icon": "book-marked",
-					"link_type": "Report",
-					"link_to": "Gold Booking Ledger"
-				},
-				{
-					"type": "Link",
-					"label": "Gold Booking Status",
-					"section": "Reports",
-					"icon": "clipboard-check",
-					"link_type": "Report",
-					"link_to": "Gold Booking Status Summary"
-				},
-				{
-					"type": "Link",
-					"label": "Gold Booking Liability",
-					"section": "Reports",
-					"icon": "scale",
-					"link_type": "Report",
-					"link_to": "Gold Booking Liability Summary"
-				},
-				{
-					"type": "Link",
-					"label": "Gold Booking Type Analysis",
-					"section": "Reports",
-					"icon": "shapes",
-					"link_type": "Report",
-					"link_to": "Gold Booking Type Analysis"
-				},
-				{
-					"type": "Link",
-					"label": "Gold Booking Expiry",
-					"section": "Reports",
-					"icon": "timer",
-					"link_type": "Report",
-					"link_to": "Gold Booking Expiry Alert"
 				},
 				{
 					"type": "Link",
@@ -1266,1530 +1317,31 @@
 				},
 				{
 					"type": "Card Break",
-					"label": "Repair"
+					"label": "Vendor Metal"
 				},
 				{
 					"type": "Link",
-					"label": "Repair Order",
-					"section": "Main",
-					"icon": "hammer",
-					"link_type": "DocType",
-					"link_to": "Repair Order"
-				},
-				{
-					"type": "Link",
-					"label": "Repair Workshop Status",
-					"section": "Reports",
-					"icon": "hammer",
-					"link_type": "Report",
-					"link_to": "Repair Workshop Status"
-				}
-			],
-			"overview_link_type": "DocType",
-			"overview_link_to": "Jewellery Labelling Sheet"
-		},
-		{
-			"title": "Schemes",
-			"icon": "piggy-bank",
-			"sequence": 80,
-			"items": [
-				{
-					"type": "Card Break",
-					"label": "Saving Scheme"
-				},
-				{
-					"type": "Link",
-					"label": "Saving Scheme",
-					"section": "Main",
-					"icon": "piggy-bank",
-					"link_type": "DocType",
-					"link_to": "Saving Scheme"
-				},
-				{
-					"type": "Link",
-					"label": "Saving Scheme Entry",
-					"section": "Main",
-					"icon": "file-plus",
-					"link_type": "DocType",
-					"link_to": "Saving Scheme Entry"
-				},
-				{
-					"type": "Link",
-					"label": "Saving Scheme Summary",
-					"section": "Reports",
-					"icon": "piggy-bank",
-					"link_type": "Report",
-					"link_to": "Saving Scheme Summary"
-				},
-				{
-					"type": "Link",
-					"label": "Scheme Members",
-					"section": "Reports",
-					"icon": "users",
-					"link_type": "Report",
-					"link_to": "Saving Scheme Member Register"
-				},
-				{
-					"type": "Link",
-					"label": "Scheme Maturity",
-					"section": "Reports",
-					"icon": "calendar-check",
-					"link_type": "Report",
-					"link_to": "Saving Scheme Maturity Report"
-				},
-				{
-					"type": "Link",
-					"label": "Scheme Overdue",
-					"section": "Reports",
-					"icon": "triangle-alert",
-					"link_type": "Report",
-					"link_to": "Saving Scheme Overdue Installments"
-				},
-				{
-					"type": "Link",
-					"label": "Gold Gullak",
-					"section": "Reports",
-					"icon": "circle-dollar-sign",
-					"link_type": "Report",
-					"link_to": "Gold Gullak Tracker"
-				}
-			],
-			"overview_link_type": "DocType",
-			"overview_link_to": "Saving Scheme"
-		},
-		{
-			"title": "HRMS",
-			"icon": "users",
-			"sequence": 90,
-			"items": [
-				{
-					"type": "Card Break",
-					"label": "My Day"
-				},
-				{
-					"type": "Link",
-					"label": "Today",
-					"section": "Main",
-					"icon": "sun",
-					"link_type": "Page",
-					"link_to": "kaiten-today"
-				},
-				{
-					"type": "Link",
-					"label": "Daily Checklist",
-					"section": "Main",
-					"icon": "clipboard-check",
-					"link_type": "Page",
-					"link_to": "daily-retail-checklist"
-				},
-				{
-					"type": "Link",
-					"label": "Performance Dashboard",
-					"section": "Main",
-					"icon": "gauge",
-					"link_type": "Page",
-					"link_to": "performance-dashboard"
-				},
-				{
-					"type": "Link",
-					"label": "To Do",
-					"section": "Main",
-					"icon": "inbox",
-					"link_type": "DocType",
-					"link_to": "ToDo"
-				},
-				{
-					"type": "Link",
-					"label": "Announcements",
-					"section": "Main",
-					"icon": "megaphone",
-					"link_type": "DocType",
-					"link_to": "Company Announcement"
-				},
-				{
-					"type": "Card Break",
-					"label": "People & Org"
-				},
-				{
-					"type": "Link",
-					"label": "HR Dashboard",
-					"section": "Main",
-					"icon": "",
-					"link_type": "Dashboard",
-					"link_to": "Human Resource"
-				},
-				{
-					"type": "Link",
-					"label": "Employee",
-					"section": "Main",
-					"icon": "id-card",
-					"link_type": "DocType",
-					"link_to": "Employee"
-				},
-				{
-					"type": "Link",
-					"label": "Organizational Chart",
-					"section": "Main",
-					"icon": "network",
-					"link_type": "Page",
-					"link_to": "organizational-chart"
-				},
-				{
-					"type": "Link",
-					"label": "Department",
-					"section": "Setup",
-					"icon": "building",
-					"link_type": "DocType",
-					"link_to": "Department"
-				},
-				{
-					"type": "Link",
-					"label": "Designation",
-					"section": "Setup",
-					"icon": "briefcase",
-					"link_type": "DocType",
-					"link_to": "Designation"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Group",
-					"section": "Setup",
-					"icon": "users",
-					"link_type": "DocType",
-					"link_to": "Employee Group"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Grade",
-					"section": "Setup",
-					"icon": "award",
-					"link_type": "DocType",
-					"link_to": "Employee Grade"
-				},
-				{
-					"type": "Link",
-					"label": "Employment Type",
-					"section": "Setup",
-					"icon": "id-card",
-					"link_type": "DocType",
-					"link_to": "Employment Type"
-				},
-				{
-					"type": "Link",
-					"label": "Branch",
-					"section": "Setup",
-					"icon": "map-pin",
-					"link_type": "DocType",
-					"link_to": "Branch"
-				},
-				{
-					"type": "Link",
-					"label": "HR Settings",
-					"section": "Setup",
-					"icon": "settings",
-					"link_type": "DocType",
-					"link_to": "HR Settings"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Analytics",
-					"section": "Reports",
-					"icon": "chart-column",
-					"link_type": "Report",
-					"link_to": "Employee Analytics"
-				},
-				{
-					"type": "Card Break",
-					"label": "Hire → Join"
-				},
-				{
-					"type": "Link",
-					"label": "Recruitment Dashboard",
-					"section": "Main",
-					"icon": "users",
-					"link_type": "Dashboard",
-					"link_to": "Recruitment"
-				},
-				{
-					"type": "Link",
-					"label": "Hiring Pipeline",
-					"section": "Main",
-					"icon": "kanban",
-					"link_type": "DocType",
-					"link_to": "Job Applicant"
-				},
-				{
-					"type": "Link",
-					"label": "Job Opening",
-					"section": "Main",
-					"icon": "briefcase",
-					"link_type": "DocType",
-					"link_to": "Job Opening"
-				},
-				{
-					"type": "Link",
-					"label": "Job Applicant",
-					"section": "Main",
-					"icon": "user-plus",
-					"link_type": "DocType",
-					"link_to": "Job Applicant"
-				},
-				{
-					"type": "Link",
-					"label": "Interview",
-					"section": "Main",
-					"icon": "user-check",
-					"link_type": "DocType",
-					"link_to": "Interview"
-				},
-				{
-					"type": "Link",
-					"label": "Job Offer",
-					"section": "Main",
-					"icon": "file-check",
-					"link_type": "DocType",
-					"link_to": "Job Offer"
-				},
-				{
-					"type": "Link",
-					"label": "Appointment Letter",
-					"section": "Main",
-					"icon": "file-text",
-					"link_type": "DocType",
-					"link_to": "Appointment Letter"
-				},
-				{
-					"type": "Link",
-					"label": "Job Requisition",
-					"section": "Main",
-					"icon": "clipboard-list",
-					"link_type": "DocType",
-					"link_to": "Job Requisition"
-				},
-				{
-					"type": "Link",
-					"label": "Staffing Plan",
-					"section": "Main",
-					"icon": "users",
-					"link_type": "DocType",
-					"link_to": "Staffing Plan"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Referral",
-					"section": "Main",
-					"icon": "user-plus",
-					"link_type": "DocType",
-					"link_to": "Employee Referral"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Onboarding",
-					"section": "Main",
-					"icon": "user-plus",
-					"link_type": "DocType",
-					"link_to": "Employee Onboarding"
-				},
-				{
-					"type": "Link",
-					"label": "Police Verification",
-					"section": "Main",
-					"icon": "shield",
-					"link_type": "DocType",
-					"link_to": "Police Verification"
-				},
-				{
-					"type": "Link",
-					"label": "Job Portal",
-					"section": "Main",
-					"icon": "globe",
-					"link_type": "URL",
-					"url": "/jobs"
-				},
-				{
-					"type": "Link",
-					"label": "Recruitment Analytics",
-					"section": "Reports",
-					"icon": "users",
-					"link_type": "Report",
-					"link_to": "Recruitment Analytics"
-				},
-				{
-					"type": "Link",
-					"label": "Interview Type",
-					"section": "Setup",
-					"icon": "clipboard-check",
-					"link_type": "DocType",
-					"link_to": "Interview Type"
-				},
-				{
-					"type": "Link",
-					"label": "Job Applicant Source",
-					"section": "Setup",
-					"icon": "send",
-					"link_type": "DocType",
-					"link_to": "Job Applicant Source"
-				},
-				{
-					"type": "Link",
-					"label": "Job Opening Template",
-					"section": "Setup",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Job Opening Template"
-				},
-				{
-					"type": "Link",
-					"label": "Appointment Letter Template",
-					"section": "Setup",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Appointment Letter Template"
-				},
-				{
-					"type": "Link",
-					"label": "Job Offer Term Template",
-					"section": "Setup",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Job Offer Term Template"
-				},
-				{
-					"type": "Card Break",
-					"label": "Leaves"
-				},
-				{
-					"type": "Link",
-					"label": "Leave Application",
-					"section": "Main",
-					"icon": "calendar-off",
-					"link_type": "DocType",
-					"link_to": "Leave Application"
-				},
-				{
-					"type": "Link",
-					"label": "Weekly Off Request",
-					"section": "Main",
-					"icon": "calendar-off",
-					"link_type": "DocType",
-					"link_to": "Weekly Off Request"
-				},
-				{
-					"type": "Link",
-					"label": "Leave Encashment",
-					"section": "Main",
-					"icon": "wallet",
-					"link_type": "DocType",
-					"link_to": "Leave Encashment"
-				},
-				{
-					"type": "Link",
-					"label": "Leave Control Panel",
-					"section": "Main",
-					"icon": "sliders-horizontal",
-					"link_type": "DocType",
-					"link_to": "Leave Control Panel"
-				},
-				{
-					"type": "Link",
-					"label": "Leave Policy Assignment",
-					"section": "Main",
-					"icon": "clipboard-list",
-					"link_type": "DocType",
-					"link_to": "Leave Policy Assignment"
-				},
-				{
-					"type": "Link",
-					"label": "Leave Allocation",
-					"section": "Main",
-					"icon": "calendar-plus",
-					"link_type": "DocType",
-					"link_to": "Leave Allocation"
-				},
-				{
-					"type": "Link",
-					"label": "Compensatory Leave Request",
-					"section": "Main",
-					"icon": "calendar-plus",
-					"link_type": "DocType",
-					"link_to": "Compensatory Leave Request"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Leave Balance",
-					"section": "Reports",
-					"icon": "calendar-off",
-					"link_type": "Report",
-					"link_to": "Employee Leave Balance"
-				},
-				{
-					"type": "Link",
-					"label": "Leave Balance Summary",
-					"section": "Reports",
-					"icon": "calendar-off",
-					"link_type": "Report",
-					"link_to": "Employee Leave Balance Summary"
-				},
-				{
-					"type": "Link",
-					"label": "Weekly Off Ledger",
-					"section": "Reports",
-					"icon": "list",
-					"link_type": "DocType",
-					"link_to": "Weekly Off Ledger"
-				},
-				{
-					"type": "Link",
-					"label": "Working on a Holiday",
-					"section": "Reports",
-					"icon": "calendar-off",
-					"link_type": "Report",
-					"link_to": "Employees working on a holiday"
-				},
-				{
-					"type": "Link",
-					"label": "Holiday List",
-					"section": "Setup",
-					"icon": "calendar-off",
-					"link_type": "DocType",
-					"link_to": "Holiday List"
-				},
-				{
-					"type": "Link",
-					"label": "Holiday List Assignment",
-					"section": "Setup",
-					"icon": "calendar-range",
-					"link_type": "DocType",
-					"link_to": "Holiday List Assignment"
-				},
-				{
-					"type": "Link",
-					"label": "Leave Period",
-					"section": "Setup",
-					"icon": "calendar-range",
-					"link_type": "DocType",
-					"link_to": "Leave Period"
-				},
-				{
-					"type": "Link",
-					"label": "Leave Policy",
-					"section": "Setup",
-					"icon": "scroll-text",
-					"link_type": "DocType",
-					"link_to": "Leave Policy"
-				},
-				{
-					"type": "Link",
-					"label": "Leave Block List",
-					"section": "Setup",
-					"icon": "ban",
-					"link_type": "DocType",
-					"link_to": "Leave Block List"
-				},
-				{
-					"type": "Link",
-					"label": "Leave Type",
-					"section": "Setup",
-					"icon": "calendar-off",
-					"link_type": "DocType",
-					"link_to": "Leave Type"
-				},
-				{
-					"type": "Card Break",
-					"label": "Payroll & Incentives"
-				},
-				{
-					"type": "Link",
-					"label": "Payroll Dashboard",
-					"section": "Main",
-					"icon": "wallet",
-					"link_type": "Dashboard",
-					"link_to": "Payroll"
-				},
-				{
-					"type": "Link",
-					"label": "Payroll Entry",
-					"section": "Main",
-					"icon": "wallet",
-					"link_type": "DocType",
-					"link_to": "Payroll Entry"
-				},
-				{
-					"type": "Link",
-					"label": "Salary Structure Assignment",
-					"section": "Main",
-					"icon": "layers",
-					"link_type": "DocType",
-					"link_to": "Salary Structure Assignment"
-				},
-				{
-					"type": "Link",
-					"label": "Salary Slip",
-					"section": "Main",
-					"icon": "file-text",
-					"link_type": "DocType",
-					"link_to": "Salary Slip"
-				},
-				{
-					"type": "Link",
-					"label": "Additional Salary",
-					"section": "Main",
-					"icon": "banknote",
-					"link_type": "DocType",
-					"link_to": "Additional Salary"
-				},
-				{
-					"type": "Link",
-					"label": "Salary Withholding",
-					"section": "Main",
-					"icon": "ban",
-					"link_type": "DocType",
-					"link_to": "Salary Withholding"
-				},
-				{
-					"type": "Link",
-					"label": "Incentive Scheme",
-					"section": "Setup",
-					"icon": "trending-up",
-					"link_type": "DocType",
-					"link_to": "Incentive Scheme"
-				},
-				{
-					"type": "Link",
-					"label": "Incentive Assignment",
-					"section": "Main",
-					"icon": "clipboard-list",
-					"link_type": "DocType",
-					"link_to": "Incentive Scheme Assignment"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Incentive",
-					"section": "Main",
-					"icon": "trending-up",
-					"link_type": "DocType",
-					"link_to": "Employee Incentive"
-				},
-				{
-					"type": "Link",
-					"label": "Employee CTC Break-up",
-					"section": "Reports",
-					"icon": "pie-chart",
-					"link_type": "Report",
-					"link_to": "Employee CTC Break-up"
-				},
-				{
-					"type": "Link",
-					"label": "Salary Register",
-					"section": "Reports",
-					"icon": "file-spreadsheet",
-					"link_type": "Report",
-					"link_to": "Salary Register"
-				},
-				{
-					"type": "Link",
-					"label": "Income Tax Deductions",
-					"section": "Reports",
-					"icon": "receipt",
-					"link_type": "Report",
-					"link_to": "Income Tax Deductions"
-				},
-				{
-					"type": "Link",
-					"label": "Professional Tax Deductions",
-					"section": "Reports",
-					"icon": "receipt",
-					"link_type": "Report",
-					"link_to": "Professional Tax Deductions"
-				},
-				{
-					"type": "Link",
-					"label": "Salary Component",
-					"section": "Setup",
-					"icon": "banknote",
-					"link_type": "DocType",
-					"link_to": "Salary Component"
-				},
-				{
-					"type": "Link",
-					"label": "Salary Structure",
-					"section": "Setup",
-					"icon": "layers",
-					"link_type": "DocType",
-					"link_to": "Salary Structure"
-				},
-				{
-					"type": "Link",
-					"label": "Payroll Period",
-					"section": "Setup",
-					"icon": "calendar-range",
-					"link_type": "DocType",
-					"link_to": "Payroll Period"
-				},
-				{
-					"type": "Link",
-					"label": "Payroll Settings",
-					"section": "Setup",
-					"icon": "settings",
-					"link_type": "DocType",
-					"link_to": "Payroll Settings"
-				},
-				{
-					"type": "Card Break",
-					"label": "Tax & Benefits"
-				},
-				{
-					"type": "Link",
-					"label": "Tax Declaration",
-					"section": "Main",
-					"icon": "file-text",
-					"link_type": "DocType",
-					"link_to": "Employee Tax Exemption Declaration"
-				},
-				{
-					"type": "Link",
-					"label": "Tax Proof Submission",
-					"section": "Main",
-					"icon": "file-check",
-					"link_type": "DocType",
-					"link_to": "Employee Tax Exemption Proof Submission"
-				},
-				{
-					"type": "Link",
-					"label": "Benefit Application",
-					"section": "Main",
-					"icon": "heart",
-					"link_type": "DocType",
-					"link_to": "Employee Benefit Application"
-				},
-				{
-					"type": "Link",
-					"label": "Benefit Claim",
-					"section": "Main",
-					"icon": "heart",
-					"link_type": "DocType",
-					"link_to": "Employee Benefit Claim"
-				},
-				{
-					"type": "Link",
-					"label": "Gratuity",
-					"section": "Main",
-					"icon": "wallet",
-					"link_type": "DocType",
-					"link_to": "Gratuity"
-				},
-				{
-					"type": "Link",
-					"label": "Income Tax Computation",
-					"section": "Reports",
-					"icon": "calculator",
-					"link_type": "Report",
-					"link_to": "Income Tax Computation"
-				},
-				{
-					"type": "Link",
-					"label": "Income Tax Deductions",
-					"section": "Reports",
-					"icon": "receipt",
-					"link_type": "Report",
-					"link_to": "Income Tax Deductions"
-				},
-				{
-					"type": "Link",
-					"label": "Accrued Earnings",
-					"section": "Reports",
-					"icon": "trending-up",
-					"link_type": "Report",
-					"link_to": "Accrued Earnings Report"
-				},
-				{
-					"type": "Link",
-					"label": "Income Tax Slab",
-					"section": "Setup",
-					"icon": "percent",
-					"link_type": "DocType",
-					"link_to": "Income Tax Slab"
-				},
-				{
-					"type": "Link",
-					"label": "Tax Exemption Category",
-					"section": "Setup",
-					"icon": "percent",
-					"link_type": "DocType",
-					"link_to": "Employee Tax Exemption Category"
-				},
-				{
-					"type": "Link",
-					"label": "Gratuity Rule",
-					"section": "Setup",
-					"icon": "shield",
-					"link_type": "DocType",
-					"link_to": "Gratuity Rule"
-				},
-				{
-					"type": "Card Break",
-					"label": "Attendance & Shifts"
-				},
-				{
-					"type": "Link",
-					"label": "Roster",
-					"section": "Main",
-					"icon": "calendar-range",
-					"link_type": "URL",
-					"url": "/hr/roster"
-				},
-				{
-					"type": "Link",
-					"label": "Attendance Dashboard",
-					"section": "Main",
-					"icon": "calendar-check",
-					"link_type": "Dashboard",
-					"link_to": "Attendance"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Attendance Tool",
-					"section": "Main",
-					"icon": "wrench",
-					"link_type": "DocType",
-					"link_to": "Employee Attendance Tool"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Checkin",
-					"section": "Main",
-					"icon": "log-in",
-					"link_type": "DocType",
-					"link_to": "Employee Checkin"
-				},
-				{
-					"type": "Link",
-					"label": "Shift Request",
-					"section": "Main",
-					"icon": "clipboard-pen",
-					"link_type": "DocType",
-					"link_to": "Shift Request"
-				},
-				{
-					"type": "Link",
-					"label": "Attendance Request",
-					"section": "Main",
-					"icon": "clipboard-pen",
-					"link_type": "DocType",
-					"link_to": "Attendance Request"
-				},
-				{
-					"type": "Link",
-					"label": "Attendance",
-					"section": "Main",
-					"icon": "calendar-check",
-					"link_type": "DocType",
-					"link_to": "Attendance"
-				},
-				{
-					"type": "Link",
-					"label": "Shift Assignment",
-					"section": "Main",
-					"icon": "clock",
-					"link_type": "DocType",
-					"link_to": "Shift Assignment"
-				},
-				{
-					"type": "Link",
-					"label": "Shift Schedule Assignment",
-					"section": "Main",
-					"icon": "clock",
-					"link_type": "DocType",
-					"link_to": "Shift Schedule Assignment"
-				},
-				{
-					"type": "Link",
-					"label": "Overtime Slip",
-					"section": "Main",
-					"icon": "file-text",
-					"link_type": "DocType",
-					"link_to": "Overtime Slip"
-				},
-				{
-					"type": "Link",
-					"label": "Week Off Entry",
-					"section": "Main",
-					"icon": "calendar",
-					"link_type": "DocType",
-					"link_to": "Week Off Work Entry"
-				},
-				{
-					"type": "Link",
-					"label": "Week Off Payroll Batch",
-					"section": "Main",
-					"icon": "wallet",
-					"link_type": "DocType",
-					"link_to": "Week Off Payroll Batch"
-				},
-				{
-					"type": "Link",
-					"label": "Late Penalty Entry",
-					"section": "Main",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Late Penalty Entry"
-				},
-				{
-					"type": "Link",
-					"label": "Late Penalty Reconciliation",
-					"section": "Main",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Late Penalty Reconciliation"
-				},
-				{
-					"type": "Link",
-					"label": "Monthly Attendance Sheet",
-					"section": "Reports",
-					"icon": "table-2",
-					"link_type": "Report",
-					"link_to": "Monthly Attendance Sheet"
-				},
-				{
-					"type": "Link",
-					"label": "Shift Attendance",
-					"section": "Reports",
-					"icon": "calendar-check",
-					"link_type": "Report",
-					"link_to": "Shift Attendance"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Late Summary",
-					"section": "Reports",
-					"icon": "",
-					"link_type": "Report",
-					"link_to": "Employee Late Summary"
-				},
-				{
-					"type": "Link",
-					"label": "Monthly Late Penalty",
-					"section": "Reports",
-					"icon": "",
-					"link_type": "Report",
-					"link_to": "Monthly Late Penalty Report"
-				},
-				{
-					"type": "Link",
-					"label": "Pending Late Penalty",
-					"section": "Reports",
-					"icon": "",
-					"link_type": "Report",
-					"link_to": "Pending Late Penalty Approval"
-				},
-				{
-					"type": "Link",
-					"label": "Waived Late Penalties",
-					"section": "Reports",
-					"icon": "",
-					"link_type": "Report",
-					"link_to": "Waived Late Penalties"
-				},
-				{
-					"type": "Link",
-					"label": "Late Payroll Deduction",
-					"section": "Reports",
-					"icon": "",
-					"link_type": "Report",
-					"link_to": "Late Penalty Payroll Deduction Summary"
-				},
-				{
-					"type": "Link",
-					"label": "Shift Type",
-					"section": "Setup",
-					"icon": "clock",
-					"link_type": "DocType",
-					"link_to": "Shift Type"
-				},
-				{
-					"type": "Link",
-					"label": "Shift Location",
-					"section": "Setup",
-					"icon": "map-pin",
-					"link_type": "DocType",
-					"link_to": "Shift Location"
-				},
-				{
-					"type": "Link",
-					"label": "Shift Schedule",
-					"section": "Setup",
-					"icon": "calendar-range",
-					"link_type": "DocType",
-					"link_to": "Shift Schedule"
-				},
-				{
-					"type": "Link",
-					"label": "Roster Template",
-					"section": "Setup",
-					"icon": "calendar-range",
-					"link_type": "DocType",
-					"link_to": "Roster Template"
-				},
-				{
-					"type": "Link",
-					"label": "Overtime Type",
-					"section": "Setup",
-					"icon": "clock",
-					"link_type": "DocType",
-					"link_to": "Overtime Type"
-				},
-				{
-					"type": "Link",
-					"label": "Week Off Policy",
-					"section": "Setup",
-					"icon": "calendar-off",
-					"link_type": "DocType",
-					"link_to": "Week Off Compensation Policy"
-				},
-				{
-					"type": "Link",
-					"label": "Holiday List",
-					"section": "Setup",
-					"icon": "calendar-off",
-					"link_type": "DocType",
-					"link_to": "Holiday List"
-				},
-				{
-					"type": "Link",
-					"label": "Late Penalty Policy",
-					"section": "Setup",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Late Arrival Penalty Policy"
-				},
-				{
-					"type": "Card Break",
-					"label": "Expenses & Travel"
-				},
-				{
-					"type": "Link",
-					"label": "Expenses Dashboard",
-					"section": "Main",
-					"icon": "receipt",
-					"link_type": "Dashboard",
-					"link_to": "Expense Claims"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Advance",
-					"section": "Main",
-					"icon": "credit-card",
-					"link_type": "DocType",
-					"link_to": "Employee Advance"
-				},
-				{
-					"type": "Link",
-					"label": "Expense Claim",
-					"section": "Main",
-					"icon": "receipt",
-					"link_type": "DocType",
-					"link_to": "Expense Claim"
-				},
-				{
-					"type": "Link",
-					"label": "Travel Request",
-					"section": "Main",
-					"icon": "plane",
-					"link_type": "DocType",
-					"link_to": "Travel Request"
-				},
-				{
-					"type": "Link",
-					"label": "Vehicle Log",
-					"section": "Main",
-					"icon": "car",
-					"link_type": "DocType",
-					"link_to": "Vehicle Log"
-				},
-				{
-					"type": "Link",
-					"label": "Unpaid Expense Claims",
-					"section": "Reports",
-					"icon": "receipt",
-					"link_type": "Report",
-					"link_to": "Unpaid Expense Claim"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Advance Summary",
-					"section": "Reports",
-					"icon": "credit-card",
-					"link_type": "Report",
-					"link_to": "Employee Advance Summary"
-				},
-				{
-					"type": "Link",
-					"label": "Vehicle Expenses",
-					"section": "Reports",
-					"icon": "car",
-					"link_type": "Report",
-					"link_to": "Vehicle Expenses"
-				},
-				{
-					"type": "Link",
-					"label": "Expense Claim Type",
-					"section": "Setup",
-					"icon": "receipt",
-					"link_type": "DocType",
-					"link_to": "Expense Claim Type"
-				},
-				{
-					"type": "Link",
-					"label": "Purpose of Travel",
-					"section": "Setup",
-					"icon": "map",
-					"link_type": "DocType",
-					"link_to": "Purpose of Travel"
-				},
-				{
-					"type": "Link",
-					"label": "Driver",
-					"section": "Setup",
-					"icon": "user",
-					"link_type": "DocType",
-					"link_to": "Driver"
-				},
-				{
-					"type": "Link",
-					"label": "Vehicle",
-					"section": "Setup",
-					"icon": "car",
-					"link_type": "DocType",
-					"link_to": "Vehicle"
-				},
-				{
-					"type": "Card Break",
-					"label": "Assets / Issue-Return"
-				},
-				{
-					"type": "Link",
-					"label": "Stationery Handover",
+					"label": "Vendor Metal Issue",
 					"section": "Main",
 					"icon": "package",
 					"link_type": "DocType",
-					"link_to": "Stationery Handover"
-				},
-				{
-					"type": "Card Break",
-					"label": "Tenure"
+					"link_to": "Vendor Metal Issue"
 				},
 				{
 					"type": "Link",
-					"label": "Lifecycle Dashboard",
+					"label": "Vendor Metal Receive",
 					"section": "Main",
-					"icon": "",
-					"link_type": "Dashboard",
-					"link_to": "Employee Lifecycle"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Onboarding",
-					"section": "Main",
-					"icon": "user-plus",
+					"icon": "package-check",
 					"link_type": "DocType",
-					"link_to": "Employee Onboarding"
+					"link_to": "Vendor Metal Receive"
 				},
 				{
 					"type": "Link",
-					"label": "Employee Separation",
-					"section": "Main",
-					"icon": "user-minus",
-					"link_type": "DocType",
-					"link_to": "Employee Separation"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Grievance",
-					"section": "Main",
-					"icon": "scale",
-					"link_type": "DocType",
-					"link_to": "Employee Grievance"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Transfer",
+					"label": "Supplier Metal Transaction",
 					"section": "Main",
 					"icon": "arrow-left-right",
 					"link_type": "DocType",
-					"link_to": "Employee Transfer"
-				},
-				{
-					"type": "Link",
-					"label": "Exit Interview",
-					"section": "Main",
-					"icon": "user-minus",
-					"link_type": "DocType",
-					"link_to": "Exit Interview"
-				},
-				{
-					"type": "Link",
-					"label": "Full & Final",
-					"section": "Main",
-					"icon": "file-check",
-					"link_type": "DocType",
-					"link_to": "Full and Final Statement"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Exits",
-					"section": "Reports",
-					"icon": "user-minus",
-					"link_type": "Report",
-					"link_to": "Employee Exits"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Birthday",
-					"section": "Reports",
-					"icon": "cake",
-					"link_type": "Report",
-					"link_to": "Employee Birthday"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Information",
-					"section": "Reports",
-					"icon": "id-card",
-					"link_type": "Report",
-					"link_to": "Employee Information"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Analytics",
-					"section": "Reports",
-					"icon": "chart-column",
-					"link_type": "Report",
-					"link_to": "Employee Analytics"
-				},
-				{
-					"type": "Link",
-					"label": "Onboarding Template",
-					"section": "Setup",
-					"icon": "layout-template",
-					"link_type": "DocType",
-					"link_to": "Employee Onboarding Template"
-				},
-				{
-					"type": "Link",
-					"label": "Separation Template",
-					"section": "Setup",
-					"icon": "layout-template",
-					"link_type": "DocType",
-					"link_to": "Employee Separation Template"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Skill Map",
-					"section": "Setup",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Employee Skill Map"
-				},
-				{
-					"type": "Link",
-					"label": "Grievance Type",
-					"section": "Setup",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Grievance Type"
-				},
-				{
-					"type": "Link",
-					"label": "Training Program",
-					"section": "Setup",
-					"icon": "graduation-cap",
-					"link_type": "DocType",
-					"link_to": "Training Program"
-				},
-				{
-					"type": "Link",
-					"label": "Training Event",
-					"section": "Setup",
-					"icon": "calendar",
-					"link_type": "DocType",
-					"link_to": "Training Event"
-				},
-				{
-					"type": "Link",
-					"label": "Training Feedback",
-					"section": "Setup",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Training Feedback"
-				},
-				{
-					"type": "Link",
-					"label": "Training Result",
-					"section": "Setup",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Training Result"
-				},
-				{
-					"type": "Card Break",
-					"label": "Store Floor"
-				},
-				{
-					"type": "Link",
-					"label": "Counter",
-					"section": "Main",
-					"icon": "store",
-					"link_type": "DocType",
-					"link_to": "Counter"
-				},
-				{
-					"type": "Link",
-					"label": "Counter Assignment",
-					"section": "Main",
-					"icon": "store",
-					"link_type": "DocType",
-					"link_to": "Counter Assignment"
-				},
-				{
-					"type": "Link",
-					"label": "Footfall",
-					"section": "Main",
-					"icon": "users",
-					"link_type": "DocType",
-					"link_to": "Footfall Session"
-				},
-				{
-					"type": "Link",
-					"label": "Store Occupancy",
-					"section": "Main",
-					"icon": "store",
-					"link_type": "Page",
-					"link_to": "store-occupancy"
-				},
-				{
-					"type": "Link",
-					"label": "Store Traffic",
-					"section": "Reports",
-					"icon": "users",
-					"link_type": "Report",
-					"link_to": "Store Traffic and Conversion"
-				},
-				{
-					"type": "Card Break",
-					"label": "Visits"
-				},
-				{
-					"type": "Link",
-					"label": "Store Visits",
-					"section": "Main",
-					"icon": "store",
-					"link_type": "DocType",
-					"link_to": "Store Customer Visit"
-				},
-				{
-					"type": "Link",
-					"label": "Customer Profile",
-					"section": "Main",
-					"icon": "user-round",
-					"link_type": "DocType",
-					"link_to": "Customer Profile"
-				},
-				{
-					"type": "Link",
-					"label": "Visit Assignment",
-					"section": "Main",
-					"icon": "map-pin",
-					"link_type": "DocType",
-					"link_to": "Visit Assignment"
-				},
-				{
-					"type": "Link",
-					"label": "Visit Conversion",
-					"section": "Reports",
-					"icon": "trending-up",
-					"link_type": "Report",
-					"link_to": "Store Visit Sales Conversion"
-				},
-				{
-					"type": "Card Break",
-					"label": "Performance"
-				},
-				{
-					"type": "Link",
-					"label": "Line Group",
-					"section": "Setup",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Performance Line Group"
-				},
-				{
-					"type": "Link",
-					"label": "Metric",
-					"section": "Setup",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Performance Metric"
-				},
-				{
-					"type": "Link",
-					"label": "Group Metric",
-					"section": "Setup",
-					"icon": "",
-					"link_type": "DocType",
-					"link_to": "Performance Group Metric"
-				},
-				{
-					"type": "Link",
-					"label": "Template",
-					"section": "Setup",
-					"icon": "layout-template",
-					"link_type": "DocType",
-					"link_to": "Performance Template"
-				},
-				{
-					"type": "Link",
-					"label": "Plan Assignment",
-					"section": "Main",
-					"icon": "clipboard-list",
-					"link_type": "DocType",
-					"link_to": "Performance Plan Assignment"
-				},
-				{
-					"type": "Link",
-					"label": "Sales Target Plan",
-					"section": "Main",
-					"icon": "target",
-					"link_type": "DocType",
-					"link_to": "Sales Target Plan"
-				},
-				{
-					"type": "Link",
-					"label": "Daily Entry",
-					"section": "Main",
-					"icon": "clipboard-check",
-					"link_type": "DocType",
-					"link_to": "Performance Daily Entry"
-				},
-				{
-					"type": "Link",
-					"label": "Performance Record",
-					"section": "Main",
-					"icon": "star",
-					"link_type": "DocType",
-					"link_to": "Performance Record"
-				},
-				{
-					"type": "Link",
-					"label": "Appraisal",
-					"section": "Main",
-					"icon": "star",
-					"link_type": "DocType",
-					"link_to": "Appraisal"
-				},
-				{
-					"type": "Link",
-					"label": "Performance Dashboard",
-					"section": "Main",
-					"icon": "gauge",
-					"link_type": "Page",
-					"link_to": "performance-dashboard"
-				},
-				{
-					"type": "Link",
-					"label": "Monthly Scorecard",
-					"section": "Reports",
-					"icon": "gauge",
-					"link_type": "Report",
-					"link_to": "Monthly Performance Scorecard"
-				},
-				{
-					"type": "Link",
-					"label": "Branch Score Sheet",
-					"section": "Reports",
-					"icon": "building-2",
-					"link_type": "Report",
-					"link_to": "Branch Employee Score Sheet"
-				},
-				{
-					"type": "Link",
-					"label": "Target Tree",
-					"section": "Reports",
-					"icon": "git-branch",
-					"link_type": "Report",
-					"link_to": "Hierarchical Target Report"
-				},
-				{
-					"type": "Link",
-					"label": "Salesperson Summary",
-					"section": "Reports",
-					"icon": "user-check",
-					"link_type": "Report",
-					"link_to": "Salesperson Sales Summary"
-				},
-				{
-					"type": "Card Break",
-					"label": "Compliance"
-				},
-				{
-					"type": "Link",
-					"label": "POSH Complaint",
-					"section": "Main",
-					"icon": "shield",
-					"link_type": "DocType",
-					"link_to": "POSH Complaint"
-				},
-				{
-					"type": "Link",
-					"label": "Recognition",
-					"section": "Main",
-					"icon": "award",
-					"link_type": "DocType",
-					"link_to": "Employee Recognition"
-				}
-			],
-			"overview_link_type": "DocType",
-			"overview_link_to": "Employee"
-		},
-		{
-			"title": "Reports",
-			"icon": "chart-column",
-			"sequence": 100,
-			"items": [
-				{
-					"type": "Card Break",
-					"label": "Purchase"
-				},
-				{
-					"type": "Link",
-					"label": "Purchase Register",
-					"section": "Reports",
-					"icon": "file-spreadsheet",
-					"link_type": "Report",
-					"link_to": "Purchase Register"
-				},
-				{
-					"type": "Link",
-					"label": "Item-wise Purchase Register",
-					"section": "Reports",
-					"icon": "shopping-bag",
-					"link_type": "Report",
-					"link_to": "Item-wise Purchase Register"
-				},
-				{
-					"type": "Link",
-					"label": "Supplier Ledger",
-					"section": "Reports",
-					"icon": "truck",
-					"link_type": "Report",
-					"link_to": "Supplier Ledger Summary"
-				},
-				{
-					"type": "Link",
-					"label": "URD Purchase Register",
-					"section": "Reports",
-					"icon": "recycle",
-					"link_type": "Report",
-					"link_to": "URD Purchase Register"
+					"link_to": "Supplier Metal Transaction"
 				},
 				{
 					"type": "Link",
@@ -2801,151 +1353,47 @@
 				},
 				{
 					"type": "Card Break",
-					"label": "Gold Booking"
+					"label": "Labelling"
 				},
 				{
 					"type": "Link",
-					"label": "Gold Booking Ledger",
-					"section": "Reports",
-					"icon": "book-marked",
-					"link_type": "Report",
-					"link_to": "Gold Booking Ledger"
+					"label": "Labelling Department",
+					"section": "Main",
+					"icon": "tag",
+					"link_type": "Page",
+					"link_to": "labelling-desk"
 				},
 				{
 					"type": "Link",
-					"label": "Gold Booking Status",
-					"section": "Reports",
-					"icon": "clipboard-check",
-					"link_type": "Report",
-					"link_to": "Gold Booking Status Summary"
-				},
-				{
-					"type": "Link",
-					"label": "Gold Booking Liability",
-					"section": "Reports",
-					"icon": "scale",
-					"link_type": "Report",
-					"link_to": "Gold Booking Liability Summary"
-				},
-				{
-					"type": "Link",
-					"label": "Gold Booking Type Analysis",
-					"section": "Reports",
-					"icon": "shapes",
-					"link_type": "Report",
-					"link_to": "Gold Booking Type Analysis"
-				},
-				{
-					"type": "Link",
-					"label": "Gold Booking Expiry",
-					"section": "Reports",
-					"icon": "timer",
-					"link_type": "Report",
-					"link_to": "Gold Booking Expiry Alert"
-				},
-				{
-					"type": "Link",
-					"label": "Daily Metal Rate History",
-					"section": "Reports",
-					"icon": "history",
-					"link_type": "Report",
-					"link_to": "Daily Metal Rate History"
-				},
-				{
-					"type": "Card Break",
-					"label": "Schemes"
-				},
-				{
-					"type": "Link",
-					"label": "Saving Scheme Summary",
-					"section": "Reports",
-					"icon": "piggy-bank",
-					"link_type": "Report",
-					"link_to": "Saving Scheme Summary"
-				},
-				{
-					"type": "Link",
-					"label": "Scheme Members",
-					"section": "Reports",
-					"icon": "users",
-					"link_type": "Report",
-					"link_to": "Saving Scheme Member Register"
-				},
-				{
-					"type": "Link",
-					"label": "Scheme Maturity",
-					"section": "Reports",
-					"icon": "calendar-check",
-					"link_type": "Report",
-					"link_to": "Saving Scheme Maturity Report"
-				},
-				{
-					"type": "Link",
-					"label": "Scheme Overdue",
-					"section": "Reports",
-					"icon": "triangle-alert",
-					"link_type": "Report",
-					"link_to": "Saving Scheme Overdue Installments"
-				},
-				{
-					"type": "Link",
-					"label": "Gold Gullak",
-					"section": "Reports",
-					"icon": "circle-dollar-sign",
-					"link_type": "Report",
-					"link_to": "Gold Gullak Tracker"
-				},
-				{
-					"type": "Card Break",
-					"label": "Manufacturing"
-				},
-				{
-					"type": "Link",
-					"label": "Manufacturing Job Register",
-					"section": "Reports",
-					"icon": "factory",
-					"link_type": "Report",
-					"link_to": "Manufacturing Job Register"
-				},
-				{
-					"type": "Link",
-					"label": "Bag Tracking",
-					"section": "Reports",
+					"label": "Packing List",
+					"section": "Main",
 					"icon": "package",
-					"link_type": "Report",
-					"link_to": "Bag Tracking"
+					"link_type": "DocType",
+					"link_to": "Jewellery Packing List"
 				},
 				{
 					"type": "Link",
-					"label": "Daily Production WIP",
-					"section": "Reports",
-					"icon": "hourglass",
-					"link_type": "Report",
-					"link_to": "Daily Production WIP"
+					"label": "Labelling Sheet",
+					"section": "Main",
+					"icon": "file",
+					"link_type": "DocType",
+					"link_to": "Jewellery Labelling Sheet"
 				},
 				{
 					"type": "Link",
-					"label": "Manufacturing WIP Aging",
-					"section": "Reports",
-					"icon": "hourglass",
-					"link_type": "Report",
-					"link_to": "Manufacturing WIP Aging"
+					"label": "Label History",
+					"section": "Main",
+					"icon": "history",
+					"link_type": "DocType",
+					"link_to": "Jewellery Label History"
 				},
 				{
 					"type": "Link",
-					"label": "Manufacturing Loss by Stage",
-					"section": "Reports",
-					"icon": "trending-down",
-					"link_type": "Report",
-					"link_to": "Manufacturing Loss by Stage"
-				},
-				{
-					"type": "Link",
-					"label": "Karigar Metal Balance",
-					"section": "Reports",
-					"icon": "hammer",
-					"link_type": "Report",
-					"link_to": "Karigar Metal Balance"
+					"label": "Label Branch Transfer",
+					"section": "Main",
+					"icon": "arrow-left-right",
+					"link_type": "DocType",
+					"link_to": "Label Branch Transfer"
 				},
 				{
 					"type": "Card Break",
@@ -2953,9 +1401,57 @@
 				},
 				{
 					"type": "Link",
+					"label": "Refinery Department",
+					"section": "Main",
+					"icon": "flame",
+					"link_type": "Page",
+					"link_to": "refinery-home"
+				},
+				{
+					"type": "Link",
+					"label": "Sent to Refinery",
+					"section": "Main",
+					"icon": "truck",
+					"link_type": "DocType",
+					"link_to": "Sent to Refinery"
+				},
+				{
+					"type": "Link",
+					"label": "Refinery Process",
+					"section": "Main",
+					"icon": "settings",
+					"link_type": "DocType",
+					"link_to": "Refinery Process"
+				},
+				{
+					"type": "Link",
+					"label": "Refinery Master",
+					"section": "Main",
+					"icon": "database",
+					"link_type": "DocType",
+					"link_to": "Refinery Master"
+				},
+				{
+					"type": "Link",
+					"label": "Refinery Convert Batch",
+					"section": "Main",
+					"icon": "layers",
+					"link_type": "DocType",
+					"link_to": "Refinery Convert Batch"
+				},
+				{
+					"type": "Link",
+					"label": "Metal Recovery Receipt",
+					"section": "Main",
+					"icon": "recycle",
+					"link_type": "DocType",
+					"link_to": "Metal Recovery Receipt"
+				},
+				{
+					"type": "Link",
 					"label": "Refinery Pipeline",
 					"section": "Reports",
-					"icon": "flame",
+					"icon": "list",
 					"link_type": "Report",
 					"link_to": "Refinery Pipeline Status"
 				},
@@ -2971,21 +1467,9 @@
 					"type": "Link",
 					"label": "Refinery Batch Summary",
 					"section": "Reports",
-					"icon": "boxes",
+					"icon": "list",
 					"link_type": "Report",
 					"link_to": "Refinery Batch Summary"
-				},
-				{
-					"type": "Card Break",
-					"label": "Vendor Metal"
-				},
-				{
-					"type": "Link",
-					"label": "Supplier Metal Balance",
-					"section": "Reports",
-					"icon": "scale",
-					"link_type": "Report",
-					"link_to": "Supplier Metal Balance"
 				},
 				{
 					"type": "Card Break",
@@ -2993,463 +1477,49 @@
 				},
 				{
 					"type": "Link",
+					"label": "Repair Department",
+					"section": "Main",
+					"icon": "wrench",
+					"link_type": "Page",
+					"link_to": "repair-home"
+				},
+				{
+					"type": "Link",
+					"label": "Repair Order",
+					"section": "Main",
+					"icon": "file-text",
+					"link_type": "DocType",
+					"link_to": "Repair Order"
+				},
+				{
+					"type": "Link",
+					"label": "Repair Custody Transfer",
+					"section": "Main",
+					"icon": "shield",
+					"link_type": "DocType",
+					"link_to": "Repair Custody Transfer"
+				},
+				{
+					"type": "Link",
 					"label": "Repair Workshop Status",
 					"section": "Reports",
-					"icon": "hammer",
+					"icon": "list",
 					"link_type": "Report",
 					"link_to": "Repair Workshop Status"
 				},
 				{
 					"type": "Card Break",
-					"label": "Sales"
+					"label": "Diamond"
 				},
 				{
 					"type": "Link",
-					"label": "Sales Register",
-					"section": "Reports",
-					"icon": "file-spreadsheet",
-					"link_type": "Report",
-					"link_to": "Sales Register"
-				},
-				{
-					"type": "Link",
-					"label": "Item-wise Sales Register",
-					"section": "Reports",
-					"icon": "shopping-bag",
-					"link_type": "Report",
-					"link_to": "Item-wise Sales Register"
-				},
-				{
-					"type": "Link",
-					"label": "Customer Ledger",
-					"section": "Reports",
-					"icon": "user-round",
-					"link_type": "Report",
-					"link_to": "Customer Ledger Summary"
-				},
-				{
-					"type": "Card Break",
-					"label": "Accounts"
-				},
-				{
-					"type": "Link",
-					"label": "General Ledger",
-					"section": "Reports",
-					"icon": "book-marked",
-					"link_type": "Report",
-					"link_to": "General Ledger"
-				},
-				{
-					"type": "Link",
-					"label": "Trial Balance",
-					"section": "Reports",
-					"icon": "scale",
-					"link_type": "Report",
-					"link_to": "Trial Balance"
-				},
-				{
-					"type": "Link",
-					"label": "Profit & Loss",
-					"section": "Reports",
-					"icon": "trending-up",
-					"link_type": "Report",
-					"link_to": "Profit and Loss Statement"
-				},
-				{
-					"type": "Link",
-					"label": "Balance Sheet",
-					"section": "Reports",
-					"icon": "file-spreadsheet",
-					"link_type": "Report",
-					"link_to": "Balance Sheet"
-				},
-				{
-					"type": "Link",
-					"label": "Accounts Receivable",
-					"section": "Reports",
-					"icon": "user-round",
-					"link_type": "Report",
-					"link_to": "Accounts Receivable"
-				},
-				{
-					"type": "Link",
-					"label": "Accounts Payable",
-					"section": "Reports",
-					"icon": "handshake",
-					"link_type": "Report",
-					"link_to": "Accounts Payable"
-				},
-				{
-					"type": "Card Break",
-					"label": "GST"
-				},
-				{
-					"type": "Link",
-					"label": "GSTR-1",
-					"section": "Reports",
-					"icon": "receipt",
-					"link_type": "DocType",
-					"link_to": "GSTR-1"
-				},
-				{
-					"type": "Link",
-					"label": "GSTR-3B",
-					"section": "Reports",
-					"icon": "receipt",
-					"link_type": "DocType",
-					"link_to": "GSTR 3B Report"
-				},
-				{
-					"type": "Link",
-					"label": "HSN Summary",
-					"section": "Reports",
-					"icon": "hash",
-					"link_type": "Report",
-					"link_to": "HSN-wise-summary of outward supplies"
-				},
-				{
-					"type": "Link",
-					"label": "GST Sales Register",
-					"section": "Reports",
-					"icon": "receipt",
-					"link_type": "Report",
-					"link_to": "GST Sales Register"
-				},
-				{
-					"type": "Link",
-					"label": "GST Purchase Register",
-					"section": "Reports",
-					"icon": "shopping-cart",
-					"link_type": "Report",
-					"link_to": "GST Purchase Register"
-				},
-				{
-					"type": "Card Break",
-					"label": "Stock"
-				},
-				{
-					"type": "Link",
-					"label": "Stock Ledger",
-					"section": "Reports",
-					"icon": "",
-					"link_type": "Report",
-					"link_to": "Stock Ledger"
-				},
-				{
-					"type": "Link",
-					"label": "Stock Balance",
-					"section": "Reports",
-					"icon": "scale",
-					"link_type": "Report",
-					"link_to": "Stock Balance"
-				},
-				{
-					"type": "Link",
-					"label": "Stock Ageing",
-					"section": "Reports",
-					"icon": "timer",
-					"link_type": "Report",
-					"link_to": "Stock Ageing"
-				},
-				{
-					"type": "Link",
-					"label": "Stock Analytics",
-					"section": "Reports",
-					"icon": "chart-column",
-					"link_type": "Report",
-					"link_to": "Stock Analytics"
-				},
-				{
-					"type": "Link",
-					"label": "Metal Ledger Entry",
-					"section": "Reports",
-					"icon": "book-marked",
-					"link_type": "DocType",
-					"link_to": "Metal Ledger Entry"
-				},
-				{
-					"type": "Card Break",
-					"label": "Attendance"
-				},
-				{
-					"type": "Link",
-					"label": "Monthly Attendance Sheet",
-					"section": "Reports",
-					"icon": "table-2",
-					"link_type": "Report",
-					"link_to": "Monthly Attendance Sheet"
-				},
-				{
-					"type": "Link",
-					"label": "Shift Attendance",
-					"section": "Reports",
-					"icon": "calendar-check",
-					"link_type": "Report",
-					"link_to": "Shift Attendance"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Late Summary",
-					"section": "Reports",
-					"icon": "",
-					"link_type": "Report",
-					"link_to": "Employee Late Summary"
-				},
-				{
-					"type": "Link",
-					"label": "Monthly Late Penalty",
-					"section": "Reports",
-					"icon": "",
-					"link_type": "Report",
-					"link_to": "Monthly Late Penalty Report"
-				},
-				{
-					"type": "Link",
-					"label": "Pending Late Penalty",
-					"section": "Reports",
-					"icon": "",
-					"link_type": "Report",
-					"link_to": "Pending Late Penalty Approval"
-				},
-				{
-					"type": "Link",
-					"label": "Waived Late Penalties",
-					"section": "Reports",
-					"icon": "",
-					"link_type": "Report",
-					"link_to": "Waived Late Penalties"
-				},
-				{
-					"type": "Link",
-					"label": "Late Payroll Deduction",
-					"section": "Reports",
-					"icon": "",
-					"link_type": "Report",
-					"link_to": "Late Penalty Payroll Deduction Summary"
-				},
-				{
-					"type": "Card Break",
-					"label": "Leaves"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Leave Balance",
-					"section": "Reports",
-					"icon": "calendar-off",
-					"link_type": "Report",
-					"link_to": "Employee Leave Balance"
-				},
-				{
-					"type": "Link",
-					"label": "Leave Balance Summary",
-					"section": "Reports",
-					"icon": "calendar-off",
-					"link_type": "Report",
-					"link_to": "Employee Leave Balance Summary"
-				},
-				{
-					"type": "Link",
-					"label": "Weekly Off Ledger",
-					"section": "Reports",
-					"icon": "list",
-					"link_type": "DocType",
-					"link_to": "Weekly Off Ledger"
-				},
-				{
-					"type": "Link",
-					"label": "Working on a Holiday",
-					"section": "Reports",
-					"icon": "calendar-off",
-					"link_type": "Report",
-					"link_to": "Employees working on a holiday"
-				},
-				{
-					"type": "Card Break",
-					"label": "Payroll"
-				},
-				{
-					"type": "Link",
-					"label": "Salary Register",
-					"section": "Reports",
-					"icon": "file-spreadsheet",
-					"link_type": "Report",
-					"link_to": "Salary Register"
-				},
-				{
-					"type": "Link",
-					"label": "Employee CTC Break-up",
-					"section": "Reports",
-					"icon": "pie-chart",
-					"link_type": "Report",
-					"link_to": "Employee CTC Break-up"
-				},
-				{
-					"type": "Link",
-					"label": "Income Tax Deductions",
-					"section": "Reports",
-					"icon": "receipt",
-					"link_type": "Report",
-					"link_to": "Income Tax Deductions"
-				},
-				{
-					"type": "Link",
-					"label": "Professional Tax Deductions",
-					"section": "Reports",
-					"icon": "receipt",
-					"link_type": "Report",
-					"link_to": "Professional Tax Deductions"
-				},
-				{
-					"type": "Link",
-					"label": "Income Tax Computation",
-					"section": "Reports",
-					"icon": "calculator",
-					"link_type": "Report",
-					"link_to": "Income Tax Computation"
-				},
-				{
-					"type": "Link",
-					"label": "Accrued Earnings",
-					"section": "Reports",
-					"icon": "trending-up",
-					"link_type": "Report",
-					"link_to": "Accrued Earnings Report"
-				},
-				{
-					"type": "Card Break",
-					"label": "Performance"
-				},
-				{
-					"type": "Link",
-					"label": "Monthly Scorecard",
-					"section": "Reports",
-					"icon": "gauge",
-					"link_type": "Report",
-					"link_to": "Monthly Performance Scorecard"
-				},
-				{
-					"type": "Link",
-					"label": "Branch Score Sheet",
-					"section": "Reports",
-					"icon": "building-2",
-					"link_type": "Report",
-					"link_to": "Branch Employee Score Sheet"
-				},
-				{
-					"type": "Link",
-					"label": "Target Tree",
-					"section": "Reports",
-					"icon": "git-branch",
-					"link_type": "Report",
-					"link_to": "Hierarchical Target Report"
-				},
-				{
-					"type": "Link",
-					"label": "Salesperson Summary",
-					"section": "Reports",
-					"icon": "user-check",
-					"link_type": "Report",
-					"link_to": "Salesperson Sales Summary"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Analytics",
-					"section": "Reports",
-					"icon": "chart-column",
-					"link_type": "Report",
-					"link_to": "Employee Analytics"
-				},
-				{
-					"type": "Card Break",
-					"label": "Store & Visits"
-				},
-				{
-					"type": "Link",
-					"label": "Store Traffic",
-					"section": "Reports",
-					"icon": "users",
-					"link_type": "Report",
-					"link_to": "Store Traffic and Conversion"
-				},
-				{
-					"type": "Link",
-					"label": "Visit Conversion",
-					"section": "Reports",
-					"icon": "trending-up",
-					"link_type": "Report",
-					"link_to": "Store Visit Sales Conversion"
-				},
-				{
-					"type": "Card Break",
-					"label": "Hire"
-				},
-				{
-					"type": "Link",
-					"label": "Recruitment Analytics",
-					"section": "Reports",
-					"icon": "users",
-					"link_type": "Report",
-					"link_to": "Recruitment Analytics"
-				},
-				{
-					"type": "Card Break",
-					"label": "Tenure"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Exits",
-					"section": "Reports",
-					"icon": "user-minus",
-					"link_type": "Report",
-					"link_to": "Employee Exits"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Birthday",
-					"section": "Reports",
-					"icon": "cake",
-					"link_type": "Report",
-					"link_to": "Employee Birthday"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Information",
-					"section": "Reports",
-					"icon": "id-card",
-					"link_type": "Report",
-					"link_to": "Employee Information"
-				},
-				{
-					"type": "Card Break",
-					"label": "Expenses"
-				},
-				{
-					"type": "Link",
-					"label": "Unpaid Expense Claims",
-					"section": "Reports",
-					"icon": "receipt",
-					"link_type": "Report",
-					"link_to": "Unpaid Expense Claim"
-				},
-				{
-					"type": "Link",
-					"label": "Employee Advance Summary",
-					"section": "Reports",
-					"icon": "credit-card",
-					"link_type": "Report",
-					"link_to": "Employee Advance Summary"
-				},
-				{
-					"type": "Link",
-					"label": "Vehicle Expenses",
-					"section": "Reports",
-					"icon": "car",
-					"link_type": "Report",
-					"link_to": "Vehicle Expenses"
+					"label": "Diamond Department",
+					"section": "Main",
+					"icon": "gem",
+					"link_type": "Page",
+					"link_to": "diamond-home"
 				}
-			],
-			"overview_link_type": "Report",
-			"overview_link_to": "General Ledger"
+			]
 		}
 	]
 }
