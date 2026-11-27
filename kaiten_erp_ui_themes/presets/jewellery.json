@@ -290,22 +290,6 @@
 				},
 				{
 					"type": "Link",
-					"label": "Jewellery POS",
-					"section": "Main",
-					"icon": "gem",
-					"link_type": "Page",
-					"link_to": "jewellery-pos"
-				},
-				{
-					"type": "Link",
-					"label": "Branch Repair",
-					"section": "Main",
-					"icon": "wrench",
-					"link_type": "Page",
-					"link_to": "branch-repair-desk"
-				},
-				{
-					"type": "Link",
 					"label": "POS Opening Entry",
 					"section": "Main",
 					"icon": "door-open",
@@ -314,43 +298,11 @@
 				},
 				{
 					"type": "Link",
-					"label": "POS Closing Entry",
+					"label": "Jewellery POS",
 					"section": "Main",
-					"icon": "door-closed",
-					"link_type": "DocType",
-					"link_to": "POS Closing Entry"
-				},
-				{
-					"type": "Link",
-					"label": "Lead",
-					"section": "Main",
-					"icon": "user-search",
-					"link_type": "DocType",
-					"link_to": "Lead"
-				},
-				{
-					"type": "Link",
-					"label": "Opportunity",
-					"section": "Main",
-					"icon": "target",
-					"link_type": "DocType",
-					"link_to": "Opportunity"
-				},
-				{
-					"type": "Link",
-					"label": "Quotation",
-					"section": "Main",
-					"icon": "file-text",
-					"link_type": "DocType",
-					"link_to": "Quotation"
-				},
-				{
-					"type": "Link",
-					"label": "Sales Order",
-					"section": "Main",
-					"icon": "clipboard-list",
-					"link_type": "DocType",
-					"link_to": "Sales Order"
+					"icon": "gem",
+					"link_type": "Page",
+					"link_to": "jewellery-pos"
 				},
 				{
 					"type": "Link",
@@ -362,11 +314,11 @@
 				},
 				{
 					"type": "Link",
-					"label": "Delivery Note",
+					"label": "Cash Invoice Split",
 					"section": "Main",
-					"icon": "truck",
+					"icon": "split",
 					"link_type": "DocType",
-					"link_to": "Delivery Note"
+					"link_to": "Cash Invoice Split"
 				},
 				{
 					"type": "Link",
@@ -378,24 +330,24 @@
 				},
 				{
 					"type": "Link",
-					"label": "Cash Invoice Split",
+					"label": "Branch Repair",
 					"section": "Main",
-					"icon": "split",
-					"link_type": "DocType",
-					"link_to": "Cash Invoice Split"
+					"icon": "wrench",
+					"link_type": "Page",
+					"link_to": "branch-repair-desk"
 				},
 				{
 					"type": "Link",
-					"label": "Loyalty Point Entry",
+					"label": "POS Closing Entry",
 					"section": "Main",
-					"icon": "star",
+					"icon": "door-closed",
 					"link_type": "DocType",
-					"link_to": "Loyalty Point Entry"
+					"link_to": "POS Closing Entry"
 				},
 				{
 					"type": "Link",
 					"label": "POS Profile",
-					"section": "Main",
+					"section": "Setup",
 					"icon": "settings",
 					"link_type": "DocType",
 					"link_to": "POS Profile"
@@ -403,7 +355,7 @@
 				{
 					"type": "Link",
 					"label": "POS Settings",
-					"section": "Main",
+					"section": "Setup",
 					"icon": "settings",
 					"link_type": "DocType",
 					"link_to": "POS Settings"
@@ -574,11 +526,11 @@
 				},
 				{
 					"type": "Link",
-					"label": "Promotional Scheme",
+					"label": "Loyalty Point Entry",
 					"section": "Main",
-					"icon": "megaphone",
+					"icon": "star",
 					"link_type": "DocType",
-					"link_to": "Promotional Scheme"
+					"link_to": "Loyalty Point Entry"
 				},
 				{
 					"type": "Link",
@@ -646,14 +598,6 @@
 					"icon": "undo-2",
 					"link_type": "Page",
 					"link_to": "return-desk"
-				},
-				{
-					"type": "Link",
-					"label": "Material Request",
-					"section": "Main",
-					"icon": "inbox",
-					"link_type": "DocType",
-					"link_to": "Material Request"
 				},
 				{
 					"type": "Link",
@@ -1082,6 +1026,14 @@
 				},
 				{
 					"type": "Link",
+					"label": "Diamond Department",
+					"section": "Main",
+					"icon": "gem",
+					"link_type": "Page",
+					"link_to": "diamond-home"
+				},
+				{
+					"type": "Link",
 					"label": "Enamel Department",
 					"section": "Main",
 					"icon": "palette",
@@ -1317,42 +1269,6 @@
 				},
 				{
 					"type": "Card Break",
-					"label": "Vendor Metal"
-				},
-				{
-					"type": "Link",
-					"label": "Vendor Metal Issue",
-					"section": "Main",
-					"icon": "package",
-					"link_type": "DocType",
-					"link_to": "Vendor Metal Issue"
-				},
-				{
-					"type": "Link",
-					"label": "Vendor Metal Receive",
-					"section": "Main",
-					"icon": "package-check",
-					"link_type": "DocType",
-					"link_to": "Vendor Metal Receive"
-				},
-				{
-					"type": "Link",
-					"label": "Supplier Metal Transaction",
-					"section": "Main",
-					"icon": "arrow-left-right",
-					"link_type": "DocType",
-					"link_to": "Supplier Metal Transaction"
-				},
-				{
-					"type": "Link",
-					"label": "Supplier Metal Balance",
-					"section": "Reports",
-					"icon": "scale",
-					"link_type": "Report",
-					"link_to": "Supplier Metal Balance"
-				},
-				{
-					"type": "Card Break",
 					"label": "Labelling"
 				},
 				{
@@ -1506,18 +1422,6 @@
 					"icon": "list",
 					"link_type": "Report",
 					"link_to": "Repair Workshop Status"
-				},
-				{
-					"type": "Card Break",
-					"label": "Diamond"
-				},
-				{
-					"type": "Link",
-					"label": "Diamond Department",
-					"section": "Main",
-					"icon": "gem",
-					"link_type": "Page",
-					"link_to": "diamond-home"
 				}
 			]
 		}

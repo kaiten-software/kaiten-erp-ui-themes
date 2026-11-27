@@ -2,3 +2,4 @@
 
 [post_model_sync]
 kaiten_erp_ui_themes.patches.install_jewellery_menu
+kaiten_erp_ui_themes.patches.refresh_jewellery_menu
