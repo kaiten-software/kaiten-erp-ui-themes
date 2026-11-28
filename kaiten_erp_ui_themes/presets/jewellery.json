@@ -13,6 +13,14 @@
 				},
 				{
 					"type": "Link",
+					"label": "MD Dashboard",
+					"section": "Main",
+					"icon": "layout-dashboard",
+					"link_type": "Page",
+					"link_to": "md-control-centre"
+				},
+				{
+					"type": "Link",
 					"label": "Company",
 					"section": "Main",
 					"icon": "building-2",
